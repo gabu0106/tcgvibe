@@ -10,7 +10,6 @@ export default async function handler(req, res) {
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
-
   const trimmedText = rawText.slice(0, 3000);
 
   try {
@@ -38,7 +37,7 @@ TCGVIBE AI的には〜（初心者にも伝わる解説）
 ・話し言葉で書く
 ・段落間は空行を入れる
 
-必ず以下のJSON形式のみで返してください。他のテキストは一切含めないこと：
+必ず以下のJSON形式のみで返してください。前後に余分なテキストや\`\`\`は絶対につけないこと：
 {"title":"タイトル（35文字以内）","tag":"環境解説","summary":"要約（120文字以内）","content":"記事本文","emoji":"🃏","highlights":["見どころ1","見どころ2","見どころ3"]}`,
         messages: [{
           role: 'user',
@@ -49,7 +48,7 @@ TCGVIBE AI的には〜（初心者にも伝わる解説）
 回答：
 ${trimmedText}
 
-上記をJSON形式の記事にしてください。`
+上記をJSON形式の記事にしてください。JSONのみ返してください。`
         }],
       }),
     });
@@ -62,44 +61,69 @@ ${trimmedText}
 
     const data = await response.json();
     const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    console.log('AI response:', text.substring(0, 200));
 
-    // JSON部分を抽出（```json ``` で囲まれていても対応）
-    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // あらゆる形式のJSONを抽出
+    const cleaned = text
+      .replace(/```json\n?/gi, '')
+      .replace(/```\n?/gi, '')
+      .trim();
+
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error('Response text:', text);
+      console.error('No JSON found in:', text);
       throw new Error('JSON parse error');
     }
 
-    const article = JSON.parse(jsonMatch[0]);
+    let article;
+    try {
+      article = JSON.parse(jsonMatch[0]);
+    } catch(e) {
+      console.error('JSON parse failed:', jsonMatch[0].substring(0, 200));
+      throw new Error('JSON parse error');
+    }
 
-    const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/tcg_articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_SECRET_KEY}`,
-        'apikey': SUPABASE_SECRET_KEY,
-        'Prefer': 'return=representation',
-      },
-      body: JSON.stringify({
-        game: game || 'pokeca',
-        tag: article.tag,
-        title: article.title,
-        summary: article.summary,
-        content: article.content,
-        emoji: article.emoji,
-      }),
-    });
-
-    const saved = await saveRes.json();
+    // Supabaseに保存
+    let savedId = null;
+    try {
+      const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/tcg_articles`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_SECRET_KEY}`,
+          'apikey': SUPABASE_SECRET_KEY,
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify({
+          game: game || 'pokeca',
+          tag: article.tag || '環境解説',
+          title: article.title || '',
+          summary: article.summary || '',
+          content: article.content || '',
+          emoji: article.emoji || '🃏',
+        }),
+      });
+      const saved = await saveRes.json();
+      savedId = saved[0]?.id;
+    } catch(e) {
+      console.error('Supabase save error:', e);
+    }
 
     return res.status(200).json({
       success: true,
-      article: { ...article, id: saved[0]?.id },
+      article: {
+        title: article.title || '',
+        tag: article.tag || '環境解説',
+        summary: article.summary || '',
+        content: article.content || '',
+        emoji: article.emoji || '🃏',
+        highlights: article.highlights || [],
+        id: savedId,
+      },
     });
 
   } catch (err) {
-    console.error('Admin error:', err);
-    return res.status(500).json({ error: '記事生成エラーが発生しました' });
+    console.error('Admin error:', err.message);
+    return res.status(500).json({ error: '記事生成エラーが発生しました: ' + err.message });
   }
 }
