@@ -23,10 +23,10 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
-        system: 'あなたはTCGの記事編集者です。プロプレイヤーの回答をQ&A形式の記事にしてください。各質問にQ/プロの回答/TCGVIBE AI的にはの三層で答えること。記号は使わず話し言葉で。必ずJSON形式のみで返すこと: {"title":"タイトル","tag":"環境解説","summary":"要約","content":"本文","emoji":"emoji文字","highlights":["1","2","3"]}',
+        system: 'あなたはTCGの記事編集者です。プロプレイヤーの回答をQ&A形式の記事にしてください。各質問にQ/プロの回答/TCGVIBE AI的にはの三層で答えること。記号は使わず話し言葉で。必ずJSON形式のみで返すこと。コードブロックやバッククォートは絶対に使わないこと: {"title":"タイトル","tag":"環境解説","summary":"要約","content":"本文","emoji":"emoji文字","highlights":["1","2","3"]}',
         messages: [{
           role: 'user',
-          content: 'ゲーム:' + (game || 'ポケカ') + ' 執筆者:' + (author || 'プロ') + ' 質問:' + (questions || '環境について') + ' 回答:' + trimmedText + ' 上記をJSONのみで返してください。'
+          content: 'ゲーム:' + (game || 'ポケカ') + ' 執筆者:' + (author || 'プロ') + ' 質問:' + (questions || '環境について') + ' 回答:' + trimmedText + ' JSONのみ返してください。コードブロックは使わないでください。'
         }],
       }),
     });
@@ -38,10 +38,16 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    const rawResponse = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    
+    // バッククォートとコードブロックを除去
+    const text = rawResponse
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/gi, '')
+      .trim();
+
     console.log('Response:', text.substring(0, 300));
 
-    // JSONを抽出
     const start = text.indexOf('{');
     const end = text.lastIndexOf('}');
 
@@ -59,7 +65,6 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'JSON parse failed' });
     }
 
-    // Supabaseに保存
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/tcg_articles`, {
         method: 'POST',
