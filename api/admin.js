@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { rawText, game, author, questions } = req.body;
+  const { rawText, game, author, authorX, questions } = req.body;
   if (!rawText) return res.status(400).json({ error: 'rawText が必要です' });
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -23,25 +23,28 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
-        system: `あなたはTCGの記事編集者です。プロの回答をQ&A三層構造の記事にしてください。
+        system: `あなたはTCGVIBE.AIの記事編集者です。プロの回答をQ&A三層構造の記事にしてください。
 
 必ず以下の形式で出力してください：
 
-TITLE: ここにタイトル（35文字以内）
+TITLE: タイトル（35文字以内）
 TAG: 環境解説
-SUMMARY: ここに要約（120文字以内）
-EMOJI: 🃏
+SUMMARY: 要約（120文字以内）
+EMOJI: 絵文字1つ
 HIGHLIGHTS: 見どころ1|見どころ2|見どころ3
 CONTENT:
-ここに記事本文を書く。記号（##、**）は使わず話し言葉で。Q&A三層構造で。全ての質問と回答を必ず含めること。`,
+記事本文をここに書く。記号（##、**）は使わず話し言葉で。全ての質問と回答を必ずQ&A三層構造で含めること。
+
+REVIEW:
+AIによる総評をここに書く（200文字程度）。プロの回答全体を踏まえた分析・注目ポイント・読者へのメッセージを話し言葉で。`,
         messages: [{
           role: 'user',
           content: `ゲーム: ${game || 'ポケカ'}
-執筆者: ${author || 'プロ'}
+執筆者: ${author || 'プロ'}${authorX ? `（X: ${authorX}）` : ''}
 質問: ${questions || '環境について'}
 回答: ${trimmedText}
 
-上記の形式で記事を出力してください。回答は全て含めてください。`
+上記の形式で記事を出力してください。全ての質問と回答を含めてください。`
         }],
       }),
     });
@@ -61,7 +64,8 @@ CONTENT:
     const summaryMatch = text.match(/SUMMARY:\s*(.+)/);
     const emojiMatch = text.match(/EMOJI:\s*(.+)/);
     const highlightsMatch = text.match(/HIGHLIGHTS:\s*(.+)/);
-    const contentMatch = text.match(/CONTENT:\s*([\s\S]+)$/);
+    const contentMatch = text.match(/CONTENT:\s*([\s\S]+?)(?=\nREVIEW:)/);
+    const reviewMatch = text.match(/REVIEW:\s*([\s\S]+)$/);
 
     const article = {
       title: titleMatch ? titleMatch[1].trim() : 'TCGプロ解説記事',
@@ -70,6 +74,9 @@ CONTENT:
       emoji: emojiMatch ? emojiMatch[1].trim() : '🃏',
       highlights: highlightsMatch ? highlightsMatch[1].split('|').map(h => h.trim()) : [],
       content: contentMatch ? contentMatch[1].trim() : text,
+      review: reviewMatch ? reviewMatch[1].trim() : '',
+      author: author || '',
+      authorX: authorX || '',
     };
 
     // Supabaseに保存
