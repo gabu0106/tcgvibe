@@ -11,7 +11,6 @@ export default async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
-  // 3000文字でカット
   const trimmedText = rawText.slice(0, 3000);
 
   try {
@@ -25,43 +24,32 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 3000,
-        system: `あなたはTCGVIBE.AIのベテラン編集者です。
-プロプレイヤーの回答をQ&A三層構造の記事に仕上げてください。
+        system: `あなたはTCGVIBE.AIの編集者です。
+プロプレイヤーの回答をQ&A三層構造の記事にしてください。
 
-【記事の構成】
 各質問ごとに：
 Q（質問）
 プロの回答（原文を自然に整理）
-TCGVIBE AI的には〜（初心者にも伝わる解説・補足）
+TCGVIBE AI的には〜（初心者にも伝わる解説）
 
-【絶対に守るルール】
-・##、**、---などの記号は一切使わない
+ルール：
+・記号（##、**、---）は使わない
 ・箇条書きは「・」のみ
-・自然な話し言葉（〜だよ、〜だね）
+・話し言葉で書く
 ・段落間は空行を入れる
-・不確かな情報は書かない
 
-以下のJSON形式のみで返してください：
-{
-  "title": "タイトル（35文字以内）",
-  "tag": "環境解説/デッキ紹介/大会レポート/価格情報/初心者向け のどれか",
-  "summary": "要約（120文字以内）",
-  "content": "記事本文（Q&A三層構造）",
-  "emoji": "絵文字1つ",
-  "highlights": ["見どころ1", "見どころ2", "見どころ3"]
-}`,
+必ず以下のJSON形式のみで返してください。他のテキストは一切含めないこと：
+{"title":"タイトル（35文字以内）","tag":"環境解説","summary":"要約（120文字以内）","content":"記事本文","emoji":"🃏","highlights":["見どころ1","見どころ2","見どころ3"]}`,
         messages: [{
           role: 'user',
-          content: `【質問リスト】
-${questions || '① 今の環境で一番強いデッキは？\n② そのデッキの回し方は？\n③ 対策カードは？\n④ 初心者におすすめのデッキは？\n⑤ 注目・高騰カードは？\n⑥ 大会で勝つために大事なことは？'}
-
-【プロプレイヤーの回答】
-ゲーム：${game || 'ポケモンカード'}
+          content: `ゲーム：${game || 'ポケモンカード'}
 執筆者：${author || 'プロプレイヤー'}
+質問：${questions || '環境・デッキ・大会について'}
 
+回答：
 ${trimmedText}
 
-上記をQ&A三層構造の記事にしてください。`
+上記をJSON形式の記事にしてください。`
         }],
       }),
     });
@@ -74,8 +62,14 @@ ${trimmedText}
 
     const data = await response.json();
     const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('JSON parse error');
+
+    // JSON部分を抽出（```json ``` で囲まれていても対応）
+    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('Response text:', text);
+      throw new Error('JSON parse error');
+    }
 
     const article = JSON.parse(jsonMatch[0]);
 
