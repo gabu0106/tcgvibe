@@ -10,6 +10,32 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'messages が必要です' });
   }
 
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+
+  // Supabaseから最新データを取得
+  let tcgContext = '';
+  try {
+    const dbRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/tcg_meta?order=collected_at.desc&limit=20`,
+      {
+        headers: {
+          'apikey': SUPABASE_PUBLISHABLE_KEY,
+          'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        },
+      }
+    );
+    if (dbRes.ok) {
+      const dbData = await dbRes.json();
+      if (dbData.length > 0) {
+        tcgContext = '\n\n【最新TCG情報データベース】\n' +
+          dbData.map(d => `[${d.game}][${d.category}] ${d.title}: ${d.content}`).join('\n');
+      }
+    }
+  } catch (e) {
+    console.error('DB取得エラー:', e);
+  }
+
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -23,29 +49,21 @@ export default async function handler(req, res) {
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1024,
         system: `あなたはTCGVIBE.AIの専属AIアドバイザーです。
-トレーディングカードゲーム（TCG）の専門家として以下のゲームに精通しています：
-ポケモンカードゲーム、遊戯王、マジック：ザ・ギャザリング、デュエル・マスターズ、ヴァイスシュヴァルツ、ワンピースカードゲーム。
+以下のゲームに精通しています：ポケモンカード、遊戯王、MTG、デュエルマスターズ、ヴァイスシュヴァルツ、ワンピースカード。
 
-【重要】最新の環境情報・カード価格・大会結果などは必ずweb_searchツールで検索してから回答してください。
-特に「今の環境」「最新」「現在」「最近」などのキーワードが含まれる質問は必ず検索すること。
+【重要】以下のデータベース情報を最優先で参照して回答してください。
+データベースにない情報はweb_searchで検索してください。${tcgContext}
 
-回答は日本語で、親しみやすくかつ専門的に。
-デッキ構築・カード評価・ルール裁定・大会対策・価格相場など何でも答えてください。
-価格情報は変動するため検索結果を参考にしつつ「最新情報はショップでご確認ください」と添えること。
-回答は簡潔に要点をまとめて伝えてください。`,
+回答は日本語で親しみやすく、かつ専門的に。
+価格情報には「最新情報はショップでご確認ください」を添えること。
+回答は簡潔に要点をまとめてください。`,
         messages: messages,
-        tools: [
-          {
-            type: 'web_search_20250305',
-            name: 'web_search',
-          }
-        ],
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('Anthropic API error:', error);
       return res.status(response.status).json({ error: 'AI APIエラーが発生しました' });
     }
 
