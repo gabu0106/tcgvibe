@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
-  const trimmedText = rawText.slice(0, 3000);
+  const trimmedText = rawText.slice(0, 2500);
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -22,32 +22,11 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 3000,
-        system: `あなたはTCGVIBE.AIの編集者です。
-プロプレイヤーの回答をQ&A三層構造の記事にしてください。
-
-各質問ごとに：
-Q（質問）
-プロの回答（原文を自然に整理）
-TCGVIBE AI的には〜（初心者にも伝わる解説）
-
-ルール：
-・記号（##、**、---）は使わない
-・箇条書きは「・」のみ
-・話し言葉で書く
-
-必ず以下のJSON形式のみで返してください。前後に余分なテキストや\`\`\`は絶対につけないこと。contentの中の改行は\\nで表現すること：
-{"title":"タイトル","tag":"環境解説","summary":"要約","content":"記事本文（改行は\\nで）","emoji":"🃏","highlights":["見どころ1","見どころ2","見どころ3"]}`,
+        max_tokens: 2000,
+        system: 'あなたはTCGの記事編集者です。プロプレイヤーの回答をQ&A形式の記事にしてください。各質問にQ/プロの回答/TCGVIBE AI的にはの三層で答えること。記号は使わず話し言葉で。必ずJSON形式のみで返すこと: {"title":"タイトル","tag":"環境解説","summary":"要約","content":"本文","emoji":"emoji文字","highlights":["1","2","3"]}',
         messages: [{
           role: 'user',
-          content: `ゲーム：${game || 'ポケモンカード'}
-執筆者：${author || 'プロプレイヤー'}
-質問：${questions || '環境・デッキ・大会について'}
-
-回答：
-${trimmedText}
-
-JSONのみ返してください。`
+          content: 'ゲーム:' + (game || 'ポケカ') + ' 執筆者:' + (author || 'プロ') + ' 質問:' + (questions || '環境について') + ' 回答:' + trimmedText + ' 上記をJSONのみで返してください。'
         }],
       }),
     });
@@ -55,42 +34,40 @@ JSONのみ返してください。`
     if (!response.ok) {
       const errData = await response.json();
       console.error('Anthropic error:', JSON.stringify(errData));
-      throw new Error('AI error');
+      return res.status(500).json({ error: 'AI error: ' + (errData.error?.message || 'unknown') });
     }
 
     const data = await response.json();
     const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-    console.log('AI response length:', text.length);
+    console.log('Response:', text.substring(0, 300));
 
-    // JSONを安全に抽出
+    // JSONを抽出
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+
+    if (start === -1 || end === -1) {
+      console.error('No JSON in:', text.substring(0, 500));
+      return res.status(500).json({ error: 'JSON not found' });
+    }
+
+    const jsonStr = text.substring(start, end + 1);
     let article;
     try {
-      // まずそのままパースを試みる
-      const cleaned = text.replace(/```json\n?/gi, '').replace(/```\n?/gi, '').trim();
-      
-      // { から最後の } までを抽出
-      const start = cleaned.indexOf('{');
-      const end = cleaned.lastIndexOf('}');
-      
-      if (start === -1 || end === -1) throw new Error('No JSON brackets');
-      
-      const jsonStr = cleaned.substring(start, end + 1);
       article = JSON.parse(jsonStr);
     } catch(e) {
-      console.error('JSON parse failed:', e.message);
-      throw new Error('JSON parse error');
+      console.error('Parse error:', e.message, jsonStr.substring(0, 200));
+      return res.status(500).json({ error: 'JSON parse failed' });
     }
 
     // Supabaseに保存
-    let savedId = null;
     try {
-      const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/tcg_articles`, {
+      await fetch(`${SUPABASE_URL}/rest/v1/tcg_articles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${SUPABASE_SECRET_KEY}`,
           'apikey': SUPABASE_SECRET_KEY,
-          'Prefer': 'return=representation',
+          'Prefer': 'return=minimal',
         },
         body: JSON.stringify({
           game: game || 'pokeca',
@@ -98,13 +75,11 @@ JSONのみ返してください。`
           title: article.title || '',
           summary: article.summary || '',
           content: article.content || '',
-          emoji: article.emoji || '🃏',
+          emoji: article.emoji || '',
         }),
       });
-      const saved = await saveRes.json();
-      savedId = saved[0]?.id;
     } catch(e) {
-      console.error('Supabase save error:', e);
+      console.error('Supabase error:', e);
     }
 
     return res.status(200).json({
@@ -113,16 +88,14 @@ JSONのみ返してください。`
         title: article.title || '',
         tag: article.tag || '環境解説',
         summary: article.summary || '',
-        content: (article.content || '').replace(/\\n/g, '\n'),
-        emoji: article.emoji || '🃏',
+        content: article.content || '',
+        emoji: article.emoji || '',
         highlights: article.highlights || [],
-        id: savedId,
       },
     });
 
   } catch (err) {
-    console.error('Admin error:', err.message);
-    return res.status(500).json({ error: '記事生成エラーが発生しました: ' + err.message });
+    console.error('Handler error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 }
-　
