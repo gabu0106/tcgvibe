@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
+        max_tokens: 4000,
         system: `あなたはTCGの記事編集者です。プロの回答をQ&A三層構造の記事にしてください。
 
 必ず以下の形式で出力してください：
@@ -33,7 +33,7 @@ SUMMARY: ここに要約（120文字以内）
 EMOJI: 🃏
 HIGHLIGHTS: 見どころ1|見どころ2|見どころ3
 CONTENT:
-ここに記事本文を書く。記号（##、**）は使わず話し言葉で。Q&A三層構造で。`,
+ここに記事本文を書く。記号（##、**）は使わず話し言葉で。Q&A三層構造で。全ての質問と回答を必ず含めること。`,
         messages: [{
           role: 'user',
           content: `ゲーム: ${game || 'ポケカ'}
@@ -41,7 +41,7 @@ CONTENT:
 質問: ${questions || '環境について'}
 回答: ${trimmedText}
 
-上記の形式で記事を出力してください。`
+上記の形式で記事を出力してください。回答は全て含めてください。`
         }],
       }),
     });
@@ -53,7 +53,7 @@ CONTENT:
 
     const data = await response.json();
     const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-    console.log('Response:', text.substring(0, 200));
+    console.log('Response length:', text.length);
 
     // テキスト形式をパース
     const titleMatch = text.match(/TITLE:\s*(.+)/);
