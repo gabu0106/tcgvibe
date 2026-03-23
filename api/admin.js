@@ -35,10 +35,9 @@ TCGVIBE AI的には〜（初心者にも伝わる解説）
 ・記号（##、**、---）は使わない
 ・箇条書きは「・」のみ
 ・話し言葉で書く
-・段落間は空行を入れる
 
-必ず以下のJSON形式のみで返してください。前後に余分なテキストや\`\`\`は絶対につけないこと：
-{"title":"タイトル（35文字以内）","tag":"環境解説","summary":"要約（120文字以内）","content":"記事本文","emoji":"🃏","highlights":["見どころ1","見どころ2","見どころ3"]}`,
+必ず以下のJSON形式のみで返してください。前後に余分なテキストや\`\`\`は絶対につけないこと。contentの中の改行は\\nで表現すること：
+{"title":"タイトル","tag":"環境解説","summary":"要約","content":"記事本文（改行は\\nで）","emoji":"🃏","highlights":["見どころ1","見どころ2","見どころ3"]}`,
         messages: [{
           role: 'user',
           content: `ゲーム：${game || 'ポケモンカード'}
@@ -48,7 +47,7 @@ TCGVIBE AI的には〜（初心者にも伝わる解説）
 回答：
 ${trimmedText}
 
-上記をJSON形式の記事にしてください。JSONのみ返してください。`
+JSONのみ返してください。`
         }],
       }),
     });
@@ -61,25 +60,24 @@ ${trimmedText}
 
     const data = await response.json();
     const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-    console.log('AI response:', text.substring(0, 200));
+    console.log('AI response length:', text.length);
 
-    // あらゆる形式のJSONを抽出
-    const cleaned = text
-      .replace(/```json\n?/gi, '')
-      .replace(/```\n?/gi, '')
-      .trim();
-
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error('No JSON found in:', text);
-      throw new Error('JSON parse error');
-    }
-
+    // JSONを安全に抽出
     let article;
     try {
-      article = JSON.parse(jsonMatch[0]);
+      // まずそのままパースを試みる
+      const cleaned = text.replace(/```json\n?/gi, '').replace(/```\n?/gi, '').trim();
+      
+      // { から最後の } までを抽出
+      const start = cleaned.indexOf('{');
+      const end = cleaned.lastIndexOf('}');
+      
+      if (start === -1 || end === -1) throw new Error('No JSON brackets');
+      
+      const jsonStr = cleaned.substring(start, end + 1);
+      article = JSON.parse(jsonStr);
     } catch(e) {
-      console.error('JSON parse failed:', jsonMatch[0].substring(0, 200));
+      console.error('JSON parse failed:', e.message);
       throw new Error('JSON parse error');
     }
 
@@ -115,7 +113,7 @@ ${trimmedText}
         title: article.title || '',
         tag: article.tag || '環境解説',
         summary: article.summary || '',
-        content: article.content || '',
+        content: (article.content || '').replace(/\\n/g, '\n'),
         emoji: article.emoji || '🃏',
         highlights: article.highlights || [],
         id: savedId,
