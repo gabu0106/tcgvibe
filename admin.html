@@ -6,201 +6,464 @@
 <title>TCGVIBE.AI 管理画面</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#fafaf8; --bg2:#f5f3ee; --surface:#fff; --border:rgba(0,0,0,0.08); --text:#1a1814; --muted:#7a7570; --gold:#b8952a; --gold2:#d4af5a; --danger:#c0392b; }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-  header { background:var(--surface); border-bottom:1px solid var(--border); padding:1.25rem 2rem; display:flex; align-items:center; justify-content:space-between; }
-  .logo { font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:600; }
-  .logo span { color:var(--gold); }
-  .badge { font-size:0.7rem; background:var(--gold); color:#fff; padding:0.2rem 0.6rem; border-radius:2px; letter-spacing:0.1em; }
-  main { max-width:860px; margin:3rem auto; padding:0 2rem; }
-  h2 { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:300; margin-bottom:0.5rem; }
-  .desc { color:var(--muted); font-size:0.88rem; margin-bottom:2rem; line-height:1.7; }
-  .card { background:var(--surface); border:1px solid var(--border); padding:2rem; margin-bottom:1.5rem; }
-  .card-title { font-size:0.78rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--gold); margin-bottom:1.25rem; }
-  label { display:block; font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:0.5rem; }
-  select, textarea, input { width:100%; font-family:inherit; font-size:0.88rem; color:var(--text); background:var(--bg); border:1px solid var(--border); padding:0.75rem 1rem; outline:none; transition:border-color 0.2s; margin-bottom:1.25rem; border-radius:2px; }
-  select:focus, textarea:focus, input:focus { border-color:var(--gold2); }
-  textarea { resize:vertical; line-height:1.7; }
-  textarea.over { border-color:var(--danger) !important; }
-  .char-count { font-size:0.75rem; color:var(--muted); text-align:right; margin-top:-1rem; margin-bottom:1rem; }
-  .char-count.over { color:var(--danger); font-weight:500; }
-  .btn { display:inline-flex; align-items:center; gap:0.5rem; padding:0.875rem 2rem; background:var(--text); color:var(--bg); font-family:inherit; font-size:0.8rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; border:none; cursor:pointer; border-radius:2px; transition:background 0.2s; }
-  .btn:hover { background:var(--gold); }
-  .btn:disabled { opacity:0.4; cursor:not-allowed; }
-  .btn-gold { background:var(--gold); }
-  .btn-gold:hover { background:#8a6e1a; }
-  .result { margin-top:1.5rem; padding:1.75rem; background:var(--bg2); border:1px solid var(--border); border-radius:2px; display:none; }
-  .result.show { display:block; }
-  .result-tag { font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); margin-bottom:0.5rem; }
-  .result-title { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:400; margin-bottom:0.5rem; line-height:1.3; }
-  .result-summary { font-size:0.85rem; color:var(--muted); margin-bottom:1.25rem; line-height:1.7; padding-bottom:1.25rem; border-bottom:1px solid var(--border); }
-  .highlights { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.25rem; }
-  .highlight-pill { background:rgba(184,149,42,0.1); border:1px solid rgba(184,149,42,0.25); color:var(--gold); font-size:0.75rem; padding:0.3rem 0.75rem; border-radius:999px; }
-  .result-content { font-size:0.9rem; line-height:1.9; white-space:pre-wrap; }
-  .result-review { margin-top:1.5rem; padding:1.25rem; background:rgba(184,149,42,0.06); border:1px solid rgba(184,149,42,0.2); border-radius:2px; }
-  .result-review-label { font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); margin-bottom:0.5rem; font-weight:500; }
-  .result-review-text { font-size:0.88rem; line-height:1.8; color:var(--text); }
-  .author-box { margin-top:1.25rem; padding:1rem 1.25rem; background:var(--surface); border:1px solid var(--border); border-radius:2px; display:flex; align-items:center; justify-content:space-between; }
-  .author-name { font-size:0.88rem; font-weight:500; }
-  .author-x { font-size:0.8rem; color:var(--muted); text-decoration:none; transition:color 0.2s; }
-  .author-x:hover { color:var(--text); }
-  .status { font-size:0.82rem; color:var(--muted); margin-top:0.75rem; }
-  .status.success { color:#2a7a4a; }
-  .status.error { color:var(--danger); font-weight:500; }
-  .divider { height:1px; background:var(--border); margin:1.5rem 0; }
-  .tips { background:rgba(184,149,42,0.06); border:1px solid rgba(184,149,42,0.18); padding:1.25rem; border-radius:2px; margin-bottom:2rem; }
-  .tips h4 { font-size:0.78rem; font-weight:500; color:var(--gold); margin-bottom:0.5rem; }
-  .tips p { font-size:0.82rem; color:var(--muted); line-height:1.7; }
-  .progress { background:var(--bg2); border:1px solid var(--border); padding:1.25rem; border-radius:2px; margin-top:1rem; display:none; }
-  .progress.show { display:block; }
-  .progress-step { font-size:0.82rem; color:var(--muted); padding:0.4rem 0; display:flex; align-items:center; gap:0.5rem; }
-  .progress-step.done { color:#2a7a4a; }
-  .progress-step.active { color:var(--text); font-weight:500; }
-  .step-dot { width:8px; height:8px; border-radius:50%; background:var(--border); flex-shrink:0; }
-  .progress-step.done .step-dot { background:#2a7a4a; }
-  .progress-step.active .step-dot { background:var(--gold); animation:pulse 1s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  .warning-box { background:rgba(192,57,43,0.06); border:1px solid rgba(192,57,43,0.2); padding:1rem 1.25rem; border-radius:2px; margin-bottom:1rem; font-size:0.82rem; color:var(--danger); display:none; }
-  .warning-box.show { display:block; }
-  .input-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-  @media(max-width:600px) { .input-row { grid-template-columns:1fr; } }
+  :root{--bg:#fafaf8;--bg2:#f5f3ee;--surface:#fff;--border:rgba(0,0,0,0.08);--text:#1a1814;--muted:#7a7570;--gold:#b8952a;--gold2:#d4af5a;--danger:#c0392b;--success:#2a7a4a;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* LOGIN */
+  #loginPage{display:flex;position:fixed;inset:0;z-index:999;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;}
+  #loginPage.hide{display:none;}
+  .login-logo{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;letter-spacing:0.08em;}
+  .login-logo span{color:var(--gold);}
+  .login-badge{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);}
+  .login-form{display:flex;flex-direction:column;gap:0.75rem;width:320px;}
+  .login-input{background:var(--surface);border:1px solid var(--border);padding:0.875rem 1.25rem;font-family:inherit;font-size:0.9rem;color:var(--text);outline:none;border-radius:2px;transition:border-color 0.2s;}
+  .login-input:focus{border-color:var(--gold2);}
+  .login-btn{background:var(--text);color:var(--bg);border:none;padding:0.875rem;font-family:inherit;font-size:0.8rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:background 0.2s;}
+  .login-btn:hover{background:var(--gold);}
+  .login-error{font-size:0.8rem;color:var(--danger);text-align:center;}
+
+  /* LAYOUT */
+  #app{display:none;}
+  #app.show{display:flex;min-height:100vh;}
+  .sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:fixed;top:0;bottom:0;overflow-y:auto;flex-shrink:0;}
+  .sidebar-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;letter-spacing:0.08em;padding:0 1.5rem 1.5rem;border-bottom:1px solid var(--border);display:block;}
+  .sidebar-logo span{color:var(--gold);}
+  .sidebar-nav{padding:1rem 0;}
+  .nav-section{font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);padding:0.75rem 1.5rem 0.4rem;}
+  .nav-item{display:flex;align-items:center;gap:0.6rem;padding:0.6rem 1.5rem;font-size:0.85rem;color:var(--muted);cursor:pointer;transition:all 0.15s;border-left:2px solid transparent;}
+  .nav-item:hover{color:var(--text);background:var(--bg2);}
+  .nav-item.active{color:var(--text);background:var(--gold-light, #f5edda);border-left-color:var(--gold);}
+  .nav-icon{font-size:1rem;width:20px;text-align:center;}
+  .main{margin-left:240px;flex:1;padding:2.5rem;}
+  .page{display:none;}
+  .page.active{display:block;}
+  .page-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;margin-bottom:0.5rem;}
+  .page-desc{color:var(--muted);font-size:0.85rem;margin-bottom:2rem;}
+
+  /* CARDS */
+  .card{background:var(--surface);border:1px solid var(--border);padding:1.75rem;margin-bottom:1.25rem;border-radius:2px;}
+  .card-title{font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:1.25rem;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
+  .stat-card{background:var(--bg2);border:1px solid var(--border);padding:1.25rem;border-radius:2px;}
+  .stat-num{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;display:block;line-height:1;}
+  .stat-label{font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;}
+
+  /* FORM ELEMENTS */
+  label{display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;}
+  input,textarea,select{width:100%;font-family:inherit;font-size:0.875rem;color:var(--text);background:var(--bg);border:1px solid var(--border);padding:0.75rem 1rem;outline:none;transition:border-color 0.2s;margin-bottom:1.25rem;border-radius:2px;}
+  input:focus,textarea:focus,select:focus{border-color:var(--gold2);}
+  textarea{resize:vertical;line-height:1.7;}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.6rem 1.25rem;background:var(--text);color:var(--bg);font-family:inherit;font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:pointer;border-radius:2px;transition:background 0.2s;}
+  .btn:hover{background:var(--gold);}
+  .btn-sm{padding:0.4rem 0.875rem;font-size:0.72rem;}
+  .btn-danger{background:var(--danger);}
+  .btn-danger:hover{background:#a93226;}
+  .btn-success{background:var(--success);}
+  .btn-success:hover{background:#1e5c35;}
+  .btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);}
+  .btn-outline:hover{background:var(--bg2);color:var(--text);}
+
+  /* STATUS BADGE */
+  .badge{display:inline-block;padding:0.2rem 0.6rem;font-size:0.65rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;border-radius:999px;}
+  .badge-live{background:rgba(42,122,74,0.15);color:var(--success);}
+  .badge-coming{background:rgba(184,149,42,0.15);color:var(--gold);}
+
+  /* TABLE */
+  .table{width:100%;border-collapse:collapse;}
+  .table th{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);padding:0.75rem 1rem;text-align:left;border-bottom:1px solid var(--border);font-weight:400;}
+  .table td{padding:0.875rem 1rem;border-bottom:1px solid var(--border);font-size:0.85rem;vertical-align:middle;}
+  .table tr:last-child td{border-bottom:none;}
+  .table tr:hover td{background:var(--bg2);}
+
+  /* TOGGLE */
+  .toggle-wrap{display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;}
+  .toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:999px;cursor:pointer;transition:background 0.2s;}
+  .toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform 0.2s;}
+  .toggle input:checked+.toggle-slider{background:var(--success);}
+  .toggle input:checked+.toggle-slider::before{transform:translateX(20px);}
+  .toggle-label{font-size:0.88rem;}
+
+  /* STATUS */
+  .status-msg{font-size:0.82rem;padding:0.6rem 1rem;border-radius:2px;margin-top:0.75rem;display:none;}
+  .status-msg.show{display:block;}
+  .status-msg.success{background:rgba(42,122,74,0.1);color:var(--success);}
+  .status-msg.error{background:rgba(192,57,43,0.1);color:var(--danger);}
+
+  /* GAME TAGS */
+  .game-tags{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;}
+  .game-tag{display:flex;align-items:center;gap:0.4rem;background:var(--bg2);border:1px solid var(--border);padding:0.3rem 0.75rem;border-radius:999px;font-size:0.8rem;}
+  .game-tag-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;line-height:1;padding:0;}
+  .game-tag-del:hover{color:var(--danger);}
+
+  /* ARTICLE LIST */
+  .article-row{display:flex;align-items:center;gap:1rem;padding:1rem;border-bottom:1px solid var(--border);transition:background 0.15s;}
+  .article-row:hover{background:var(--bg2);}
+  .article-row:last-child{border-bottom:none;}
+  .article-emoji{font-size:1.5rem;flex-shrink:0;}
+  .article-info{flex:1;min-width:0;}
+  .article-info-title{font-size:0.88rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .article-info-meta{font-size:0.72rem;color:var(--muted);margin-top:0.2rem;}
+  .article-actions{display:flex;gap:0.5rem;flex-shrink:0;}
+
+  @media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:1.5rem;}.stat-grid{grid-template-columns:1fr 1fr;}}
 </style>
 </head>
 <body>
-<header>
-  <div class="logo">TCGVIBE<span>.AI</span></div>
-  <span class="badge">管理画面</span>
-</header>
 
-<main>
-  <h2>プロ記事を生成する</h2>
-  <p class="desc">プロプレイヤーからの回答をここに貼り付けるだけで、AIが調査・深掘り・解説を加えた本格記事に仕上げます。</p>
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-logo">TCGVIBE<span>.AI</span></div>
+  <div class="login-badge">管理者ログイン</div>
+  <div class="login-form">
+    <input class="login-input" type="password" id="loginInput" placeholder="管理者パスワード" onkeydown="if(e.key==='Enter')login()">
+    <button class="login-btn" onclick="login()">ログイン</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
 
-  <div class="tips">
-    <h4>💡 使い方</h4>
-    <p>① プロにLINEで質問 → ② 回答をここに貼り付け → ③「記事を生成」を押す → ④ 内容確認して「公開」<br>⚠️ 回答テキストは3,000文字以内推奨</p>
+<!-- APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <span class="sidebar-logo">TCGVIBE<span>.AI</span></span>
+    <nav class="sidebar-nav">
+      <div class="nav-section">メイン</div>
+      <div class="nav-item active" onclick="showPage('dashboard', this)"><span class="nav-icon">📊</span>ダッシュボード</div>
+      <div class="nav-item" onclick="showPage('articles', this)"><span class="nav-icon">📝</span>記事管理</div>
+      <div class="nav-item" onclick="showPage('compose', this)"><span class="nav-icon">✍️</span>記事を生成する</div>
+      <div class="nav-section">サイト設定</div>
+      <div class="nav-item" onclick="showPage('siteStatus', this)"><span class="nav-icon">🌐</span>公開設定</div>
+      <div class="nav-item" onclick="showPage('games', this)"><span class="nav-icon">🃏</span>対応ゲーム</div>
+      <div class="nav-item" onclick="showPage('prices', this)"><span class="nav-icon">📈</span>価格テーブル</div>
+      <div class="nav-section">AI設定</div>
+      <div class="nav-item" onclick="showPage('aiPrompt', this)"><span class="nav-icon">🤖</span>AIプロンプト</div>
+    </nav>
   </div>
 
-  <div class="card">
-    <div class="card-title">基本情報</div>
-    <label>ゲーム</label>
-    <select id="game">
-      <option value="pokeca">ポケモンカード</option>
-      <option value="onepiece">ワンピースカード</option>
-      <option value="yugioh">遊戯王</option>
-      <option value="mtg">MTG</option>
-      <option value="duema">デュエルマスターズ</option>
-    </select>
-    <div class="input-row">
-      <div>
-        <label>執筆者名（プロの名前）</label>
-        <input type="text" id="author" placeholder="例：そでやまる選手">
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <h1 class="page-title">ダッシュボード</h1>
+      <p class="page-desc">TCGVIBE.AIの管理画面へようこそ</p>
+      <div class="stat-grid">
+        <div class="stat-card"><span class="stat-num" id="dash-articles">-</span><span class="stat-label">記事数</span></div>
+        <div class="stat-card"><span class="stat-num" id="dash-games">-</span><span class="stat-label">対応ゲーム</span></div>
+        <div class="stat-card"><span class="stat-num" id="dash-status">-</span><span class="stat-label">サイト状態</span></div>
+        <div class="stat-card"><span class="stat-num" id="dash-prices">-</span><span class="stat-label">価格データ</span></div>
       </div>
-      <div>
-        <label>X（Twitter）アカウント</label>
-        <input type="text" id="authorX" placeholder="例：@sodeyamaru0828">
+      <div class="card">
+        <div class="card-title">クイックアクション</div>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+          <button class="btn" onclick="showPage('compose', document.querySelector('[onclick*=compose]'))">✍️ 新しい記事を生成</button>
+          <button class="btn btn-outline" onclick="window.open('/', '_blank')">🌐 サイトを確認</button>
+          <button class="btn btn-outline" onclick="window.open('/?key=tcgvibe0106', '_blank')">🔑 管理者モードで確認</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="card">
-    <div class="card-title">質問リスト</div>
-    <textarea id="questions" style="min-height:140px" placeholder="① 今の環境で一番強いデッキは？
-② そのデッキの回し方は？
-③ 対策カードは？
-④ 初心者におすすめのデッキは？
-⑤ 注目・高騰カードは？
-⑥ 大会で勝つために大事なことは？
-⑦ 直近の大会レポート"></textarea>
-  </div>
+    <!-- ARTICLES -->
+    <div class="page" id="page-articles">
+      <h1 class="page-title">記事管理</h1>
+      <p class="page-desc">公開中の記事の確認・削除ができます</p>
+      <div class="card">
+        <div class="card-title">公開中の記事</div>
+        <div id="articlesList">読み込み中...</div>
+      </div>
+    </div>
 
-  <div class="card">
-    <div class="card-title">プロからの回答テキスト</div>
-    <div class="warning-box" id="warningBox">⚠️ 3,000文字を超えています！分割して生成することをおすすめします。</div>
-    <textarea id="rawText" style="min-height:300px" placeholder="LINEの返信をそのままコピペでOKです。" oninput="checkLength(this)"></textarea>
-    <div class="char-count" id="charCount">0 / 3,000文字</div>
-    <button class="btn" id="generateBtn" onclick="generateArticle()">記事を生成する</button>
-    <div class="status" id="generateStatus"></div>
-    <div class="progress" id="progress">
-      <div class="progress-step" id="step1"><div class="step-dot"></div>記事を構成中...</div>
-      <div class="progress-step" id="step2"><div class="step-dot"></div>Q&A三層構造で整形中...</div>
-      <div class="progress-step" id="step3"><div class="step-dot"></div>AIの解説・総評を追加中...</div>
-      <div class="progress-step" id="step4"><div class="step-dot"></div>データベースに保存中...</div>
+    <!-- COMPOSE -->
+    <div class="page" id="page-compose">
+      <h1 class="page-title">記事を生成する</h1>
+      <p class="page-desc">プロプレイヤーの回答からAIが記事を作成します</p>
+      <div class="card">
+        <div class="card-title">基本情報</div>
+        <label>ゲーム</label>
+        <select id="c-game">
+          <option value="pokeca">ポケモンカード</option>
+          <option value="onepiece">ワンピースカード</option>
+          <option value="yugioh">遊戯王</option>
+          <option value="mtg">MTG</option>
+          <option value="duema">デュエルマスターズ</option>
+        </select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div>
+            <label>執筆者名</label>
+            <input type="text" id="c-author" placeholder="例：そでやまる選手">
+          </div>
+          <div>
+            <label>X（Twitter）アカウント</label>
+            <input type="text" id="c-authorX" placeholder="例：@sodeyamaru0828">
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">質問リスト</div>
+        <textarea id="c-questions" style="min-height:120px" placeholder="① 今の環境で一番強いデッキは？&#10;② そのデッキの回し方は？&#10;③ 対策カードは？"></textarea>
+      </div>
+      <div class="card">
+        <div class="card-title">プロからの回答テキスト <span style="color:var(--muted);font-weight:300;font-size:0.75rem;text-transform:none;letter-spacing:0">（3,000文字以内推奨）</span></div>
+        <textarea id="c-rawText" style="min-height:280px" placeholder="LINEの返信をそのままコピペでOK" oninput="checkLen(this)"></textarea>
+        <div id="c-charCount" style="font-size:0.75rem;color:var(--muted);text-align:right;margin-top:-1rem;margin-bottom:1rem">0 / 3,000文字</div>
+        <button class="btn" id="c-btn" onclick="generateArticle()">✍️ 記事を生成する</button>
+        <div class="status-msg" id="c-status"></div>
+      </div>
+      <div id="c-result" style="display:none">
+        <div class="card">
+          <div class="card-title">生成結果</div>
+          <div style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem" id="r-tag"></div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;margin-bottom:0.75rem" id="r-title"></div>
+          <div style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border)" id="r-summary"></div>
+          <div style="font-size:0.88rem;line-height:1.9;white-space:pre-wrap;max-height:400px;overflow-y:auto" id="r-content"></div>
+          <div style="margin-top:1.5rem;display:flex;gap:0.75rem">
+            <button class="btn btn-success" onclick="publishArticle()">✓ 公開する</button>
+            <button class="btn btn-outline" onclick="document.getElementById('c-result').style.display='none'">✗ 破棄する</button>
+          </div>
+          <div class="status-msg" id="r-status"></div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="result" id="result">
-    <div class="result-tag" id="resultTag"></div>
-    <div class="result-title" id="resultTitle"></div>
-    <div class="result-summary" id="resultSummary"></div>
-    <div class="highlights" id="resultHighlights"></div>
-    <div class="divider"></div>
-    <div class="result-content" id="resultContent"></div>
-    <div class="result-review" id="resultReviewBox" style="display:none">
-      <div class="result-review-label">TCGVIBE AI 総評</div>
-      <div class="result-review-text" id="resultReview"></div>
+    <!-- SITE STATUS -->
+    <div class="page" id="page-siteStatus">
+      <h1 class="page-title">公開設定</h1>
+      <p class="page-desc">サイトの公開状態とカウントダウンを設定します</p>
+      <div class="card">
+        <div class="card-title">サイト状態</div>
+        <div class="toggle-wrap">
+          <label class="toggle"><input type="checkbox" id="statusToggle" onchange="updateStatus()"><span class="toggle-slider"></span></label>
+          <span class="toggle-label" id="statusLabel">読み込み中...</span>
+        </div>
+        <p style="font-size:0.82rem;color:var(--muted)">ONにすると一般ユーザーにも全機能が公開されます。OFFは準備中ページを表示。</p>
+        <div class="status-msg" id="status-msg"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">カウントダウン日付</div>
+        <label>公開予定日</label>
+        <input type="date" id="launchDate">
+        <button class="btn" onclick="saveLaunchDate()">保存する</button>
+        <div class="status-msg" id="date-msg"></div>
+      </div>
     </div>
-    <div class="author-box" id="resultAuthorBox" style="display:none">
-      <span class="author-name" id="resultAuthorName"></span>
-      <a class="author-x" id="resultAuthorX" href="#" target="_blank" rel="noopener"></a>
+
+    <!-- GAMES -->
+    <div class="page" id="page-games">
+      <h1 class="page-title">対応ゲーム</h1>
+      <p class="page-desc">サイトに表示する対応ゲームを管理します</p>
+      <div class="card">
+        <div class="card-title">現在の対応ゲーム</div>
+        <div class="game-tags" id="gameTags"></div>
+        <div style="display:flex;gap:0.75rem">
+          <input type="text" id="newGame" placeholder="新しいゲーム名を入力..." style="margin:0;flex:1">
+          <button class="btn" onclick="addGame()" style="margin:0">追加</button>
+        </div>
+        <div class="status-msg" id="games-msg"></div>
+      </div>
     </div>
-    <div class="divider"></div>
-    <button class="btn btn-gold" id="publishBtn" onclick="publishArticle()">✓ この記事を公開する</button>
-    <div class="status" id="publishStatus"></div>
+
+    <!-- PRICES -->
+    <div class="page" id="page-prices">
+      <h1 class="page-title">価格テーブル</h1>
+      <p class="page-desc">サイトに表示するカード価格データを編集します</p>
+      <div class="card">
+        <div class="card-title">価格データ（JSON形式）</div>
+        <textarea id="priceData" style="min-height:300px;font-family:monospace;font-size:0.82rem"></textarea>
+        <button class="btn" onclick="savePrices()">保存する</button>
+        <div class="status-msg" id="prices-msg"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">形式の例</div>
+        <pre style="font-size:0.75rem;color:var(--muted);line-height:1.6;overflow-x:auto">[
+  {
+    "emoji": "🦎",
+    "name": "リザードンex SAR",
+    "set": "スカーレット ex",
+    "rarity": "Secret",
+    "price": "¥38,000",
+    "change": "+12.4%",
+    "changeType": "up",
+    "prediction": "上昇継続"
+  }
+]</pre>
+      </div>
+    </div>
+
+    <!-- AI PROMPT -->
+    <div class="page" id="page-aiPrompt">
+      <h1 class="page-title">AIプロンプト編集</h1>
+      <p class="page-desc">AIアドバイザーの性格・回答スタイルを設定します</p>
+      <div class="card">
+        <div class="card-title">システムプロンプト</div>
+        <textarea id="aiPromptText" style="min-height:300px;line-height:1.7"></textarea>
+        <button class="btn" onclick="savePrompt()">保存する</button>
+        <div class="status-msg" id="prompt-msg"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">ヒント</div>
+        <p style="font-size:0.82rem;color:var(--muted);line-height:1.7">
+          ・口調（友達っぽく・丁寧に など）<br>
+          ・専門知識のレベル（初心者向け・上級者向け）<br>
+          ・対応ゲームの追加<br>
+          ・禁止事項（価格断言しないなど）
+        </p>
+      </div>
+    </div>
+
   </div>
-</main>
+</div>
 
 <script>
-let generatedArticle = null;
+const ADMIN_KEY = 'tcgvibe0106';
+let settings = {};
+let articles = [];
+let pendingArticle = null;
 
-function checkLength(el) {
-  const len = el.value.length;
-  const counter = document.getElementById('charCount');
-  const warning = document.getElementById('warningBox');
-  counter.textContent = len.toLocaleString() + ' / 3,000文字';
-  if (len > 3000) {
-    el.classList.add('over');
-    counter.className = 'char-count over';
-    warning.classList.add('show');
+// ── LOGIN ──
+function login() {
+  const val = document.getElementById('loginInput').value;
+  if (val === ADMIN_KEY) {
+    document.getElementById('loginPage').classList.add('hide');
+    document.getElementById('app').classList.add('show');
+    loadAll();
   } else {
-    el.classList.remove('over');
-    counter.className = 'char-count';
-    warning.classList.remove('show');
+    document.getElementById('loginError').textContent = 'パスワードが違います';
+  }
+}
+document.getElementById('loginInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') login();
+});
+
+// ── NAVIGATION ──
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'articles') renderArticles();
+}
+
+// ── LOAD ALL ──
+async function loadAll() {
+  await loadSettings();
+  await loadArticles();
+}
+
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    const data = await res.json();
+    settings = data.settings || {};
+    applySettings();
+  } catch(e) { console.error(e); }
+}
+
+function applySettings() {
+  // Dashboard stats
+  document.getElementById('dash-articles').textContent = articles.length;
+  const games = parseJSON(settings.games, []);
+  document.getElementById('dash-games').textContent = games.length;
+  const isLive = settings.site_status === 'live';
+  document.getElementById('dash-status').textContent = isLive ? '公開中' : '準備中';
+  const prices = parseJSON(settings.price_table, []);
+  document.getElementById('dash-prices').textContent = prices.length;
+
+  // Site status
+  const toggle = document.getElementById('statusToggle');
+  toggle.checked = isLive;
+  document.getElementById('statusLabel').textContent = isLive ? '公開中（全機能が誰でも使えます）' : '準備中（Coming Soonページを表示）';
+
+  // Launch date
+  if (settings.launch_date) {
+    document.getElementById('launchDate').value = settings.launch_date;
+  }
+
+  // Games
+  renderGameTags(games);
+
+  // Prices
+  document.getElementById('priceData').value = JSON.stringify(parseJSON(settings.price_table, []), null, 2);
+
+  // AI prompt
+  if (settings.ai_prompt) {
+    document.getElementById('aiPromptText').value = settings.ai_prompt;
   }
 }
 
-function setStep(n) {
-  for (let i = 1; i <= 4; i++) {
-    const el = document.getElementById('step' + i);
-    el.className = 'progress-step' + (i < n ? ' done' : i === n ? ' active' : '');
+function parseJSON(str, fallback) {
+  try { return JSON.parse(str); } catch(e) { return fallback; }
+}
+
+// ── ARTICLES ──
+async function loadArticles() {
+  try {
+    const res = await fetch('/api/articles');
+    const data = await res.json();
+    articles = data.articles || [];
+    document.getElementById('dash-articles').textContent = articles.length;
+  } catch(e) { console.error(e); }
+}
+
+function renderArticles() {
+  const el = document.getElementById('articlesList');
+  if (!articles.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;padding:1rem 0">記事がありません</p>';
+    return;
   }
+  el.innerHTML = articles.map((a, i) => `
+    <div class="article-row">
+      <div class="article-emoji">${a.emoji || '🃏'}</div>
+      <div class="article-info">
+        <div class="article-info-title">${a.title || ''}</div>
+        <div class="article-info-meta">${a.tag || ''} · ${a.date || ''}</div>
+      </div>
+      <div class="article-actions">
+        <button class="btn btn-sm btn-outline" onclick="window.open('/', '_blank')">確認</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteArticle(${a.id})">削除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function deleteArticle(id) {
+  if (!confirm('この記事を削除しますか？')) return;
+  try {
+    const res = await fetch(`/api/articles?id=${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminKey: ADMIN_KEY }),
+    });
+    await loadArticles();
+    renderArticles();
+  } catch(e) { alert('削除に失敗しました'); }
+}
+
+// ── COMPOSE ──
+function checkLen(el) {
+  const len = el.value.length;
+  const el2 = document.getElementById('c-charCount');
+  el2.textContent = len.toLocaleString() + ' / 3,000文字';
+  el2.style.color = len > 3000 ? 'var(--danger)' : 'var(--muted)';
 }
 
 async function generateArticle() {
-  const rawText = document.getElementById('rawText').value.trim();
-  const game = document.getElementById('game').value;
-  const author = document.getElementById('author').value.trim();
-  const authorX = document.getElementById('authorX').value.trim();
-  const questions = document.getElementById('questions').value.trim();
+  const rawText = document.getElementById('c-rawText').value.trim();
+  const game = document.getElementById('c-game').value;
+  const author = document.getElementById('c-author').value.trim();
+  const authorX = document.getElementById('c-authorX').value.trim();
+  const questions = document.getElementById('c-questions').value.trim();
+  if (!rawText) { showMsg('c-status', 'error', '回答テキストを入力してください'); return; }
 
-  if (!rawText) {
-    document.getElementById('generateStatus').textContent = '回答テキストを入力してください';
-    document.getElementById('generateStatus').className = 'status error';
-    return;
-  }
-
-  const btn = document.getElementById('generateBtn');
+  const btn = document.getElementById('c-btn');
   btn.disabled = true;
   btn.textContent = '生成中...';
-  document.getElementById('generateStatus').textContent = '';
-  document.getElementById('result').classList.remove('show');
-  document.getElementById('progress').classList.add('show');
-  setStep(1);
-
-  setTimeout(() => setStep(2), 8000);
-  setTimeout(() => setStep(3), 18000);
-  setTimeout(() => setStep(4), 28000);
+  showMsg('c-status', '', '');
+  document.getElementById('c-result').style.display = 'none';
 
   try {
     const res = await fetch('/api/admin', {
@@ -209,67 +472,121 @@ async function generateArticle() {
       body: JSON.stringify({ rawText, game, author, authorX, questions }),
     });
     const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error || 'エラー');
+    if (!res.ok || data.error) throw new Error(data.error);
 
-    generatedArticle = data.article;
-    setStep(5);
-
-    document.getElementById('resultTag').textContent = (data.article.emoji || '🃏') + ' ' + (data.article.tag || '');
-    document.getElementById('resultTitle').textContent = data.article.title || '';
-    document.getElementById('resultSummary').textContent = data.article.summary || '';
-    document.getElementById('resultContent').textContent = data.article.content || '';
-
-    const hl = document.getElementById('resultHighlights');
-    hl.innerHTML = '';
-    (data.article.highlights || []).forEach(h => {
-      const pill = document.createElement('span');
-      pill.className = 'highlight-pill';
-      pill.textContent = h;
-      hl.appendChild(pill);
-    });
-
-    // 総評
-    if (data.article.review) {
-      document.getElementById('resultReview').textContent = data.article.review;
-      document.getElementById('resultReviewBox').style.display = 'block';
-    }
-
-    // 著者
-    if (author || authorX) {
-      document.getElementById('resultAuthorName').textContent = author || '';
-      const xLink = document.getElementById('resultAuthorX');
-      if (authorX) {
-        const handle = authorX.startsWith('@') ? authorX : '@' + authorX;
-        xLink.textContent = handle + ' でフォロー →';
-        xLink.href = 'https://x.com/' + handle.replace('@', '');
-        xLink.style.display = 'inline';
-      }
-      document.getElementById('resultAuthorBox').style.display = 'flex';
-    }
-
-    document.getElementById('result').classList.add('show');
-    document.getElementById('generateStatus').textContent = '✓ 記事が生成されました！内容を確認して公開してください。';
-    document.getElementById('generateStatus').className = 'status success';
-
-  } catch (err) {
-    document.getElementById('generateStatus').textContent = 'エラー: ' + err.message;
-    document.getElementById('generateStatus').className = 'status error';
-    document.getElementById('progress').classList.remove('show');
+    pendingArticle = data.article;
+    document.getElementById('r-tag').textContent = (data.article.emoji || '🃏') + ' ' + (data.article.tag || '');
+    document.getElementById('r-title').textContent = data.article.title || '';
+    document.getElementById('r-summary').textContent = data.article.summary || '';
+    document.getElementById('r-content').textContent = data.article.content || '';
+    document.getElementById('c-result').style.display = 'block';
+    showMsg('c-status', 'success', '記事が生成されました！内容を確認して公開してください。');
+  } catch(err) {
+    showMsg('c-status', 'error', 'エラー: ' + err.message);
   }
-
   btn.disabled = false;
-  btn.textContent = '記事を生成する';
+  btn.textContent = '✍️ 記事を生成する';
 }
 
 async function publishArticle() {
-  const btn = document.getElementById('publishBtn');
-  btn.disabled = true;
-  btn.textContent = '公開中...';
-  setTimeout(() => {
-    document.getElementById('publishStatus').textContent = '✓ 記事が公開されました！';
-    document.getElementById('publishStatus').className = 'status success';
-    btn.textContent = '✓ 公開済み';
-  }, 800);
+  showMsg('r-status', 'success', '✓ 記事が公開されました！');
+  await loadArticles();
+}
+
+// ── SITE STATUS ──
+async function updateStatus() {
+  const isLive = document.getElementById('statusToggle').checked;
+  const value = isLive ? 'live' : 'coming_soon';
+  document.getElementById('statusLabel').textContent = isLive ? '公開中（全機能が誰でも使えます）' : '準備中（Coming Soonページを表示）';
+  const ok = await saveSetting('site_status', value);
+  showMsg('status-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラーが発生しました');
+}
+
+async function saveLaunchDate() {
+  const value = document.getElementById('launchDate').value;
+  if (!value) return;
+  const ok = await saveSetting('launch_date', value);
+  showMsg('date-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラーが発生しました');
+}
+
+// ── GAMES ──
+function renderGameTags(games) {
+  const el = document.getElementById('gameTags');
+  el.innerHTML = games.map((g, i) => `
+    <div class="game-tag">
+      <span>${g}</span>
+      <button class="game-tag-del" onclick="removeGame(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+async function addGame() {
+  const input = document.getElementById('newGame');
+  const name = input.value.trim();
+  if (!name) return;
+  const games = parseJSON(settings.games, []);
+  if (games.includes(name)) return;
+  games.push(name);
+  const ok = await saveSetting('games', JSON.stringify(games));
+  if (ok) {
+    settings.games = JSON.stringify(games);
+    renderGameTags(games);
+    input.value = '';
+    showMsg('games-msg', 'success', '✓ 追加しました');
+  }
+}
+
+async function removeGame(idx) {
+  const games = parseJSON(settings.games, []);
+  games.splice(idx, 1);
+  const ok = await saveSetting('games', JSON.stringify(games));
+  if (ok) {
+    settings.games = JSON.stringify(games);
+    renderGameTags(games);
+    showMsg('games-msg', 'success', '✓ 削除しました');
+  }
+}
+
+// ── PRICES ──
+async function savePrices() {
+  const text = document.getElementById('priceData').value;
+  try {
+    JSON.parse(text);
+  } catch(e) {
+    showMsg('prices-msg', 'error', 'JSON形式が正しくありません');
+    return;
+  }
+  const ok = await saveSetting('price_table', text);
+  showMsg('prices-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラーが発生しました');
+}
+
+// ── AI PROMPT ──
+async function savePrompt() {
+  const value = document.getElementById('aiPromptText').value.trim();
+  if (!value) return;
+  const ok = await saveSetting('ai_prompt', value);
+  showMsg('prompt-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラーが発生しました');
+}
+
+// ── HELPERS ──
+async function saveSetting(key, value) {
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminKey: ADMIN_KEY, key, value }),
+    });
+    const data = await res.json();
+    return data.success;
+  } catch(e) { return false; }
+}
+
+function showMsg(id, type, text) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'status-msg' + (type ? ' show ' + type : '');
+  if (text) setTimeout(() => el.classList.remove('show'), 3000);
 }
 </script>
 </body>
