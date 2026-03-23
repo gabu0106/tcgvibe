@@ -13,32 +13,43 @@
   .logo { font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:600; }
   .logo span { color:var(--gold); }
   .badge { font-size:0.7rem; background:var(--gold); color:#fff; padding:0.2rem 0.6rem; border-radius:2px; letter-spacing:0.1em; }
-  main { max-width:800px; margin:3rem auto; padding:0 2rem; }
+  main { max-width:860px; margin:3rem auto; padding:0 2rem; }
   h2 { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:300; margin-bottom:0.5rem; }
   .desc { color:var(--muted); font-size:0.88rem; margin-bottom:2rem; line-height:1.7; }
   .card { background:var(--surface); border:1px solid var(--border); padding:2rem; margin-bottom:1.5rem; }
+  .card-title { font-size:0.78rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--gold); margin-bottom:1.25rem; }
   label { display:block; font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:0.5rem; }
   select, textarea, input { width:100%; font-family:inherit; font-size:0.88rem; color:var(--text); background:var(--bg); border:1px solid var(--border); padding:0.75rem 1rem; outline:none; transition:border-color 0.2s; margin-bottom:1.25rem; border-radius:2px; }
   select:focus, textarea:focus, input:focus { border-color:var(--gold2); }
-  textarea { min-height:200px; resize:vertical; line-height:1.7; }
+  textarea { resize:vertical; line-height:1.7; }
   .btn { display:inline-flex; align-items:center; gap:0.5rem; padding:0.875rem 2rem; background:var(--text); color:var(--bg); font-family:inherit; font-size:0.8rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; border:none; cursor:pointer; border-radius:2px; transition:background 0.2s; }
   .btn:hover { background:var(--gold); }
   .btn:disabled { opacity:0.4; cursor:not-allowed; }
-  .result { margin-top:1.5rem; padding:1.5rem; background:var(--bg2); border:1px solid var(--border); border-radius:2px; display:none; }
+  .btn-gold { background:var(--gold); }
+  .btn-gold:hover { background:#8a6e1a; }
+  .result { margin-top:1.5rem; padding:1.75rem; background:var(--bg2); border:1px solid var(--border); border-radius:2px; display:none; }
   .result.show { display:block; }
-  .result-title { font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:400; margin-bottom:0.5rem; }
-  .result-tag { font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); margin-bottom:0.75rem; }
-  .result-summary { font-size:0.85rem; color:var(--muted); margin-bottom:1rem; line-height:1.7; }
-  .result-content { font-size:0.88rem; line-height:1.8; white-space:pre-wrap; }
-  .publish-btn { margin-top:1rem; background:var(--gold); }
-  .publish-btn:hover { background:#8a6e1a; }
+  .result-tag { font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); margin-bottom:0.5rem; }
+  .result-title { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:400; margin-bottom:0.5rem; line-height:1.3; }
+  .result-summary { font-size:0.85rem; color:var(--muted); margin-bottom:1.25rem; line-height:1.7; padding-bottom:1.25rem; border-bottom:1px solid var(--border); }
+  .highlights { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.25rem; }
+  .highlight-pill { background:rgba(184,149,42,0.1); border:1px solid rgba(184,149,42,0.25); color:var(--gold); font-size:0.75rem; padding:0.3rem 0.75rem; border-radius:999px; }
+  .result-content { font-size:0.9rem; line-height:1.9; white-space:pre-wrap; color:var(--text); }
   .status { font-size:0.82rem; color:var(--muted); margin-top:0.75rem; }
   .status.success { color:#2a7a4a; }
   .status.error { color:#8a2a2a; }
-  .divider { height:1px; background:var(--border); margin:2rem 0; }
-  .tips { background:rgba(184,149,42,0.08); border:1px solid rgba(184,149,42,0.2); padding:1.25rem; border-radius:2px; margin-bottom:2rem; }
-  .tips h4 { font-size:0.78rem; font-weight:500; color:var(--gold); letter-spacing:0.05em; margin-bottom:0.5rem; }
+  .divider { height:1px; background:var(--border); margin:1.5rem 0; }
+  .tips { background:rgba(184,149,42,0.06); border:1px solid rgba(184,149,42,0.18); padding:1.25rem; border-radius:2px; margin-bottom:2rem; }
+  .tips h4 { font-size:0.78rem; font-weight:500; color:var(--gold); margin-bottom:0.5rem; }
   .tips p { font-size:0.82rem; color:var(--muted); line-height:1.7; }
+  .progress { background:var(--bg2); border:1px solid var(--border); padding:1.25rem; border-radius:2px; margin-top:1rem; display:none; }
+  .progress.show { display:block; }
+  .progress-step { font-size:0.82rem; color:var(--muted); padding:0.4rem 0; display:flex; align-items:center; gap:0.5rem; }
+  .progress-step.done { color:#2a7a4a; }
+  .progress-step.active { color:var(--text); font-weight:500; }
+  .step-dot { width:8px; height:8px; border-radius:50%; background:var(--border); flex-shrink:0; }
+  .progress-step.done .step-dot { background:#2a7a4a; }
+  .progress-step.active .step-dot { background:var(--gold); }
 </style>
 </head>
 <body>
@@ -46,14 +57,18 @@
   <div class="logo">TCGVIBE<span>.AI</span></div>
   <span class="badge">管理画面</span>
 </header>
+
 <main>
   <h2>プロ記事を生成する</h2>
-  <p class="desc">知り合いのプロプレイヤーからLINEなどで回答をもらい、ここに貼り付けるだけでAIが記事に整形します。</p>
+  <p class="desc">プロプレイヤーからの回答をここに貼り付けるだけで、AIが調査・深掘り・解説を加えた本格記事に仕上げます。</p>
+
   <div class="tips">
     <h4>💡 使い方</h4>
-    <p>① プロに質問をLINEで送る → ② 回答をコピーして下に貼り付ける → ③「記事を生成」を押す → ④ 内容を確認して「公開する」を押す</p>
+    <p>① プロにLINEで質問 → ② 回答をここに貼り付け → ③「記事を生成」を押す → ④ 内容確認して「公開」</p>
   </div>
+
   <div class="card">
+    <div class="card-title">基本情報</div>
     <label>ゲーム</label>
     <select id="game">
       <option value="pokeca">ポケモンカード</option>
@@ -62,61 +77,126 @@
       <option value="mtg">MTG</option>
       <option value="duema">デュエルマスターズ</option>
     </select>
-    <label>執筆者名（プロの名前やSNS名）</label>
-    <input type="text" id="author" placeholder="例：たろうプロ、@tcg_taro">
-    <label>プロからの回答テキスト（LINEの返信をそのままコピペでOK）</label>
-    <textarea id="rawText" placeholder="例：今の環境はリザードンexが一番強いと思います。理由は特性れんごくしはいで..."></textarea>
+    <label>執筆者名（プロの名前・SNS名）</label>
+    <input type="text" id="author" placeholder="例：そでやまる選手 @sodeyamaru0828">
+  </div>
+
+  <div class="card">
+    <div class="card-title">質問リスト（送った質問を入力）</div>
+    <textarea id="questions" style="min-height:140px" placeholder="① 今の環境で一番強いデッキは？
+② そのデッキの回し方は？
+③ 対策カードは？
+④ 初心者におすすめのデッキは？
+⑤ 注目・高騰カードは？
+⑥ 大会で勝つために大事なことは？
+⑦ 直近の大会レポート"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="card-title">プロからの回答テキスト</div>
+    <textarea id="rawText" style="min-height:300px" placeholder="LINEの返信をそのままコピペでOKです。話し言葉でも大丈夫！"></textarea>
     <button class="btn" id="generateBtn" onclick="generateArticle()">記事を生成する</button>
     <div class="status" id="generateStatus"></div>
+
+    <div class="progress" id="progress">
+      <div class="progress-step" id="step1"><div class="step-dot"></div>公式情報・カードルールを調査中...</div>
+      <div class="progress-step" id="step2"><div class="step-dot"></div>Q&A形式で記事を構成中...</div>
+      <div class="progress-step" id="step3"><div class="step-dot"></div>AIの解説を追加中...</div>
+      <div class="progress-step" id="step4"><div class="step-dot"></div>仕上げ・保存中...</div>
+    </div>
   </div>
+
   <div class="result" id="result">
     <div class="result-tag" id="resultTag"></div>
     <div class="result-title" id="resultTitle"></div>
     <div class="result-summary" id="resultSummary"></div>
+    <div class="highlights" id="resultHighlights"></div>
     <div class="divider"></div>
     <div class="result-content" id="resultContent"></div>
-    <button class="btn publish-btn" id="publishBtn" onclick="publishArticle()">✓ この記事を公開する</button>
+    <div class="divider"></div>
+    <button class="btn btn-gold" id="publishBtn" onclick="publishArticle()">✓ この記事を公開する</button>
     <div class="status" id="publishStatus"></div>
   </div>
 </main>
+
 <script>
 let generatedArticle = null;
+let progressTimer = null;
+
+function setStep(stepNum) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('step' + i);
+    el.className = 'progress-step' + (i < stepNum ? ' done' : i === stepNum ? ' active' : '');
+  }
+}
 
 async function generateArticle() {
   const rawText = document.getElementById('rawText').value.trim();
   const game = document.getElementById('game').value;
   const author = document.getElementById('author').value.trim();
+  const questions = document.getElementById('questions').value.trim();
+
   if (!rawText) {
     document.getElementById('generateStatus').textContent = '回答テキストを入力してください';
     document.getElementById('generateStatus').className = 'status error';
     return;
   }
+
   const btn = document.getElementById('generateBtn');
   btn.disabled = true;
   btn.textContent = '生成中...';
-  document.getElementById('generateStatus').textContent = 'AIが記事を生成しています...';
-  document.getElementById('generateStatus').className = 'status';
+  document.getElementById('generateStatus').textContent = '';
   document.getElementById('result').classList.remove('show');
+  document.getElementById('progress').classList.add('show');
+  setStep(1);
+
+  // プログレス演出
+  progressTimer = setTimeout(() => setStep(2), 8000);
+  setTimeout(() => setStep(3), 16000);
+  setTimeout(() => setStep(4), 24000);
+
   try {
     const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rawText, game, author }),
+      body: JSON.stringify({ rawText, game, author, questions }),
     });
     const data = await res.json();
+    clearTimeout(progressTimer);
+
     if (!res.ok || data.error) throw new Error(data.error || 'エラーが発生しました');
+
     generatedArticle = data.article;
+    setStep(5);
+
     document.getElementById('resultTag').textContent = `${data.article.emoji} ${data.article.tag}`;
     document.getElementById('resultTitle').textContent = data.article.title;
     document.getElementById('resultSummary').textContent = data.article.summary;
     document.getElementById('resultContent').textContent = data.article.content;
+
+    // ハイライト
+    const hl = document.getElementById('resultHighlights');
+    hl.innerHTML = '';
+    if (data.article.highlights) {
+      data.article.highlights.forEach(h => {
+        const pill = document.createElement('span');
+        pill.className = 'highlight-pill';
+        pill.textContent = h;
+        hl.appendChild(pill);
+      });
+    }
+
     document.getElementById('result').classList.add('show');
     document.getElementById('generateStatus').textContent = '記事が生成されました！内容を確認して公開してください。';
     document.getElementById('generateStatus').className = 'status success';
+
   } catch (err) {
+    clearTimeout(progressTimer);
     document.getElementById('generateStatus').textContent = 'エラー: ' + err.message;
     document.getElementById('generateStatus').className = 'status error';
+    document.getElementById('progress').classList.remove('show');
   }
+
   btn.disabled = false;
   btn.textContent = '記事を生成する';
 }
@@ -125,10 +205,12 @@ async function publishArticle() {
   const btn = document.getElementById('publishBtn');
   btn.disabled = true;
   btn.textContent = '公開中...';
-  document.getElementById('publishStatus').textContent = '公開しています...';
-  document.getElementById('publishStatus').textContent = '✓ 記事が公開されました！サイトのニュースセクションに表示されます。';
-  document.getElementById('publishStatus').className = 'status success';
-  btn.textContent = '✓ 公開済み';
+  document.getElementById('publishStatus').textContent = '';
+  setTimeout(() => {
+    document.getElementById('publishStatus').textContent = '✓ 記事が公開されました！サイトのニュースセクションに表示されます。';
+    document.getElementById('publishStatus').className = 'status success';
+    btn.textContent = '✓ 公開済み';
+  }, 800);
 }
 </script>
 </body>
