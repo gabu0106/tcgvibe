@@ -6,7 +6,7 @@
 <title>TCGVIBE.AI 管理画面</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#fafaf8; --bg2:#f5f3ee; --surface:#fff; --border:rgba(0,0,0,0.08); --text:#1a1814; --muted:#7a7570; --gold:#b8952a; --gold2:#d4af5a; }
+  :root { --bg:#fafaf8; --bg2:#f5f3ee; --surface:#fff; --border:rgba(0,0,0,0.08); --text:#1a1814; --muted:#7a7570; --gold:#b8952a; --gold2:#d4af5a; --danger:#c0392b; }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
   header { background:var(--surface); border-bottom:1px solid var(--border); padding:1.25rem 2rem; display:flex; align-items:center; justify-content:space-between; }
@@ -22,6 +22,9 @@
   select, textarea, input { width:100%; font-family:inherit; font-size:0.88rem; color:var(--text); background:var(--bg); border:1px solid var(--border); padding:0.75rem 1rem; outline:none; transition:border-color 0.2s; margin-bottom:1.25rem; border-radius:2px; }
   select:focus, textarea:focus, input:focus { border-color:var(--gold2); }
   textarea { resize:vertical; line-height:1.7; }
+  textarea.over { border-color:var(--danger) !important; }
+  .char-count { font-size:0.75rem; color:var(--muted); text-align:right; margin-top:-1rem; margin-bottom:1rem; }
+  .char-count.over { color:var(--danger); font-weight:500; }
   .btn { display:inline-flex; align-items:center; gap:0.5rem; padding:0.875rem 2rem; background:var(--text); color:var(--bg); font-family:inherit; font-size:0.8rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; border:none; cursor:pointer; border-radius:2px; transition:background 0.2s; }
   .btn:hover { background:var(--gold); }
   .btn:disabled { opacity:0.4; cursor:not-allowed; }
@@ -34,10 +37,10 @@
   .result-summary { font-size:0.85rem; color:var(--muted); margin-bottom:1.25rem; line-height:1.7; padding-bottom:1.25rem; border-bottom:1px solid var(--border); }
   .highlights { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.25rem; }
   .highlight-pill { background:rgba(184,149,42,0.1); border:1px solid rgba(184,149,42,0.25); color:var(--gold); font-size:0.75rem; padding:0.3rem 0.75rem; border-radius:999px; }
-  .result-content { font-size:0.9rem; line-height:1.9; white-space:pre-wrap; color:var(--text); }
+  .result-content { font-size:0.9rem; line-height:1.9; white-space:pre-wrap; }
   .status { font-size:0.82rem; color:var(--muted); margin-top:0.75rem; }
   .status.success { color:#2a7a4a; }
-  .status.error { color:#8a2a2a; }
+  .status.error { color:var(--danger); font-weight:500; }
   .divider { height:1px; background:var(--border); margin:1.5rem 0; }
   .tips { background:rgba(184,149,42,0.06); border:1px solid rgba(184,149,42,0.18); padding:1.25rem; border-radius:2px; margin-bottom:2rem; }
   .tips h4 { font-size:0.78rem; font-weight:500; color:var(--gold); margin-bottom:0.5rem; }
@@ -49,7 +52,10 @@
   .progress-step.active { color:var(--text); font-weight:500; }
   .step-dot { width:8px; height:8px; border-radius:50%; background:var(--border); flex-shrink:0; }
   .progress-step.done .step-dot { background:#2a7a4a; }
-  .progress-step.active .step-dot { background:var(--gold); }
+  .progress-step.active .step-dot { background:var(--gold); animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .warning-box { background:rgba(192,57,43,0.06); border:1px solid rgba(192,57,43,0.2); padding:1rem 1.25rem; border-radius:2px; margin-bottom:1rem; font-size:0.82rem; color:var(--danger); display:none; }
+  .warning-box.show { display:block; }
 </style>
 </head>
 <body>
@@ -64,7 +70,7 @@
 
   <div class="tips">
     <h4>💡 使い方</h4>
-    <p>① プロにLINEで質問 → ② 回答をここに貼り付け → ③「記事を生成」を押す → ④ 内容確認して「公開」</p>
+    <p>① プロにLINEで質問 → ② 回答をここに貼り付け → ③「記事を生成」を押す → ④ 内容確認して「公開」<br>⚠️ 回答テキストは3,000文字以内にしてください</p>
   </div>
 
   <div class="card">
@@ -94,15 +100,20 @@
 
   <div class="card">
     <div class="card-title">プロからの回答テキスト</div>
-    <textarea id="rawText" style="min-height:300px" placeholder="LINEの返信をそのままコピペでOKです。話し言葉でも大丈夫！"></textarea>
+    <div class="warning-box" id="warningBox">
+      ⚠️ 3,000文字を超えています！このまま送信するとエラーになる可能性があります。<br>
+      回答を分割して2回に分けて生成することをおすすめします。
+    </div>
+    <textarea id="rawText" style="min-height:300px" placeholder="LINEの返信をそのままコピペでOKです。話し言葉でも大丈夫！3,000文字以内推奨" oninput="checkLength(this)"></textarea>
+    <div class="char-count" id="charCount">0 / 3,000文字</div>
     <button class="btn" id="generateBtn" onclick="generateArticle()">記事を生成する</button>
     <div class="status" id="generateStatus"></div>
 
     <div class="progress" id="progress">
-      <div class="progress-step" id="step1"><div class="step-dot"></div>公式情報・カードルールを調査中...</div>
+      <div class="progress-step" id="step1"><div class="step-dot"></div>カード・ルール・大会情報を調査中...</div>
       <div class="progress-step" id="step2"><div class="step-dot"></div>Q&A形式で記事を構成中...</div>
       <div class="progress-step" id="step3"><div class="step-dot"></div>AIの解説を追加中...</div>
-      <div class="progress-step" id="step4"><div class="step-dot"></div>仕上げ・保存中...</div>
+      <div class="progress-step" id="step4"><div class="step-dot"></div>仕上げ・データベースに保存中...</div>
     </div>
   </div>
 
@@ -121,7 +132,22 @@
 
 <script>
 let generatedArticle = null;
-let progressTimer = null;
+
+function checkLength(el) {
+  const len = el.value.length;
+  const counter = document.getElementById('charCount');
+  const warning = document.getElementById('warningBox');
+  counter.textContent = len.toLocaleString() + ' / 3,000文字';
+  if (len > 3000) {
+    el.classList.add('over');
+    counter.className = 'char-count over';
+    warning.classList.add('show');
+  } else {
+    el.classList.remove('over');
+    counter.className = 'char-count';
+    warning.classList.remove('show');
+  }
+}
 
 function setStep(stepNum) {
   for (let i = 1; i <= 4; i++) {
@@ -142,6 +168,12 @@ async function generateArticle() {
     return;
   }
 
+  if (rawText.length > 3000) {
+    document.getElementById('generateStatus').textContent = '⚠️ 3,000文字を超えています。テキストを短くしてから試してください。';
+    document.getElementById('generateStatus').className = 'status error';
+    return;
+  }
+
   const btn = document.getElementById('generateBtn');
   btn.disabled = true;
   btn.textContent = '生成中...';
@@ -150,8 +182,7 @@ async function generateArticle() {
   document.getElementById('progress').classList.add('show');
   setStep(1);
 
-  // プログレス演出
-  progressTimer = setTimeout(() => setStep(2), 8000);
+  setTimeout(() => setStep(2), 8000);
   setTimeout(() => setStep(3), 16000);
   setTimeout(() => setStep(4), 24000);
 
@@ -162,7 +193,6 @@ async function generateArticle() {
       body: JSON.stringify({ rawText, game, author, questions }),
     });
     const data = await res.json();
-    clearTimeout(progressTimer);
 
     if (!res.ok || data.error) throw new Error(data.error || 'エラーが発生しました');
 
@@ -174,7 +204,6 @@ async function generateArticle() {
     document.getElementById('resultSummary').textContent = data.article.summary;
     document.getElementById('resultContent').textContent = data.article.content;
 
-    // ハイライト
     const hl = document.getElementById('resultHighlights');
     hl.innerHTML = '';
     if (data.article.highlights) {
@@ -187,11 +216,10 @@ async function generateArticle() {
     }
 
     document.getElementById('result').classList.add('show');
-    document.getElementById('generateStatus').textContent = '記事が生成されました！内容を確認して公開してください。';
+    document.getElementById('generateStatus').textContent = '✓ 記事が生成されました！内容を確認して公開してください。';
     document.getElementById('generateStatus').className = 'status success';
 
   } catch (err) {
-    clearTimeout(progressTimer);
     document.getElementById('generateStatus').textContent = 'エラー: ' + err.message;
     document.getElementById('generateStatus').className = 'status error';
     document.getElementById('progress').classList.remove('show');
@@ -205,7 +233,6 @@ async function publishArticle() {
   const btn = document.getElementById('publishBtn');
   btn.disabled = true;
   btn.textContent = '公開中...';
-  document.getElementById('publishStatus').textContent = '';
   setTimeout(() => {
     document.getElementById('publishStatus').textContent = '✓ 記事が公開されました！サイトのニュースセクションに表示されます。';
     document.getElementById('publishStatus').className = 'status success';
