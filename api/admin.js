@@ -12,13 +12,13 @@ export default async function handler(req, res) {
   const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
   try {
-    // AIが記事に整形
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'web-search-2025-03-05',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
@@ -41,7 +41,11 @@ export default async function handler(req, res) {
       }),
     });
 
-    if (!response.ok) throw new Error('AI error');
+    if (!response.ok) {
+      const errData = await response.json();
+      console.error('Anthropic error:', errData);
+      throw new Error('AI error');
+    }
 
     const data = await response.json();
     const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
@@ -50,7 +54,6 @@ export default async function handler(req, res) {
 
     const article = JSON.parse(jsonMatch[0]);
 
-    // Supabaseに保存
     const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/tcg_articles`, {
       method: 'POST',
       headers: {
