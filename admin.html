@@ -38,6 +38,13 @@
   .highlights { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.25rem; }
   .highlight-pill { background:rgba(184,149,42,0.1); border:1px solid rgba(184,149,42,0.25); color:var(--gold); font-size:0.75rem; padding:0.3rem 0.75rem; border-radius:999px; }
   .result-content { font-size:0.9rem; line-height:1.9; white-space:pre-wrap; }
+  .result-review { margin-top:1.5rem; padding:1.25rem; background:rgba(184,149,42,0.06); border:1px solid rgba(184,149,42,0.2); border-radius:2px; }
+  .result-review-label { font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); margin-bottom:0.5rem; font-weight:500; }
+  .result-review-text { font-size:0.88rem; line-height:1.8; color:var(--text); }
+  .author-box { margin-top:1.25rem; padding:1rem 1.25rem; background:var(--surface); border:1px solid var(--border); border-radius:2px; display:flex; align-items:center; justify-content:space-between; }
+  .author-name { font-size:0.88rem; font-weight:500; }
+  .author-x { font-size:0.8rem; color:var(--muted); text-decoration:none; transition:color 0.2s; }
+  .author-x:hover { color:var(--text); }
   .status { font-size:0.82rem; color:var(--muted); margin-top:0.75rem; }
   .status.success { color:#2a7a4a; }
   .status.error { color:var(--danger); font-weight:500; }
@@ -52,10 +59,12 @@
   .progress-step.active { color:var(--text); font-weight:500; }
   .step-dot { width:8px; height:8px; border-radius:50%; background:var(--border); flex-shrink:0; }
   .progress-step.done .step-dot { background:#2a7a4a; }
-  .progress-step.active .step-dot { background:var(--gold); animation: pulse 1s ease-in-out infinite; }
+  .progress-step.active .step-dot { background:var(--gold); animation:pulse 1s ease-in-out infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
   .warning-box { background:rgba(192,57,43,0.06); border:1px solid rgba(192,57,43,0.2); padding:1rem 1.25rem; border-radius:2px; margin-bottom:1rem; font-size:0.82rem; color:var(--danger); display:none; }
   .warning-box.show { display:block; }
+  .input-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  @media(max-width:600px) { .input-row { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -70,7 +79,7 @@
 
   <div class="tips">
     <h4>💡 使い方</h4>
-    <p>① プロにLINEで質問 → ② 回答をここに貼り付け → ③「記事を生成」を押す → ④ 内容確認して「公開」<br>⚠️ 回答テキストは3,000文字以内にしてください</p>
+    <p>① プロにLINEで質問 → ② 回答をここに貼り付け → ③「記事を生成」を押す → ④ 内容確認して「公開」<br>⚠️ 回答テキストは3,000文字以内推奨</p>
   </div>
 
   <div class="card">
@@ -83,12 +92,20 @@
       <option value="mtg">MTG</option>
       <option value="duema">デュエルマスターズ</option>
     </select>
-    <label>執筆者名（プロの名前・SNS名）</label>
-    <input type="text" id="author" placeholder="例：そでやまる選手 @sodeyamaru0828">
+    <div class="input-row">
+      <div>
+        <label>執筆者名（プロの名前）</label>
+        <input type="text" id="author" placeholder="例：そでやまる選手">
+      </div>
+      <div>
+        <label>X（Twitter）アカウント</label>
+        <input type="text" id="authorX" placeholder="例：@sodeyamaru0828">
+      </div>
+    </div>
   </div>
 
   <div class="card">
-    <div class="card-title">質問リスト（送った質問を入力）</div>
+    <div class="card-title">質問リスト</div>
     <textarea id="questions" style="min-height:140px" placeholder="① 今の環境で一番強いデッキは？
 ② そのデッキの回し方は？
 ③ 対策カードは？
@@ -100,20 +117,16 @@
 
   <div class="card">
     <div class="card-title">プロからの回答テキスト</div>
-    <div class="warning-box" id="warningBox">
-      ⚠️ 3,000文字を超えています！このまま送信するとエラーになる可能性があります。<br>
-      回答を分割して2回に分けて生成することをおすすめします。
-    </div>
-    <textarea id="rawText" style="min-height:300px" placeholder="LINEの返信をそのままコピペでOKです。話し言葉でも大丈夫！3,000文字以内推奨" oninput="checkLength(this)"></textarea>
+    <div class="warning-box" id="warningBox">⚠️ 3,000文字を超えています！分割して生成することをおすすめします。</div>
+    <textarea id="rawText" style="min-height:300px" placeholder="LINEの返信をそのままコピペでOKです。" oninput="checkLength(this)"></textarea>
     <div class="char-count" id="charCount">0 / 3,000文字</div>
     <button class="btn" id="generateBtn" onclick="generateArticle()">記事を生成する</button>
     <div class="status" id="generateStatus"></div>
-
     <div class="progress" id="progress">
-      <div class="progress-step" id="step1"><div class="step-dot"></div>カード・ルール・大会情報を調査中...</div>
-      <div class="progress-step" id="step2"><div class="step-dot"></div>Q&A形式で記事を構成中...</div>
-      <div class="progress-step" id="step3"><div class="step-dot"></div>AIの解説を追加中...</div>
-      <div class="progress-step" id="step4"><div class="step-dot"></div>仕上げ・データベースに保存中...</div>
+      <div class="progress-step" id="step1"><div class="step-dot"></div>記事を構成中...</div>
+      <div class="progress-step" id="step2"><div class="step-dot"></div>Q&A三層構造で整形中...</div>
+      <div class="progress-step" id="step3"><div class="step-dot"></div>AIの解説・総評を追加中...</div>
+      <div class="progress-step" id="step4"><div class="step-dot"></div>データベースに保存中...</div>
     </div>
   </div>
 
@@ -124,6 +137,14 @@
     <div class="highlights" id="resultHighlights"></div>
     <div class="divider"></div>
     <div class="result-content" id="resultContent"></div>
+    <div class="result-review" id="resultReviewBox" style="display:none">
+      <div class="result-review-label">TCGVIBE AI 総評</div>
+      <div class="result-review-text" id="resultReview"></div>
+    </div>
+    <div class="author-box" id="resultAuthorBox" style="display:none">
+      <span class="author-name" id="resultAuthorName"></span>
+      <a class="author-x" id="resultAuthorX" href="#" target="_blank" rel="noopener"></a>
+    </div>
     <div class="divider"></div>
     <button class="btn btn-gold" id="publishBtn" onclick="publishArticle()">✓ この記事を公開する</button>
     <div class="status" id="publishStatus"></div>
@@ -149,10 +170,10 @@ function checkLength(el) {
   }
 }
 
-function setStep(stepNum) {
+function setStep(n) {
   for (let i = 1; i <= 4; i++) {
     const el = document.getElementById('step' + i);
-    el.className = 'progress-step' + (i < stepNum ? ' done' : i === stepNum ? ' active' : '');
+    el.className = 'progress-step' + (i < n ? ' done' : i === n ? ' active' : '');
   }
 }
 
@@ -160,16 +181,11 @@ async function generateArticle() {
   const rawText = document.getElementById('rawText').value.trim();
   const game = document.getElementById('game').value;
   const author = document.getElementById('author').value.trim();
+  const authorX = document.getElementById('authorX').value.trim();
   const questions = document.getElementById('questions').value.trim();
 
   if (!rawText) {
     document.getElementById('generateStatus').textContent = '回答テキストを入力してください';
-    document.getElementById('generateStatus').className = 'status error';
-    return;
-  }
-
-  if (rawText.length > 3000) {
-    document.getElementById('generateStatus').textContent = '⚠️ 3,000文字を超えています。テキストを短くしてから試してください。';
     document.getElementById('generateStatus').className = 'status error';
     return;
   }
@@ -183,36 +199,52 @@ async function generateArticle() {
   setStep(1);
 
   setTimeout(() => setStep(2), 8000);
-  setTimeout(() => setStep(3), 16000);
-  setTimeout(() => setStep(4), 24000);
+  setTimeout(() => setStep(3), 18000);
+  setTimeout(() => setStep(4), 28000);
 
   try {
     const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rawText, game, author, questions }),
+      body: JSON.stringify({ rawText, game, author, authorX, questions }),
     });
     const data = await res.json();
-
-    if (!res.ok || data.error) throw new Error(data.error || 'エラーが発生しました');
+    if (!res.ok || data.error) throw new Error(data.error || 'エラー');
 
     generatedArticle = data.article;
     setStep(5);
 
-    document.getElementById('resultTag').textContent = `${data.article.emoji} ${data.article.tag}`;
-    document.getElementById('resultTitle').textContent = data.article.title;
-    document.getElementById('resultSummary').textContent = data.article.summary;
-    document.getElementById('resultContent').textContent = data.article.content;
+    document.getElementById('resultTag').textContent = (data.article.emoji || '🃏') + ' ' + (data.article.tag || '');
+    document.getElementById('resultTitle').textContent = data.article.title || '';
+    document.getElementById('resultSummary').textContent = data.article.summary || '';
+    document.getElementById('resultContent').textContent = data.article.content || '';
 
     const hl = document.getElementById('resultHighlights');
     hl.innerHTML = '';
-    if (data.article.highlights) {
-      data.article.highlights.forEach(h => {
-        const pill = document.createElement('span');
-        pill.className = 'highlight-pill';
-        pill.textContent = h;
-        hl.appendChild(pill);
-      });
+    (data.article.highlights || []).forEach(h => {
+      const pill = document.createElement('span');
+      pill.className = 'highlight-pill';
+      pill.textContent = h;
+      hl.appendChild(pill);
+    });
+
+    // 総評
+    if (data.article.review) {
+      document.getElementById('resultReview').textContent = data.article.review;
+      document.getElementById('resultReviewBox').style.display = 'block';
+    }
+
+    // 著者
+    if (author || authorX) {
+      document.getElementById('resultAuthorName').textContent = author || '';
+      const xLink = document.getElementById('resultAuthorX');
+      if (authorX) {
+        const handle = authorX.startsWith('@') ? authorX : '@' + authorX;
+        xLink.textContent = handle + ' でフォロー →';
+        xLink.href = 'https://x.com/' + handle.replace('@', '');
+        xLink.style.display = 'inline';
+      }
+      document.getElementById('resultAuthorBox').style.display = 'flex';
     }
 
     document.getElementById('result').classList.add('show');
@@ -234,7 +266,7 @@ async function publishArticle() {
   btn.disabled = true;
   btn.textContent = '公開中...';
   setTimeout(() => {
-    document.getElementById('publishStatus').textContent = '✓ 記事が公開されました！サイトのニュースセクションに表示されます。';
+    document.getElementById('publishStatus').textContent = '✓ 記事が公開されました！';
     document.getElementById('publishStatus').className = 'status success';
     btn.textContent = '✓ 公開済み';
   }, 800);
