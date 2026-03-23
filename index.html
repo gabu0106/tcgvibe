@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TCGVIBE.AI — Your Ultimate TCG Companion</title>
+<title>TCGVIBE.AI — TCGプロの知見をAIで届ける</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -15,131 +15,103 @@
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
-  body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.7;}
+  body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
 
-  /* ── COMING SOON PAGE ── */
-  #comingSoon{
-    display:none;
-    position:fixed;inset:0;z-index:9999;
-    background:var(--bg);
-    flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;padding:2rem;
-  }
-  #comingSoon.show{display:flex;}
-  .cs-logo{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;letter-spacing:0.08em;margin-bottom:3rem;}
-  .cs-logo span{color:var(--gold);}
-  .cs-ornament{display:flex;align-items:center;gap:1rem;justify-content:center;margin-bottom:2rem;}
-  .cs-line{width:60px;height:1px;}
-  .cs-diamond{width:6px;height:6px;background:var(--gold2);transform:rotate(45deg);}
-  .cs-title{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,8vw,6rem);font-weight:300;line-height:1;margin-bottom:1rem;}
-  .cs-title em{font-style:italic;color:var(--gold);}
-  .cs-desc{color:var(--muted);font-size:0.95rem;font-weight:300;line-height:1.8;max-width:380px;margin:0 auto 3rem;}
-  .cs-countdown{display:flex;gap:2rem;justify-content:center;margin-bottom:3rem;flex-wrap:wrap;}
-  .cs-count{text-align:center;}
-  .cs-count-num{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;display:block;line-height:1;}
-  .cs-count-label{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);}
-  .cs-notify{display:flex;gap:0;max-width:400px;margin:0 auto;}
-  .cs-email{flex:1;background:var(--surface);border:1px solid var(--border2);border-right:none;padding:0.875rem 1.25rem;font-family:inherit;font-size:0.875rem;color:var(--text);outline:none;border-radius:2px 0 0 2px;}
-  .cs-email::placeholder{color:#b5b0a8;}
-  .cs-notify-btn{background:var(--text);color:var(--bg);border:none;padding:0.875rem 1.5rem;font-family:inherit;font-size:0.75rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:0 2px 2px 0;transition:background 0.2s;white-space:nowrap;}
-  .cs-notify-btn:hover{background:var(--gold);}
-  .cs-footer{margin-top:4rem;font-size:0.75rem;color:#c0bcb5;}
+  /* NAV */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.25rem 3rem;background:rgba(250,250,248,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+  .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;letter-spacing:0.08em;color:var(--text);text-decoration:none;}
+  .nav-logo span{color:var(--gold);}
+  .nav-right{display:flex;align-items:center;gap:1.5rem;}
+  .nav-tag{font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);}
+  .nav-ai-btn{background:var(--text);color:var(--bg);padding:0.5rem 1.25rem;border-radius:2px;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;text-decoration:none;transition:background 0.2s;display:none;}
+  .nav-ai-btn:hover{background:var(--gold);}
+  .nav-ai-btn.show{display:block;}
 
-  /* ── ARTICLE OVERLAY ── */
-  #articleOverlay{
-    display:none;position:fixed;inset:0;z-index:300;
-    background:var(--bg);overflow-y:auto;
-  }
+  /* HERO */
+  .hero{padding:10rem 2rem 5rem;text-align:center;background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(184,149,42,0.07) 0%,transparent 70%),var(--bg);position:relative;}
+  .hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 60% at 50% 50%,black 30%,transparent 80%);pointer-events:none;}
+  .hero-eyebrow{font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:center;gap:0.75rem;}
+  .hero-eyebrow::before,.hero-eyebrow::after{content:'';display:block;width:32px;height:1px;background:var(--gold2);opacity:0.6;}
+  .hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.5rem,6vw,5rem);font-weight:300;line-height:1.1;color:var(--text);margin-bottom:1rem;position:relative;}
+  .hero-title em{font-style:italic;color:var(--gold);}
+  .hero-desc{color:var(--muted);font-size:0.95rem;font-weight:300;line-height:1.8;max-width:480px;margin:0 auto 2.5rem;}
+  .hero-stats{display:flex;gap:3rem;justify-content:center;flex-wrap:wrap;margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);max-width:600px;margin-left:auto;margin-right:auto;}
+  .hero-stat-num{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;display:block;line-height:1;}
+  .hero-stat-label{font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;display:block;}
+
+  /* FILTER */
+  .filter-bar{padding:1.5rem 2rem;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:72px;z-index:50;}
+  .filter-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:0.75rem;overflow-x:auto;scrollbar-width:none;}
+  .filter-inner::-webkit-scrollbar{display:none;}
+  .filter-btn{background:none;border:1px solid var(--border2);padding:0.35rem 1rem;font-family:inherit;font-size:0.78rem;color:var(--muted);cursor:pointer;border-radius:999px;white-space:nowrap;transition:all 0.2s;}
+  .filter-btn:hover,.filter-btn.active{border-color:var(--gold2);color:var(--text);background:var(--gold-light);}
+
+  /* ARTICLES */
+  .articles-section{padding:4rem 2rem 6rem;}
+  .container{max-width:1060px;margin:0 auto;}
+  .articles-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
+  .articles-grid.list-view{grid-template-columns:1fr;}
+
+  .article-card{background:var(--surface);display:flex;flex-direction:column;cursor:pointer;transition:background 0.2s;}
+  .article-card:hover{background:var(--gold-light);}
+  .article-thumb{background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:3rem;border-bottom:1px solid var(--border);height:180px;}
+  .article-thumb.lg{height:260px;}
+  .article-body{padding:1.75rem;flex:1;display:flex;flex-direction:column;gap:0.4rem;}
+  .article-tag{font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);font-weight:500;}
+  .article-title{font-size:0.95rem;font-weight:400;line-height:1.5;flex:1;}
+  .article-title.lg{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;line-height:1.3;}
+  .article-summary{font-size:0.8rem;color:var(--muted);line-height:1.65;font-weight:300;}
+  .article-meta{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:0.75rem;border-top:1px solid var(--border);}
+  .article-date{font-size:0.7rem;color:var(--muted);font-weight:300;}
+  .article-read{font-size:0.7rem;color:var(--gold);font-weight:500;letter-spacing:0.05em;}
+
+  /* EMPTY STATE */
+  .empty-state{grid-column:1/-1;padding:5rem 2rem;text-align:center;background:var(--surface);}
+  .empty-state p{color:var(--muted);font-size:0.9rem;}
+
+  /* LOADING */
+  .loading-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
+  .loading-card{background:var(--surface);padding:2rem;}
+  .skeleton{background:var(--bg2);border-radius:2px;animation:shimmer 1.5s ease-in-out infinite;}
+  .skeleton-thumb{height:180px;margin-bottom:1rem;}
+  .skeleton-thumb.lg{height:260px;}
+  .skeleton-line{height:12px;margin-bottom:8px;}
+  .skeleton-line.short{width:40%;}
+  .skeleton-line.medium{width:70%;}
+  @keyframes shimmer{0%,100%{opacity:1}50%{opacity:0.5}}
+
+  /* ARTICLE OVERLAY */
+  #articleOverlay{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;}
   #articleOverlay.open{display:block;}
-  .article-header{
-    position:sticky;top:0;background:rgba(250,250,248,0.92);backdrop-filter:blur(20px);
-    border-bottom:1px solid var(--border);padding:1rem 2rem;
-    display:flex;align-items:center;justify-content:space-between;
-  }
-  .article-back{background:none;border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-radius:2px;color:var(--muted);transition:border-color 0.2s,color 0.2s;}
+  .article-header{position:sticky;top:0;background:rgba(250,250,248,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;}
+  .article-back{background:none;border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-radius:2px;color:var(--muted);transition:all 0.2s;}
   .article-back:hover{border-color:var(--text);color:var(--text);}
   .article-logo{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;letter-spacing:0.08em;}
   .article-logo span{color:var(--gold);}
-  .article-body{max-width:720px;margin:4rem auto;padding:0 2rem 6rem;}
-  .article-tag-line{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:1rem;}
-  .article-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:300;line-height:1.2;margin-bottom:1rem;}
-  .article-meta{font-size:0.78rem;color:var(--muted);margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
-  .article-content{font-size:0.95rem;line-height:1.9;white-space:pre-wrap;color:var(--text);}
-  .article-review{margin-top:2.5rem;padding:1.5rem;background:var(--gold-light);border:1px solid rgba(184,149,42,0.2);border-radius:2px;}
-  .article-review-label{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:0.75rem;}
-  .article-review-text{font-size:0.9rem;line-height:1.8;}
-  .article-author{margin-top:2rem;padding:1.25rem;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-  .article-author-name{font-weight:500;font-size:0.9rem;}
-  .article-author-x{font-size:0.82rem;color:var(--gold);text-decoration:none;}
-  .article-author-x:hover{text-decoration:underline;}
-  .article-ai-btn{margin-top:1.5rem;display:inline-flex;align-items:center;gap:0.5rem;font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border2);padding-bottom:0.25rem;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:color 0.2s,border-color 0.2s;}
-  .article-ai-btn:hover{color:var(--gold);border-color:var(--gold2);}
+  .article-body-wrap{max-width:720px;margin:4rem auto;padding:0 2rem 6rem;}
+  .a-tag{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:1rem;}
+  .a-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:300;line-height:1.2;margin-bottom:0.75rem;}
+  .a-meta{font-size:0.78rem;color:var(--muted);margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
+  .a-content{font-size:0.95rem;line-height:1.9;white-space:pre-wrap;}
+  .a-review{margin-top:2.5rem;padding:1.5rem;background:var(--gold-light);border:1px solid rgba(184,149,42,0.2);}
+  .a-review-label{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:0.75rem;}
+  .a-review-text{font-size:0.9rem;line-height:1.8;}
+  .a-author{margin-top:2rem;padding:1.25rem;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .a-author-name{font-weight:500;font-size:0.9rem;}
+  .a-author-x{font-size:0.82rem;color:var(--gold);text-decoration:none;}
+  .a-author-x:hover{text-decoration:underline;}
+  .a-ai-cta{margin-top:2rem;padding:1.5rem;background:var(--text);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background 0.2s;}
+  .a-ai-cta:hover{background:#2a2420;}
+  .a-ai-cta-text{color:var(--bg);font-size:0.9rem;font-weight:400;}
+  .a-ai-cta-btn{color:var(--gold2);font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;}
 
-  /* ── NAV ── */
-  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.25rem 3rem;background:rgba(250,250,248,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
-  .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;letter-spacing:0.08em;color:var(--text);text-decoration:none;}
-  .nav-logo span{color:var(--gold);}
-  .nav-links{display:flex;align-items:center;gap:2.5rem;list-style:none;}
-  .nav-links a{color:var(--muted);text-decoration:none;font-size:0.82rem;font-weight:400;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.2s;}
-  .nav-links a:hover{color:var(--text);}
-  .nav-cta{background:var(--text)!important;color:var(--bg)!important;padding:0.5rem 1.4rem;border-radius:2px;font-size:0.75rem!important;letter-spacing:0.1em;font-weight:500!important;}
-  .nav-cta:hover{background:var(--gold)!important;color:#fff!important;}
-
-  /* ── HERO ── */
-  .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:8rem 2rem 6rem;background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(184,149,42,0.07) 0%,transparent 70%),var(--bg);position:relative;}
-  .hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 70% at 50% 50%,black 30%,transparent 80%);pointer-events:none;}
-  .hero-eyebrow{font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:2rem;display:flex;align-items:center;justify-content:center;gap:0.75rem;}
-  .hero-eyebrow::before,.hero-eyebrow::after{content:'';display:block;width:32px;height:1px;background:var(--gold2);opacity:0.6;}
-  .hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(5rem,13vw,11rem);font-weight:300;line-height:0.85;color:var(--text);margin-bottom:0.25rem;}
-  .hero-title-ai{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,4vw,3rem);font-weight:300;font-style:italic;color:var(--gold);letter-spacing:0.15em;margin-bottom:2rem;}
-  .hero-desc{max-width:420px;margin:0 auto 3rem;color:var(--muted);font-size:0.95rem;font-weight:300;line-height:1.8;}
-  .ornament{display:flex;align-items:center;gap:1rem;justify-content:center;margin:1.5rem 0;}
-  .ornament-line{width:60px;height:1px;}
-  .ornament-diamond{width:5px;height:5px;background:var(--gold2);transform:rotate(45deg);}
-  .hero-search-wrap{max-width:520px;margin:0 auto 2.5rem;position:relative;}
-  .hero-search-input{width:100%;background:var(--surface);border:1px solid var(--border2);padding:1rem 5.5rem 1rem 1.5rem;font-family:inherit;font-size:0.875rem;color:var(--text);outline:none;border-radius:2px;transition:border-color 0.2s;}
-  .hero-search-input::placeholder{color:#b5b0a8;}
-  .hero-search-input:focus{border-color:var(--gold2);}
-  .hero-search-btn{position:absolute;right:0;top:0;bottom:0;background:var(--text);color:var(--bg);border:none;padding:0 1.25rem;font-family:inherit;font-size:0.7rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:0 2px 2px 0;transition:background 0.2s;}
-  .hero-search-btn:hover{background:var(--gold);}
-  .hero-stats{display:flex;gap:4rem;justify-content:center;flex-wrap:wrap;margin-top:4rem;padding-top:2.5rem;border-top:1px solid var(--border);}
-  .hero-stat-num{font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:300;display:block;line-height:1;}
-  .hero-stat-label{font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:0.3rem;display:block;}
-
-  /* ── SHARED ── */
-  section{padding:7rem 2rem;}
-  .container{max-width:1060px;margin:0 auto;}
-  .sec-label{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;display:block;margin-bottom:1rem;}
-  .sec-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,4vw,3.6rem);font-weight:300;line-height:1.1;color:var(--text);margin-bottom:1.25rem;}
-  .sec-desc{color:var(--muted);font-size:0.9rem;font-weight:300;line-height:1.8;max-width:400px;}
-  .divider{width:100%;height:1px;background:var(--border);}
-  .text-link{display:inline-flex;align-items:center;gap:0.5rem;font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border2);padding-bottom:0.25rem;transition:border-color 0.2s,color 0.2s;}
-  .text-link:hover{border-color:var(--gold2);color:var(--gold);}
-
-  /* ── GAMES ── */
-  .games-strip{padding:1.5rem 2rem;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-  .games-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:2.5rem;overflow-x:auto;scrollbar-width:none;}
-  .games-inner::-webkit-scrollbar{display:none;}
-  .games-label{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);white-space:nowrap;flex-shrink:0;}
-  .games-sep{width:1px;height:20px;background:var(--border2);flex-shrink:0;}
-  .game-item{font-size:0.8rem;color:var(--muted);white-space:nowrap;cursor:pointer;transition:color 0.2s;flex-shrink:0;}
-  .game-item:hover{color:var(--text);}
-
-  /* ── FEATURES ── */
-  .features-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;border:1px solid var(--border);background:var(--border);margin-top:4rem;}
-  .feat{background:var(--surface);padding:2.5rem;transition:background 0.25s;}
-  .feat:hover{background:var(--gold-light);}
-  .feat-num{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;color:rgba(0,0,0,0.08);line-height:1;margin-bottom:1rem;}
-  .feat-title{font-size:0.95rem;font-weight:500;margin-bottom:0.6rem;}
-  .feat-desc{font-size:0.83rem;color:var(--muted);line-height:1.75;font-weight:300;}
-
-  /* ── AI CHAT ── */
-  .chat-page{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:column;}
+  /* AI CHAT */
+  .chat-page{display:none;position:fixed;inset:0;z-index:300;background:var(--bg);flex-direction:column;}
   .chat-page.open{display:flex;}
   .chat-page-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
   .chat-page-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;}
   .chat-page-title span{color:var(--gold);font-style:italic;}
-  .chat-close{background:none;border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-radius:2px;color:var(--muted);transition:border-color 0.2s,color 0.2s;}
+  .chat-close{background:none;border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-radius:2px;color:var(--muted);transition:all 0.2s;}
   .chat-close:hover{border-color:var(--text);color:var(--text);}
   .chat-messages{flex:1;overflow-y:auto;padding:2rem;display:flex;flex-direction:column;gap:1.25rem;}
   .chat-bubble-wrap{display:flex;flex-direction:column;max-width:680px;width:100%;}
@@ -159,139 +131,31 @@
   .chat-send:hover{background:var(--gold);}
   .chat-send:disabled{opacity:0.4;cursor:not-allowed;}
   .chat-suggestions{max-width:680px;margin:0 auto 1rem;display:flex;gap:0.5rem;flex-wrap:wrap;}
-  .chat-suggestion{background:none;border:1px solid var(--border2);padding:0.35rem 0.875rem;font-family:inherit;font-size:0.75rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:border-color 0.2s,color 0.2s;}
+  .chat-suggestion{background:none;border:1px solid var(--border2);padding:0.35rem 0.875rem;font-family:inherit;font-size:0.75rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:all 0.2s;}
   .chat-suggestion:hover{border-color:var(--gold2);color:var(--text);}
 
-  /* ── DECK ── */
-  .deck-layout{display:grid;grid-template-columns:1.1fr 1fr;gap:5rem;align-items:center;margin-top:4rem;}
-  .deck-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
-  .card-cell{aspect-ratio:63/88;background:var(--bg2);border:1px solid var(--border2);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;cursor:pointer;transition:border-color 0.2s,transform 0.2s;}
-  .card-cell:hover{border-color:var(--gold2);transform:scale(1.05) translateY(-2px);}
-  .card-cell.empty{opacity:0.3;border-style:dashed;font-size:0.9rem;color:var(--muted);}
-  .deck-stats{display:flex;flex-direction:column;gap:1.25rem;}
-  .dstat{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border:1px solid var(--border);background:var(--surface);}
-  .dstat-label{font-size:0.78rem;color:var(--muted);font-weight:300;}
-  .dstat-val{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;}
-  .val-green{color:#2a7a4a;}
-
-  /* ── PRICES ── */
-  .ptable{width:100%;border-collapse:collapse;margin-top:3rem;}
-  .ptable th{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);padding:0.75rem 1rem;text-align:left;border-bottom:1px solid var(--border2);font-weight:400;}
-  .ptable td{padding:1.1rem 1rem;border-bottom:1px solid var(--border);font-size:0.875rem;vertical-align:middle;}
-  .ptable tr:last-child td{border-bottom:none;}
-  .ptable tbody tr:hover td{background:var(--gold-light);}
-  .card-row{display:flex;align-items:center;gap:0.75rem;}
-  .card-thumb{width:32px;height:44px;background:var(--bg2);border:1px solid var(--border2);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;}
-  .card-name{font-weight:500;font-size:0.875rem;}
-  .card-set{font-size:0.72rem;color:var(--muted);font-weight:300;}
-  .badge{display:inline-block;font-size:0.62rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;padding:0.2rem 0.6rem;border:1px solid;}
-  .badge-gold{color:var(--gold);border-color:var(--gold2);background:var(--gold-light);}
-  .badge-mono{color:var(--muted);border-color:var(--border2);}
-  .chg-up{color:#2a7a4a;font-weight:500;font-size:0.82rem;}
-  .chg-dn{color:#8a2a2a;font-weight:500;font-size:0.82rem;}
-  .ai-pred{font-size:0.78rem;color:var(--muted);}
-
-  /* ── NEWS ── */
-  .news-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-top:3rem;}
-  .ncard{background:var(--surface);display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:background 0.2s;cursor:pointer;}
-  .ncard:hover{background:var(--gold-light);}
-  .nthumb{background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:2.8rem;border-bottom:1px solid var(--border);height:160px;}
-  .nthumb.lg{height:220px;}
-  .nbody{padding:1.5rem;flex:1;display:flex;flex-direction:column;gap:0.4rem;}
-  .ntag{font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);font-weight:500;}
-  .ntitle{font-size:0.92rem;font-weight:400;line-height:1.5;flex:1;}
-  .ntitle.lg{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;line-height:1.3;}
-  .ndate{font-size:0.7rem;color:var(--muted);font-weight:300;margin-top:auto;}
-
-  /* ── CTA ── */
-  .cta-section{background:var(--text);color:var(--bg);text-align:center;padding:8rem 2rem;position:relative;overflow:hidden;}
-  .cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 50% 100%,rgba(184,149,42,0.15) 0%,transparent 70%);}
-  .cta-title{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,7vw,6rem);font-weight:300;line-height:1;margin-bottom:1.5rem;position:relative;}
-  .cta-title em{font-style:italic;color:var(--gold2);}
-  .cta-desc{color:rgba(250,250,248,0.55);font-size:0.9rem;font-weight:300;max-width:360px;margin:0 auto 2.5rem;line-height:1.8;position:relative;}
-  .btn-light{display:inline-flex;align-items:center;gap:0.5rem;padding:0.875rem 2.25rem;background:var(--bg);color:var(--text);font-size:0.8rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;border:none;cursor:pointer;border-radius:2px;transition:background 0.2s,color 0.2s;position:relative;}
-  .btn-light:hover{background:var(--gold);color:#fff;}
-  .btn-outline-light{display:inline-flex;align-items:center;gap:0.5rem;padding:0.875rem 2.25rem;background:transparent;color:rgba(250,250,248,0.6);font-size:0.8rem;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;border:1px solid rgba(250,250,248,0.2);cursor:pointer;border-radius:2px;transition:border-color 0.2s,color 0.2s;position:relative;}
-  .btn-outline-light:hover{border-color:var(--gold2);color:var(--gold2);}
-
-  /* ── FOOTER ── */
-  footer{background:var(--surface);border-top:1px solid var(--border);padding:4rem 2rem 2rem;color:var(--muted);}
-  .footer-top{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;padding-bottom:3rem;border-bottom:1px solid var(--border);}
-  .footer-logo{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--text);letter-spacing:0.08em;display:block;margin-bottom:0.75rem;text-decoration:none;}
+  /* FOOTER */
+  footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem 2rem 2rem;}
+  .footer-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+  .footer-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--text);letter-spacing:0.08em;text-decoration:none;}
   .footer-logo span{color:var(--gold);}
-  .footer-brand p{font-size:0.82rem;line-height:1.7;font-weight:300;}
-  .footer-col h4{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text);font-weight:500;margin-bottom:1.25rem;}
-  .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.65rem;}
-  .footer-col li a{font-size:0.82rem;color:var(--muted);text-decoration:none;font-weight:300;transition:color 0.2s;}
-  .footer-col li a:hover{color:var(--text);}
-  .footer-bottom{max-width:1060px;margin:1.5rem auto 0;display:flex;align-items:center;justify-content:space-between;font-size:0.75rem;color:#c0bcb5;}
+  .footer-copy{font-size:0.75rem;color:#c0bcb5;}
 
-  /* ── FADE IN ── */
-  .fi{opacity:0;transform:translateY(20px);transition:opacity 0.65s ease,transform 0.65s ease;}
+  /* FADE */
+  .fi{opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease;}
   .fi.vis{opacity:1;transform:translateY(0);}
 
-  @media(max-width:900px){.news-grid{grid-template-columns:1fr;}}
-  @media(max-width:768px){
-    .deck-layout,.features-grid{grid-template-columns:1fr;}
-    .footer-top{grid-template-columns:1fr 1fr;}
-    nav .nav-links li:not(:last-child){display:none;}
-    .chat-input-row{flex-direction:column;}
-  }
+  @media(max-width:900px){.articles-grid,.loading-grid{grid-template-columns:1fr;}}
+  @media(max-width:768px){nav{padding:1rem 1.5rem;}.filter-bar{top:64px;}.chat-input-row{flex-direction:column;}}
 </style>
 </head>
 <body>
 
-<!-- ── COMING SOON PAGE ── -->
-<div id="comingSoon">
-  <div class="cs-logo">TCGVIBE<span>.AI</span></div>
-  <div class="cs-ornament">
-    <div class="cs-line" style="background:linear-gradient(90deg,transparent,var(--gold2))"></div>
-    <div class="cs-diamond"></div>
-    <div class="cs-line" style="background:linear-gradient(90deg,var(--gold2),transparent)"></div>
-  </div>
-  <h1 class="cs-title">Coming<br><em>Soon.</em></h1>
-  <p class="cs-desc">AIを活用した次世代TCGプラットフォームを準備中です。もうしばらくお待ちください。</p>
-  <div class="cs-countdown">
-    <div class="cs-count"><span class="cs-count-num" id="csDays">00</span><span class="cs-count-label">Days</span></div>
-    <div class="cs-count"><span class="cs-count-num" id="csHours">00</span><span class="cs-count-label">Hours</span></div>
-    <div class="cs-count"><span class="cs-count-num" id="csMinutes">00</span><span class="cs-count-label">Minutes</span></div>
-    <div class="cs-count"><span class="cs-count-num" id="csSeconds">00</span><span class="cs-count-label">Seconds</span></div>
-  </div>
-  <div class="cs-notify">
-    <input class="cs-email" type="email" placeholder="メールアドレスを入力...">
-    <button class="cs-notify-btn" onclick="notifySignup()">通知を受け取る</button>
-  </div>
-  <p class="cs-footer">© 2025 TCGVIBE.AI</p>
-</div>
-
-<!-- ── ARTICLE OVERLAY ── -->
-<div id="articleOverlay">
-  <div class="article-header">
-    <button class="article-back" onclick="closeArticle()">← 戻る</button>
-    <div class="article-logo">TCGVIBE<span>.AI</span></div>
-    <button class="article-back" onclick="openChat(event)" style="border-color:var(--gold2);color:var(--gold)">AIに質問する</button>
-  </div>
-  <div class="article-body">
-    <div class="article-tag-line" id="articleTag"></div>
-    <h1 class="article-title" id="articleTitle"></h1>
-    <div class="article-meta" id="articleDate"></div>
-    <div class="article-content" id="articleContent"></div>
-    <div class="article-review" id="articleReviewBox" style="display:none">
-      <div class="article-review-label">TCGVIBE AI 総評</div>
-      <div class="article-review-text" id="articleReview"></div>
-    </div>
-    <div class="article-author" id="articleAuthorBox" style="display:none">
-      <span class="article-author-name" id="articleAuthorName"></span>
-      <a class="article-author-x" id="articleAuthorX" href="#" target="_blank" rel="noopener"></a>
-    </div>
-  </div>
-</div>
-
-<!-- ── AI CHAT ── -->
+<!-- AI CHAT -->
 <div class="chat-page" id="chatPage">
   <div class="chat-page-header">
     <div class="chat-page-title">TCGVIBE<span>.AI</span> — TCGアドバイザー</div>
-    <button class="chat-close" onclick="closeChat()">← サイトに戻る</button>
+    <button class="chat-close" onclick="closeChat()">← 戻る</button>
   </div>
   <div class="chat-messages" id="chatMessages">
     <div class="chat-bubble-wrap ai">
@@ -303,248 +167,196 @@
     <div class="chat-suggestions" id="chatSuggestions">
       <button class="chat-suggestion" onclick="sendSuggestion(this)">今の環境で強いデッキは？</button>
       <button class="chat-suggestion" onclick="sendSuggestion(this)">初心者向けデッキを教えて</button>
-      <button class="chat-suggestion" onclick="sendSuggestion(this)">リザードンexの対策カードは？</button>
-      <button class="chat-suggestion" onclick="sendSuggestion(this)">ポケカのルールを説明して</button>
+      <button class="chat-suggestion" onclick="sendSuggestion(this)">リザードンexの対策は？</button>
     </div>
     <div class="chat-input-row">
-      <textarea class="chat-input" id="chatInput" placeholder="メッセージを入力... (Shift+Enterで改行)" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <textarea class="chat-input" id="chatInput" placeholder="メッセージを入力..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
       <button class="chat-send" id="chatSendBtn" onclick="sendMessage()">送信</button>
     </div>
   </div>
 </div>
 
-<!-- ── MAIN SITE ── -->
-<nav>
-  <a href="#" class="nav-logo">TCGVIBE<span>.AI</span></a>
-  <ul class="nav-links">
-    <li><a href="#features">機能</a></li>
-    <li><a href="#deck">デッキ</a></li>
-    <li><a href="#prices">価格</a></li>
-    <li><a href="#news">ニュース</a></li>
-    <li><a href="#" class="nav-cta" onclick="openChat(event)">AIに相談</a></li>
-  </ul>
-</nav>
-
-<section class="hero">
-  <div style="position:relative;z-index:1;width:100%;max-width:680px;margin:0 auto">
-    <div class="hero-eyebrow fi">AI-Powered TCG Platform</div>
-    <h1 class="hero-title fi">TCGVIBE</h1>
-    <p class="hero-title-ai fi">.AI</p>
-    <div class="ornament fi">
-      <div class="ornament-line" style="background:linear-gradient(90deg,transparent,var(--gold2))"></div>
-      <div class="ornament-diamond"></div>
-      <div class="ornament-line" style="background:linear-gradient(90deg,var(--gold2),transparent)"></div>
-    </div>
-    <p class="hero-desc fi">AIを活用したTCGの新しい体験。カード検索、デッキ構築、価格追跡をすべて一か所で。</p>
-    <div class="hero-search-wrap fi">
-      <input class="hero-search-input" id="heroSearch" placeholder="カード名・デッキ相談・ルール質問を入力...">
-      <button class="hero-search-btn" onclick="heroSearch()">検索</button>
-    </div>
-    <div class="hero-stats fi">
-      <div class="hero-stat"><span class="hero-stat-num">500K</span><span class="hero-stat-label">カードDB</span></div>
-      <div class="hero-stat"><span class="hero-stat-num">98%</span><span class="hero-stat-label">AI精度</span></div>
-      <div class="hero-stat"><span class="hero-stat-num">24/7</span><span class="hero-stat-label">リアルタイム</span></div>
-    </div>
+<!-- ARTICLE OVERLAY -->
+<div id="articleOverlay">
+  <div class="article-header">
+    <button class="article-back" onclick="closeArticle()">← 記事一覧</button>
+    <div class="article-logo">TCGVIBE<span>.AI</span></div>
+    <button class="article-back" style="border-color:var(--gold2);color:var(--gold)" onclick="openChatFromArticle()">AIに質問する →</button>
   </div>
-</section>
-
-<div class="games-strip">
-  <div class="games-inner">
-    <span class="games-label">対応ゲーム</span>
-    <div class="games-sep"></div>
-    <span class="game-item">ポケモンカード</span>
-    <span class="game-item">マジック：ザ・ギャザリング</span>
-    <span class="game-item">遊戯王</span>
-    <span class="game-item">デュエル・マスターズ</span>
-    <span class="game-item">ヴァイスシュヴァルツ</span>
-    <span class="game-item">ワンピースカード</span>
-    <span class="game-item">バトルスピリッツ</span>
-    <span class="game-item">その他 +5</span>
+  <div class="article-body-wrap">
+    <div class="a-tag" id="aTag"></div>
+    <h1 class="a-title" id="aTitle"></h1>
+    <div class="a-meta" id="aMeta"></div>
+    <div class="a-content" id="aContent"></div>
+    <div class="a-review" id="aReviewBox" style="display:none">
+      <div class="a-review-label">TCGVIBE AI 総評</div>
+      <div class="a-review-text" id="aReview"></div>
+    </div>
+    <div class="a-author" id="aAuthorBox" style="display:none">
+      <span class="a-author-name" id="aAuthorName"></span>
+      <a class="a-author-x" id="aAuthorX" href="#" target="_blank" rel="noopener"></a>
+    </div>
+    <div class="a-ai-cta" onclick="openChatFromArticle()">
+      <span class="a-ai-cta-text">この記事についてAIに質問する</span>
+      <span class="a-ai-cta-btn">AIチャットを開く →</span>
+    </div>
   </div>
 </div>
 
-<section id="features" style="background:var(--bg2);">
-  <div class="container">
-    <div class="fi"><span class="sec-label">機能</span><h2 class="sec-title">AIが変える<br>TCG体験</h2></div>
-    <div class="features-grid fi">
-      <div class="feat"><div class="feat-num">01</div><h3 class="feat-title">AIアドバイザー</h3><p class="feat-desc">デッキ相談・メタ分析・ルール裁定まで何でも答える専属AI。プロプレイヤーの視点で最適解を提案します。</p></div>
-      <div class="feat"><div class="feat-num">02</div><h3 class="feat-title">スマートカード検索</h3><p class="feat-desc">50万件以上のカードを自然言語で検索。「2コスト以下で特性を止める」など曖昧な条件でも対応。</p></div>
-      <div class="feat"><div class="feat-num">03</div><h3 class="feat-title">AIデッキビルダー</h3><p class="feat-desc">コンセプトを入力するだけで最適なデッキを自動構築。環境トップのリストも瞬時に参照・改善。</p></div>
-      <div class="feat"><div class="feat-num">04</div><h3 class="feat-title">リアルタイム価格追跡</h3><p class="feat-desc">主要マーケットの相場をリアルタイム集計。AIが価格変動を予測し、買い時・売り時を通知します。</p></div>
-      <div class="feat"><div class="feat-num">05</div><h3 class="feat-title">ルール裁定チェッカー</h3><p class="feat-desc">複雑なカード効果の公式裁定を即座に確認。大会前の不安を解消します。</p></div>
-      <div class="feat"><div class="feat-num">06</div><h3 class="feat-title">プロ記事</h3><p class="feat-desc">実績あるプロプレイヤーによる独自記事。AIの解説付きで初心者にも分かりやすく。</p></div>
-    </div>
-    <div style="margin-top:2.5rem;text-align:center">
-      <a href="#" class="text-link fi" onclick="openChat(event)">AIアドバイザーを試す →</a>
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">TCGVIBE<span>.AI</span></a>
+  <div class="nav-right">
+    <span class="nav-tag">TCG × AI メディア</span>
+    <a href="#" class="nav-ai-btn" id="navAiBtn" onclick="openChat(event)">AIに相談</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div style="position:relative;z-index:1;">
+    <div class="hero-eyebrow fi">プロの知見 × AIの分析力</div>
+    <h1 class="hero-title fi">TCGをもっと<br><em>深く、楽しく。</em></h1>
+    <p class="hero-desc fi">実績あるプロプレイヤーへのインタビューをAIが深掘り・解説。ポケカ・ワンピース・遊戯王の最新環境情報をお届けします。</p>
+    <div class="hero-stats fi">
+      <div class="hero-stat"><span class="hero-stat-num" id="articleCount">-</span><span class="hero-stat-label">記事数</span></div>
+      <div class="hero-stat"><span class="hero-stat-num">24/7</span><span class="hero-stat-label">AI対応</span></div>
+      <div class="hero-stat"><span class="hero-stat-num">無料</span><span class="hero-stat-label">完全無料</span></div>
     </div>
   </div>
 </section>
 
-<div class="divider"></div>
-
-<section id="deck" style="background:var(--bg);">
-  <div class="container">
-    <div class="deck-layout">
-      <div class="fi">
-        <div class="deck-grid">
-          <div class="card-cell">🦎</div><div class="card-cell">🔥</div><div class="card-cell">⚡</div><div class="card-cell">🌿</div><div class="card-cell">🌀</div>
-          <div class="card-cell">🃏</div><div class="card-cell">💎</div><div class="card-cell">🗡️</div><div class="card-cell">🛡️</div><div class="card-cell">✨</div>
-          <div class="card-cell">🎴</div><div class="card-cell">🌟</div><div class="card-cell">🐲</div><div class="card-cell">🔮</div><div class="card-cell">🌊</div>
-          <div class="card-cell empty">+</div><div class="card-cell empty">+</div><div class="card-cell empty">+</div><div class="card-cell empty">+</div><div class="card-cell empty">+</div>
-        </div>
-        <p style="font-size:0.7rem;color:var(--muted);margin-top:0.75rem;text-align:center;letter-spacing:0.04em">クリックでカード詳細 / ドラッグで並べ替え</p>
-      </div>
-      <div class="fi">
-        <span class="sec-label">デッキビルダー</span>
-        <h2 class="sec-title">最強デッキを<br>AIと一緒に</h2>
-        <p class="sec-desc" style="margin-bottom:2rem">メタ環境を分析したAIがあなたのプレイスタイルに合ったデッキを提案。60枚の最適解を数秒で。</p>
-        <div class="deck-stats">
-          <div class="dstat"><span class="dstat-label">デッキ名</span><span class="dstat-val" style="font-size:0.95rem;font-family:'DM Sans',sans-serif">リザードンex型</span></div>
-          <div class="dstat"><span class="dstat-label">カード枚数</span><span class="dstat-val">60 / 60</span></div>
-          <div class="dstat"><span class="dstat-label">推定勝率</span><span class="dstat-val val-green">62.4%</span></div>
-          <div class="dstat"><span class="dstat-label">資産価値</span><span class="dstat-val">¥ 84,200</span></div>
-        </div>
-        <div style="margin-top:1.5rem"><a href="#" class="text-link" onclick="openChat(event)">AIで最適化 →</a></div>
-      </div>
-    </div>
+<!-- FILTER -->
+<div class="filter-bar">
+  <div class="filter-inner">
+    <button class="filter-btn active" onclick="filterArticles('all', this)">すべて</button>
+    <button class="filter-btn" onclick="filterArticles('大会レポート', this)">大会レポート</button>
+    <button class="filter-btn" onclick="filterArticles('環境解説', this)">環境解説</button>
+    <button class="filter-btn" onclick="filterArticles('デッキ紹介', this)">デッキ紹介</button>
+    <button class="filter-btn" onclick="filterArticles('価格情報', this)">価格情報</button>
+    <button class="filter-btn" onclick="filterArticles('初心者向け', this)">初心者向け</button>
+    <button class="filter-btn" onclick="filterArticles('pokeca', this)">ポケカ</button>
+    <button class="filter-btn" onclick="filterArticles('onepiece', this)">ワンピース</button>
   </div>
-</section>
+</div>
 
-<div class="divider"></div>
-
-<section id="prices" style="background:var(--bg2);">
+<!-- ARTICLES -->
+<section class="articles-section">
   <div class="container">
-    <div class="fi" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem">
-      <div><span class="sec-label">価格追跡</span><h2 class="sec-title">マーケットを<br>先読みする</h2></div>
-      <a href="#" style="font-size:0.75rem;color:var(--muted);text-decoration:none;letter-spacing:0.06em;text-transform:uppercase">すべて見る →</a>
+    <div id="articlesGrid" class="loading-grid">
+      <div class="loading-card"><div class="skeleton skeleton-thumb lg"></div><div class="skeleton skeleton-line short" style="margin-bottom:12px"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line medium"></div></div>
+      <div class="loading-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line short" style="margin-bottom:12px"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line medium"></div></div>
+      <div class="loading-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line short" style="margin-bottom:12px"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line medium"></div></div>
     </div>
-    <table class="ptable fi">
-      <thead><tr><th>カード</th><th>レア</th><th>現在価格</th><th>前日比</th><th>AI予測</th></tr></thead>
-      <tbody>
-        <tr><td><div class="card-row"><div class="card-thumb">🦎</div><div><div class="card-name">リザードンex SAR</div><div class="card-set">スカーレット ex</div></div></div></td><td><span class="badge badge-gold">Secret</span></td><td><strong>¥38,000</strong></td><td><span class="chg-up">↑ +12.4%</span></td><td><span class="ai-pred">上昇継続</span></td></tr>
-        <tr><td><div class="card-row"><div class="card-thumb">⚡</div><div><div class="card-name">ミライドンex SR</div><div class="card-set">スカーレット ex</div></div></div></td><td><span class="badge badge-mono">Ultra</span></td><td><strong>¥4,200</strong></td><td><span class="chg-up">↑ +3.1%</span></td><td><span class="ai-pred">買い時</span></td></tr>
-        <tr><td><div class="card-row"><div class="card-thumb">🌿</div><div><div class="card-name">フシギバナex SAR</div><div class="card-set">151</div></div></div></td><td><span class="badge badge-gold">Secret</span></td><td><strong>¥22,000</strong></td><td><span class="chg-dn">↓ −5.2%</span></td><td><span class="ai-pred">様子見</span></td></tr>
-        <tr><td><div class="card-row"><div class="card-thumb">🔮</div><div><div class="card-name">テツノカイナex RR</div><div class="card-set">古代の咆哮</div></div></div></td><td><span class="badge badge-mono">Rare</span></td><td><strong>¥1,800</strong></td><td><span class="chg-up">↑ +8.7%</span></td><td><span class="ai-pred">注目株</span></td></tr>
-        <tr><td><div class="card-row"><div class="card-thumb">🌊</div><div><div class="card-name">カイオーガex SAR</div><div class="card-set">レイジングサーフ</div></div></div></td><td><span class="badge badge-gold">Secret</span></td><td><strong>¥15,500</strong></td><td><span class="chg-dn">↓ −2.0%</span></td><td><span class="ai-pred">売り推奨</span></td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<div class="divider"></div>
-
-<section id="news" style="background:var(--bg);">
-  <div class="container">
-    <div class="fi" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem">
-      <div><span class="sec-label">ニュース</span><h2 class="sec-title">最新情報を<br>キャッチ</h2></div>
-      <a href="#" style="font-size:0.75rem;color:var(--muted);text-decoration:none;letter-spacing:0.06em;text-transform:uppercase">すべて見る →</a>
-    </div>
-    <div class="news-grid fi" id="newsGrid">
-      <div class="ncard"><div class="nthumb lg" style="font-size:1rem;color:var(--muted)">読み込み中...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle lg">最新情報を取得しています</h3><span class="ndate">--</span></div></div>
-      <div class="ncard"><div class="nthumb">...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle">取得中</h3><span class="ndate">--</span></div></div>
-      <div class="ncard"><div class="nthumb">...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle">取得中</h3><span class="ndate">--</span></div></div>
-    </div>
-  </div>
-</section>
-
-<section class="cta-section">
-  <h2 class="cta-title fi">今すぐ始めよう、<br><em>無料で。</em></h2>
-  <p class="cta-desc fi">クレジットカード不要。AIアドバイザーを今すぐ試せます。</p>
-  <div class="fi" style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative">
-    <button class="btn-light" onclick="openChat(event)">AIに相談する</button>
-    <a href="#features" class="btn-outline-light">機能一覧を見る</a>
   </div>
 </section>
 
 <footer>
-  <div class="footer-top">
-    <div class="footer-brand"><a href="#" class="footer-logo">TCGVIBE<span>.AI</span></a><p>AIが変えるTCGの新しい体験。<br>あなたの最強デッキを一緒に作ろう。</p></div>
-    <div class="footer-col"><h4>プロダクト</h4><ul><li><a href="#">AIアドバイザー</a></li><li><a href="#">デッキビルダー</a></li><li><a href="#">価格追跡</a></li><li><a href="#">カード検索</a></li></ul></div>
-    <div class="footer-col"><h4>対応ゲーム</h4><ul><li><a href="#">ポケモンカード</a></li><li><a href="#">遊戯王</a></li><li><a href="#">MTG</a></li><li><a href="#">デュエマ</a></li></ul></div>
-    <div class="footer-col"><h4>サポート</h4><ul><li><a href="#">ヘルプ</a></li><li><a href="#">利用規約</a></li><li><a href="#">プライバシー</a></li><li><a href="#">お問い合わせ</a></li></ul></div>
+  <div class="footer-inner">
+    <a href="/" class="footer-logo">TCGVIBE<span>.AI</span></a>
+    <span class="footer-copy">© 2025 TCGVIBE.AI — プロの知見をAIで届ける</span>
   </div>
-  <div class="footer-bottom"><span>© 2025 TCGVIBE.AI — All rights reserved.</span><span>Made with AI</span></div>
 </footer>
 
 <script>
-// ── 管理者チェック ──
 const ADMIN_KEY = 'tcgvibe0106';
 const params = new URLSearchParams(window.location.search);
 const isAdmin = params.get('key') === ADMIN_KEY;
 
-// 管理者でなければ準備中ページを表示
-if (!isAdmin) {
-  document.getElementById('comingSoon').classList.add('show');
+// 管理者のみAIボタンを表示
+if (isAdmin) {
+  document.getElementById('navAiBtn').classList.add('show');
 }
 
-// ── カウントダウン（2025年6月1日オープン予定）──
-const launchDate = new Date('2025-06-01T00:00:00+09:00');
-function updateCountdown() {
-  const now = new Date();
-  const diff = launchDate - now;
-  if (diff <= 0) {
-    document.getElementById('csDays').textContent = '00';
-    document.getElementById('csHours').textContent = '00';
-    document.getElementById('csMinutes').textContent = '00';
-    document.getElementById('csSeconds').textContent = '00';
-    return;
-  }
-  const days = Math.floor(diff / (1000*60*60*24));
-  const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-  const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
-  const seconds = Math.floor((diff % (1000*60)) / 1000);
-  document.getElementById('csDays').textContent = String(days).padStart(2,'0');
-  document.getElementById('csHours').textContent = String(hours).padStart(2,'0');
-  document.getElementById('csMinutes').textContent = String(minutes).padStart(2,'0');
-  document.getElementById('csSeconds').textContent = String(seconds).padStart(2,'0');
-}
-updateCountdown();
-setInterval(updateCountdown, 1000);
-
-function notifySignup() {
-  alert('通知登録ありがとうございます！オープン時にお知らせします。');
-}
-
-// ── FADE IN ──
+// FADE IN
 const obs = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
 }, { threshold: 0.08 });
 document.querySelectorAll('.fi').forEach(el => obs.observe(el));
 
-// ── ARTICLE ──
-let currentArticles = [];
+// ARTICLES
+let allArticles = [];
+let currentArticle = null;
 
-function showArticle(article) {
-  document.getElementById('articleTag').textContent = (article.emoji || '🃏') + ' ' + (article.tag || '');
-  document.getElementById('articleTitle').textContent = article.title || '';
-  document.getElementById('articleDate').textContent = article.date || '';
-  document.getElementById('articleContent').textContent = article.content || '';
+async function loadArticles() {
+  try {
+    const res = await fetch('/api/articles');
+    const data = await res.json();
+    allArticles = data.articles || [];
+    document.getElementById('articleCount').textContent = allArticles.length;
+    renderArticles(allArticles);
+  } catch(e) {
+    console.error(e);
+    renderArticles([]);
+  }
+}
 
-  // 総評
-  if (article.review) {
-    document.getElementById('articleReview').textContent = article.review;
-    document.getElementById('articleReviewBox').style.display = 'block';
-  } else {
-    document.getElementById('articleReviewBox').style.display = 'none';
+function renderArticles(articles) {
+  const grid = document.getElementById('articlesGrid');
+  grid.className = 'articles-grid';
+
+  if (!articles.length) {
+    grid.innerHTML = '<div class="empty-state"><p>記事を準備中です。もうしばらくお待ちください。</p></div>';
+    return;
   }
 
-  // 著者
-  if (article.author || article.authorX) {
-    document.getElementById('articleAuthorName').textContent = article.author || '';
-    const xLink = document.getElementById('articleAuthorX');
-    if (article.authorX) {
-      const handle = article.authorX.startsWith('@') ? article.authorX : '@' + article.authorX;
+  grid.innerHTML = articles.map((a, i) => `
+    <div class="article-card" onclick="openArticle(${allArticles.indexOf(a)})">
+      <div class="article-thumb${i === 0 ? ' lg' : ''}">${a.emoji || '🃏'}</div>
+      <div class="article-body">
+        <div class="article-tag">${a.tag || ''}</div>
+        <h2 class="article-title${i === 0 ? ' lg' : ''}">${a.title || ''}</h2>
+        <p class="article-summary">${a.summary || ''}</p>
+        <div class="article-meta">
+          <span class="article-date">${a.date || ''}</span>
+          <span class="article-read">続きを読む →</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterArticles(tag, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (tag === 'all') {
+    renderArticles(allArticles);
+  } else {
+    renderArticles(allArticles.filter(a => a.tag === tag || a.game === tag));
+  }
+}
+
+function openArticle(idx) {
+  const a = allArticles[idx];
+  currentArticle = a;
+  document.getElementById('aTag').textContent = (a.emoji || '🃏') + ' ' + (a.tag || '');
+  document.getElementById('aTitle').textContent = a.title || '';
+  document.getElementById('aMeta').textContent = a.date || '';
+  document.getElementById('aContent').textContent = a.content || '';
+
+  if (a.review) {
+    document.getElementById('aReview').textContent = a.review;
+    document.getElementById('aReviewBox').style.display = 'block';
+  } else {
+    document.getElementById('aReviewBox').style.display = 'none';
+  }
+
+  if (a.author || a.authorX) {
+    document.getElementById('aAuthorName').textContent = a.author || '';
+    const xLink = document.getElementById('aAuthorX');
+    if (a.authorX) {
+      const handle = a.authorX.startsWith('@') ? a.authorX : '@' + a.authorX;
       xLink.textContent = handle + ' でフォロー →';
       xLink.href = 'https://x.com/' + handle.replace('@','');
-      xLink.style.display = 'inline';
     }
-    document.getElementById('articleAuthorBox').style.display = 'flex';
+    document.getElementById('aAuthorBox').style.display = 'flex';
   } else {
-    document.getElementById('articleAuthorBox').style.display = 'none';
+    document.getElementById('aAuthorBox').style.display = 'none';
   }
 
   document.getElementById('articleOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  window.scrollTo(0, 0);
 }
 
 function closeArticle() {
@@ -552,38 +364,28 @@ function closeArticle() {
   document.body.style.overflow = '';
 }
 
-// ── LOAD ARTICLES ──
-async function loadArticles() {
-  try {
-    const res = await fetch('/api/articles');
-    const data = await res.json();
-    const grid = document.getElementById('newsGrid');
-    if (!data.articles || !data.articles.length) return;
-    currentArticles = data.articles;
-
-    grid.innerHTML = data.articles.map((a, i) => `
-      <div class="ncard" onclick="showArticle(currentArticles[${i}])">
-        <div class="nthumb${i === 0 ? ' lg' : ''}">${a.emoji || '🃏'}</div>
-        <div class="nbody">
-          <div class="ntag">${a.tag || ''}</div>
-          <h3 class="ntitle${i === 0 ? ' lg' : ''}">${a.title || ''}</h3>
-          <p style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem;font-weight:300">${a.summary || ''}</p>
-          <span class="ndate">${a.date || ''}</span>
-        </div>
-      </div>
-    `).join('');
-  } catch(e) {
-    console.error('記事取得エラー:', e);
+function openChatFromArticle() {
+  if (!isAdmin) {
+    alert('AIチャット機能は近日公開予定です！');
+    return;
+  }
+  closeArticle();
+  openChat();
+  if (currentArticle) {
+    setTimeout(() => {
+      document.getElementById('chatInput').value = `「${currentArticle.title}」についてもっと詳しく教えてください`;
+      sendMessage();
+    }, 200);
   }
 }
-loadArticles();
 
-// ── CHAT ──
+// CHAT
 let chatHistory = [];
 let isLoading = false;
 
 function openChat(e) {
   if (e) e.preventDefault();
+  if (!isAdmin) { alert('AIチャット機能は近日公開予定です！'); return; }
   document.getElementById('chatPage').classList.add('open');
   document.body.style.overflow = 'hidden';
   setTimeout(() => document.getElementById('chatInput').focus(), 100);
@@ -592,18 +394,6 @@ function closeChat() {
   document.getElementById('chatPage').classList.remove('open');
   document.body.style.overflow = '';
 }
-function heroSearch() {
-  const q = document.getElementById('heroSearch').value.trim();
-  if (!q) { openChat(); return; }
-  openChat();
-  setTimeout(() => {
-    document.getElementById('chatInput').value = q;
-    sendMessage();
-  }, 200);
-}
-document.getElementById('heroSearch').addEventListener('keydown', e => {
-  if (e.key === 'Enter') heroSearch();
-});
 function sendSuggestion(btn) {
   document.getElementById('chatInput').value = btn.textContent;
   document.getElementById('chatSuggestions').style.display = 'none';
@@ -631,12 +421,12 @@ async function sendMessage() {
     const data = await res.json();
     removeBubble(typingId);
     if (!res.ok || data.error) {
-      addBubble('ai', `エラーが発生しました: ${data.error ?? '不明なエラー'}`);
+      addBubble('ai', 'エラーが発生しました。');
     } else {
       addBubble('ai', data.reply);
       chatHistory.push({ role: 'assistant', content: data.reply });
     }
-  } catch (err) {
+  } catch(err) {
     removeBubble(typingId);
     addBubble('ai', 'ネットワークエラーが発生しました。');
   }
@@ -673,6 +463,8 @@ function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
+
+loadArticles();
 </script>
 </body>
 </html>
