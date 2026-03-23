@@ -56,9 +56,7 @@ AIによる総評をここに書く（200文字程度）。プロの回答全体
 
     const data = await response.json();
     const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-    console.log('Response length:', text.length);
 
-    // テキスト形式をパース
     const titleMatch = text.match(/TITLE:\s*(.+)/);
     const tagMatch = text.match(/TAG:\s*(.+)/);
     const summaryMatch = text.match(/SUMMARY:\s*(.+)/);
@@ -96,6 +94,8 @@ AIによる総評をここに書く（200文字程度）。プロの回答全体
           summary: article.summary,
           content: article.content,
           emoji: article.emoji,
+          author: article.author,
+          author_x: article.authorX,
         }),
       });
     } catch(e) {
