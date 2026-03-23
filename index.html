@@ -350,10 +350,11 @@
       <div><span class="sec-label">ニュース</span><h2 class="sec-title">最新情報を<br>キャッチ</h2></div>
       <a href="#" style="font-size:0.75rem;color:var(--muted);text-decoration:none;letter-spacing:0.06em;text-transform:uppercase">すべて見る →</a>
     </div>
-    <div class="news-grid fi">
-      <a class="ncard" href="#"><div class="nthumb lg">🏆</div><div class="nbody"><div class="ntag">大会レポート</div><h3 class="ntitle lg">ポケカ日本選手権2025 — リザードンex圧勝の裏にあったメタ読みの真実</h3><span class="ndate">2025年3月18日</span></div></a>
-      <a class="ncard" href="#"><div class="nthumb">🤖</div><div class="nbody"><div class="ntag">AIアップデート</div><h3 class="ntitle">TCGVIBE AI v2.5 — デッキ提案精度が大幅向上</h3><span class="ndate">2025年3月15日</span></div></a>
-      <a class="ncard" href="#"><div class="nthumb">📦</div><div class="nbody"><div class="ntag">新弾情報</div><h3 class="ntitle">「ステラミラクル」収録カード全リスト & AI価格予測</h3><span class="ndate">2025年3月12日</span></div></a>
+    <div class="news-grid fi" id="newsGrid">
+      <!-- ローディング表示 -->
+      <div class="ncard"><div class="nthumb lg" style="font-size:1rem;color:var(--muted)">記事を取得中...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle lg">最新情報を取得しています</h3><span class="ndate">--</span></div></div>
+      <div class="ncard"><div class="nthumb" style="font-size:1rem;color:var(--muted)">...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle">取得中</h3><span class="ndate">--</span></div></div>
+      <div class="ncard"><div class="nthumb" style="font-size:1rem;color:var(--muted)">...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle">取得中</h3><span class="ndate">--</span></div></div>
     </div>
   </div>
 </section>
@@ -385,6 +386,45 @@ const obs = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
 }, { threshold: 0.08 });
 document.querySelectorAll('.fi').forEach(el => obs.observe(el));
+
+// ── LOAD ARTICLES ──
+async function loadArticles() {
+  try {
+    const res = await fetch('/api/articles');
+    const data = await res.json();
+    const grid = document.getElementById('newsGrid');
+    if (!data.articles || !data.articles.length) return;
+
+    grid.innerHTML = data.articles.map((a, i) => `
+      <a class="ncard" href="#" onclick="openArticleChat('${a.title.replace(/'/g,"\\'")}', event)">
+        <div class="nthumb${i === 0 ? ' lg' : ''}">${a.emoji || '🃏'}</div>
+        <div class="nbody">
+          <div class="ntag">${a.tag}</div>
+          <h3 class="ntitle${i === 0 ? ' lg' : ''}">${a.title}</h3>
+          <p style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem;font-weight:300">${a.summary}</p>
+          <span class="ndate">${a.date}</span>
+        </div>
+      </a>
+    `).join('');
+
+    // re-observe for fade-in
+    grid.querySelectorAll('.ncard').forEach(el => obs.observe(el));
+  } catch(e) {
+    console.error('記事取得エラー:', e);
+  }
+}
+
+function openArticleChat(title, e) {
+  e.preventDefault();
+  openChat();
+  setTimeout(() => {
+    document.getElementById('chatInput').value = `「${title}」について詳しく教えてください`;
+    sendMessage();
+  }, 200);
+}
+
+// ページ読み込み時に記事を取得
+loadArticles();
 
 // ── CHAT STATE ──
 let chatHistory = [];
