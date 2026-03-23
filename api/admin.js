@@ -11,25 +11,22 @@ export default async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
+  // 3000文字でカット
+  const trimmedText = rawText.slice(0, 3000);
+
   try {
-    // 1回のAPI呼び出しで調査＋記事生成を同時に行う
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'web-search-2025-03-05',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
+        max_tokens: 3000,
         system: `あなたはTCGVIBE.AIのベテラン編集者です。
-プロプレイヤーの回答を本格的な記事に仕上げてください。
-
-【手順】
-1. 回答に出てくるカード名・大会名・ルールをweb_searchで調査
-2. 調査結果を使ってQ&A三層構造の記事を書く
+プロプレイヤーの回答をQ&A三層構造の記事に仕上げてください。
 
 【記事の構成】
 各質問ごとに：
@@ -38,11 +35,11 @@ Q（質問）
 TCGVIBE AI的には〜（初心者にも伝わる解説・補足）
 
 【絶対に守るルール】
-・##、**、---、<cite>などの記号は一切使わない
+・##、**、---などの記号は一切使わない
 ・箇条書きは「・」のみ
-・カードの効果・ルールは検索で確認した正確な情報のみ
 ・自然な話し言葉（〜だよ、〜だね）
 ・段落間は空行を入れる
+・不確かな情報は書かない
 
 以下のJSON形式のみで返してください：
 {
@@ -56,17 +53,16 @@ TCGVIBE AI的には〜（初心者にも伝わる解説・補足）
         messages: [{
           role: 'user',
           content: `【質問リスト】
-${questions || '① 今の環境で一番強いデッキは？\n② そのデッキの回し方は？\n③ 対策カードは？\n④ 初心者におすすめのデッキは？\n⑤ 注目・高騰カードは？\n⑥ 大会で勝つために大事なことは？\n⑦ 直近の大会レポート'}
+${questions || '① 今の環境で一番強いデッキは？\n② そのデッキの回し方は？\n③ 対策カードは？\n④ 初心者におすすめのデッキは？\n⑤ 注目・高騰カードは？\n⑥ 大会で勝つために大事なことは？'}
 
 【プロプレイヤーの回答】
 ゲーム：${game || 'ポケモンカード'}
 執筆者：${author || 'プロプレイヤー'}
 
-${rawText}
+${trimmedText}
 
-まずweb_searchでカード・ルール・大会情報を調査してから記事を書いてください。`
+上記をQ&A三層構造の記事にしてください。`
         }],
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       }),
     });
 
