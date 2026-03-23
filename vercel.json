@@ -1,7 +1,12 @@
 {
   "functions": {
-    "api/chat.js": {
-      "maxDuration": 30
+    "api/chat.js": { "maxDuration": 30 },
+    "api/articles.js": { "maxDuration": 60 }
+  },
+  "crons": [
+    {
+      "path": "/api/articles",
+      "schedule": "0 21 * * *"
     }
-  }
+  ]
 }
