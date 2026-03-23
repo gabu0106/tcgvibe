@@ -9,8 +9,6 @@
   :root{--bg:#fafaf8;--bg2:#f5f3ee;--surface:#fff;--border:rgba(0,0,0,0.08);--text:#1a1814;--muted:#7a7570;--gold:#b8952a;--gold2:#d4af5a;--danger:#c0392b;--success:#2a7a4a;}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-
-  /* LOGIN */
   #loginPage{display:flex;position:fixed;inset:0;z-index:999;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;}
   #loginPage.hide{display:none;}
   .login-logo{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;letter-spacing:0.08em;}
@@ -22,40 +20,32 @@
   .login-btn{background:var(--text);color:var(--bg);border:none;padding:0.875rem;font-family:inherit;font-size:0.8rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:background 0.2s;}
   .login-btn:hover{background:var(--gold);}
   .login-error{font-size:0.8rem;color:var(--danger);text-align:center;}
-
-  /* LAYOUT */
   #app{display:none;}
   #app.show{display:flex;min-height:100vh;}
-  .sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:fixed;top:0;bottom:0;overflow-y:auto;flex-shrink:0;}
+  .sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:fixed;top:0;bottom:0;overflow-y:auto;}
   .sidebar-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;letter-spacing:0.08em;padding:0 1.5rem 1.5rem;border-bottom:1px solid var(--border);display:block;}
   .sidebar-logo span{color:var(--gold);}
   .sidebar-nav{padding:1rem 0;}
   .nav-section{font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);padding:0.75rem 1.5rem 0.4rem;}
   .nav-item{display:flex;align-items:center;gap:0.6rem;padding:0.6rem 1.5rem;font-size:0.85rem;color:var(--muted);cursor:pointer;transition:all 0.15s;border-left:2px solid transparent;}
   .nav-item:hover{color:var(--text);background:var(--bg2);}
-  .nav-item.active{color:var(--text);background:var(--gold-light, #f5edda);border-left-color:var(--gold);}
+  .nav-item.active{color:var(--text);background:#f5edda;border-left-color:var(--gold);}
   .nav-icon{font-size:1rem;width:20px;text-align:center;}
   .main{margin-left:240px;flex:1;padding:2.5rem;}
   .page{display:none;}
   .page.active{display:block;}
   .page-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;margin-bottom:0.5rem;}
   .page-desc{color:var(--muted);font-size:0.85rem;margin-bottom:2rem;}
-
-  /* CARDS */
   .card{background:var(--surface);border:1px solid var(--border);padding:1.75rem;margin-bottom:1.25rem;border-radius:2px;}
   .card-title{font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:1.25rem;}
   .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
   .stat-card{background:var(--bg2);border:1px solid var(--border);padding:1.25rem;border-radius:2px;}
   .stat-num{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;display:block;line-height:1;}
   .stat-label{font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;}
-
-  /* FORM ELEMENTS */
   label{display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;}
   input,textarea,select{width:100%;font-family:inherit;font-size:0.875rem;color:var(--text);background:var(--bg);border:1px solid var(--border);padding:0.75rem 1rem;outline:none;transition:border-color 0.2s;margin-bottom:1.25rem;border-radius:2px;}
   input:focus,textarea:focus,select:focus{border-color:var(--gold2);}
   textarea{resize:vertical;line-height:1.7;}
-
-  /* BUTTONS */
   .btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.6rem 1.25rem;background:var(--text);color:var(--bg);font-family:inherit;font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:pointer;border-radius:2px;transition:background 0.2s;}
   .btn:hover{background:var(--gold);}
   .btn-sm{padding:0.4rem 0.875rem;font-size:0.72rem;}
@@ -64,21 +54,9 @@
   .btn-success{background:var(--success);}
   .btn-success:hover{background:#1e5c35;}
   .btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);}
-  .btn-outline:hover{background:var(--bg2);color:var(--text);}
-
-  /* STATUS BADGE */
-  .badge{display:inline-block;padding:0.2rem 0.6rem;font-size:0.65rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;border-radius:999px;}
-  .badge-live{background:rgba(42,122,74,0.15);color:var(--success);}
-  .badge-coming{background:rgba(184,149,42,0.15);color:var(--gold);}
-
-  /* TABLE */
-  .table{width:100%;border-collapse:collapse;}
-  .table th{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);padding:0.75rem 1rem;text-align:left;border-bottom:1px solid var(--border);font-weight:400;}
-  .table td{padding:0.875rem 1rem;border-bottom:1px solid var(--border);font-size:0.85rem;vertical-align:middle;}
-  .table tr:last-child td{border-bottom:none;}
-  .table tr:hover td{background:var(--bg2);}
-
-  /* TOGGLE */
+  .btn-outline:hover{background:var(--bg2);}
+  .btn-gold{background:var(--gold);}
+  .btn-gold:hover{background:#8a6e1a;}
   .toggle-wrap{display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;}
   .toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
   .toggle input{opacity:0;width:0;height:0;}
@@ -87,20 +65,14 @@
   .toggle input:checked+.toggle-slider{background:var(--success);}
   .toggle input:checked+.toggle-slider::before{transform:translateX(20px);}
   .toggle-label{font-size:0.88rem;}
-
-  /* STATUS */
   .status-msg{font-size:0.82rem;padding:0.6rem 1rem;border-radius:2px;margin-top:0.75rem;display:none;}
   .status-msg.show{display:block;}
   .status-msg.success{background:rgba(42,122,74,0.1);color:var(--success);}
   .status-msg.error{background:rgba(192,57,43,0.1);color:var(--danger);}
-
-  /* GAME TAGS */
   .game-tags{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;}
   .game-tag{display:flex;align-items:center;gap:0.4rem;background:var(--bg2);border:1px solid var(--border);padding:0.3rem 0.75rem;border-radius:999px;font-size:0.8rem;}
   .game-tag-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;line-height:1;padding:0;}
   .game-tag-del:hover{color:var(--danger);}
-
-  /* ARTICLE LIST */
   .article-row{display:flex;align-items:center;gap:1rem;padding:1rem;border-bottom:1px solid var(--border);transition:background 0.15s;}
   .article-row:hover{background:var(--bg2);}
   .article-row:last-child{border-bottom:none;}
@@ -110,7 +82,19 @@
   .article-info-meta{font-size:0.72rem;color:var(--muted);margin-top:0.2rem;}
   .article-actions{display:flex;gap:0.5rem;flex-shrink:0;}
 
-  @media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:1.5rem;}.stat-grid{grid-template-columns:1fr 1fr;}}
+  /* EDIT MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:2rem;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);width:100%;max-width:760px;max-height:90vh;overflow-y:auto;border-radius:2px;}
+  .modal-header{padding:1.25rem 1.75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1;}
+  .modal-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;}
+  .modal-close{background:none;border:1px solid var(--border);padding:0.35rem 0.875rem;font-family:inherit;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-radius:2px;color:var(--muted);}
+  .modal-close:hover{border-color:var(--text);color:var(--text);}
+  .modal-body{padding:1.75rem;}
+  .modal-footer{padding:1.25rem 1.75rem;border-top:1px solid var(--border);display:flex;gap:0.75rem;justify-content:flex-end;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+
+  @media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:1.5rem;}.stat-grid{grid-template-columns:1fr 1fr;}.two-col{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -120,32 +104,80 @@
   <div class="login-logo">TCGVIBE<span>.AI</span></div>
   <div class="login-badge">管理者ログイン</div>
   <div class="login-form">
-    <input class="login-input" type="password" id="loginInput" placeholder="管理者パスワード" onkeydown="if(e.key==='Enter')login()">
+    <input class="login-input" type="password" id="loginInput" placeholder="管理者パスワード">
     <button class="login-btn" onclick="login()">ログイン</button>
     <div class="login-error" id="loginError"></div>
   </div>
 </div>
 
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">記事を編集する</div>
+      <button class="modal-close" onclick="closeEditModal()">× 閉じる</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="two-col">
+        <div>
+          <label>絵文字</label>
+          <input type="text" id="edit-emoji" placeholder="🃏">
+        </div>
+        <div>
+          <label>タグ</label>
+          <select id="edit-tag">
+            <option>環境解説</option>
+            <option>デッキ紹介</option>
+            <option>大会レポート</option>
+            <option>価格情報</option>
+            <option>初心者向け</option>
+          </select>
+        </div>
+      </div>
+      <label>タイトル</label>
+      <input type="text" id="edit-title" placeholder="記事タイトル">
+      <label>要約（サムネイルに表示）</label>
+      <textarea id="edit-summary" style="min-height:80px" placeholder="記事の要約"></textarea>
+      <label>本文</label>
+      <textarea id="edit-content" style="min-height:360px" placeholder="記事本文"></textarea>
+      <div class="two-col">
+        <div>
+          <label>執筆者名</label>
+          <input type="text" id="edit-author" placeholder="例：そでやまる選手">
+        </div>
+        <div>
+          <label>X（Twitter）アカウント</label>
+          <input type="text" id="edit-authorX" placeholder="例：@sodeyamaru0828">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeEditModal()">キャンセル</button>
+      <button class="btn btn-gold" onclick="saveEdit()">✓ 保存する</button>
+      <div class="status-msg" id="edit-status"></div>
+    </div>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="app">
-  <!-- SIDEBAR -->
   <div class="sidebar">
     <span class="sidebar-logo">TCGVIBE<span>.AI</span></span>
     <nav class="sidebar-nav">
       <div class="nav-section">メイン</div>
-      <div class="nav-item active" onclick="showPage('dashboard', this)"><span class="nav-icon">📊</span>ダッシュボード</div>
-      <div class="nav-item" onclick="showPage('articles', this)"><span class="nav-icon">📝</span>記事管理</div>
-      <div class="nav-item" onclick="showPage('compose', this)"><span class="nav-icon">✍️</span>記事を生成する</div>
+      <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>ダッシュボード</div>
+      <div class="nav-item" onclick="showPage('articles',this)"><span class="nav-icon">📝</span>記事管理</div>
+      <div class="nav-item" onclick="showPage('compose',this)"><span class="nav-icon">✍️</span>記事を生成する</div>
       <div class="nav-section">サイト設定</div>
-      <div class="nav-item" onclick="showPage('siteStatus', this)"><span class="nav-icon">🌐</span>公開設定</div>
-      <div class="nav-item" onclick="showPage('games', this)"><span class="nav-icon">🃏</span>対応ゲーム</div>
-      <div class="nav-item" onclick="showPage('prices', this)"><span class="nav-icon">📈</span>価格テーブル</div>
+      <div class="nav-item" onclick="showPage('siteStatus',this)"><span class="nav-icon">🌐</span>公開設定</div>
+      <div class="nav-item" onclick="showPage('games',this)"><span class="nav-icon">🃏</span>対応ゲーム</div>
+      <div class="nav-item" onclick="showPage('prices',this)"><span class="nav-icon">📈</span>価格テーブル</div>
       <div class="nav-section">AI設定</div>
-      <div class="nav-item" onclick="showPage('aiPrompt', this)"><span class="nav-icon">🤖</span>AIプロンプト</div>
+      <div class="nav-item" onclick="showPage('aiPrompt',this)"><span class="nav-icon">🤖</span>AIプロンプト</div>
     </nav>
   </div>
 
-  <!-- MAIN -->
   <div class="main">
 
     <!-- DASHBOARD -->
@@ -161,9 +193,9 @@
       <div class="card">
         <div class="card-title">クイックアクション</div>
         <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
-          <button class="btn" onclick="showPage('compose', document.querySelector('[onclick*=compose]'))">✍️ 新しい記事を生成</button>
-          <button class="btn btn-outline" onclick="window.open('/', '_blank')">🌐 サイトを確認</button>
-          <button class="btn btn-outline" onclick="window.open('/?key=tcgvibe0106', '_blank')">🔑 管理者モードで確認</button>
+          <button class="btn" onclick="showPage('compose',document.querySelector('[onclick*=compose]'))">✍️ 新しい記事を生成</button>
+          <button class="btn btn-outline" onclick="window.open('/','_blank')">🌐 サイトを確認</button>
+          <button class="btn btn-outline" onclick="window.open('/?key=tcgvibe0106','_blank')">🔑 管理者モードで確認</button>
         </div>
       </div>
     </div>
@@ -171,7 +203,7 @@
     <!-- ARTICLES -->
     <div class="page" id="page-articles">
       <h1 class="page-title">記事管理</h1>
-      <p class="page-desc">公開中の記事の確認・削除ができます</p>
+      <p class="page-desc">記事の確認・編集・削除ができます</p>
       <div class="card">
         <div class="card-title">公開中の記事</div>
         <div id="articlesList">読み込み中...</div>
@@ -192,15 +224,9 @@
           <option value="mtg">MTG</option>
           <option value="duema">デュエルマスターズ</option>
         </select>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-          <div>
-            <label>執筆者名</label>
-            <input type="text" id="c-author" placeholder="例：そでやまる選手">
-          </div>
-          <div>
-            <label>X（Twitter）アカウント</label>
-            <input type="text" id="c-authorX" placeholder="例：@sodeyamaru0828">
-          </div>
+        <div class="two-col">
+          <div><label>執筆者名</label><input type="text" id="c-author" placeholder="例：そでやまる選手"></div>
+          <div><label>X（Twitter）アカウント</label><input type="text" id="c-authorX" placeholder="例：@sodeyamaru0828"></div>
         </div>
       </div>
       <div class="card">
@@ -208,7 +234,7 @@
         <textarea id="c-questions" style="min-height:120px" placeholder="① 今の環境で一番強いデッキは？&#10;② そのデッキの回し方は？&#10;③ 対策カードは？"></textarea>
       </div>
       <div class="card">
-        <div class="card-title">プロからの回答テキスト <span style="color:var(--muted);font-weight:300;font-size:0.75rem;text-transform:none;letter-spacing:0">（3,000文字以内推奨）</span></div>
+        <div class="card-title">プロからの回答テキスト</div>
         <textarea id="c-rawText" style="min-height:280px" placeholder="LINEの返信をそのままコピペでOK" oninput="checkLen(this)"></textarea>
         <div id="c-charCount" style="font-size:0.75rem;color:var(--muted);text-align:right;margin-top:-1rem;margin-bottom:1rem">0 / 3,000文字</div>
         <button class="btn" id="c-btn" onclick="generateArticle()">✍️ 記事を生成する</button>
@@ -216,13 +242,14 @@
       </div>
       <div id="c-result" style="display:none">
         <div class="card">
-          <div class="card-title">生成結果</div>
+          <div class="card-title">生成結果 — 確認・修正してから公開してください</div>
           <div style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem" id="r-tag"></div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;margin-bottom:0.75rem" id="r-title"></div>
           <div style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border)" id="r-summary"></div>
-          <div style="font-size:0.88rem;line-height:1.9;white-space:pre-wrap;max-height:400px;overflow-y:auto" id="r-content"></div>
-          <div style="margin-top:1.5rem;display:flex;gap:0.75rem">
-            <button class="btn btn-success" onclick="publishArticle()">✓ 公開する</button>
+          <div style="font-size:0.88rem;line-height:1.9;white-space:pre-wrap;max-height:400px;overflow-y:auto;margin-bottom:1.5rem" id="r-content"></div>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+            <button class="btn btn-success" onclick="publishArticle()">✓ このまま公開する</button>
+            <button class="btn btn-gold" onclick="openEditFromResult()">✏️ 編集してから公開</button>
             <button class="btn btn-outline" onclick="document.getElementById('c-result').style.display='none'">✗ 破棄する</button>
           </div>
           <div class="status-msg" id="r-status"></div>
@@ -240,7 +267,7 @@
           <label class="toggle"><input type="checkbox" id="statusToggle" onchange="updateStatus()"><span class="toggle-slider"></span></label>
           <span class="toggle-label" id="statusLabel">読み込み中...</span>
         </div>
-        <p style="font-size:0.82rem;color:var(--muted)">ONにすると一般ユーザーにも全機能が公開されます。OFFは準備中ページを表示。</p>
+        <p style="font-size:0.82rem;color:var(--muted)">ONにすると一般ユーザーにも全機能が公開されます。OFFは記事ページのみ表示。</p>
         <div class="status-msg" id="status-msg"></div>
       </div>
       <div class="card">
@@ -261,7 +288,7 @@
         <div class="game-tags" id="gameTags"></div>
         <div style="display:flex;gap:0.75rem">
           <input type="text" id="newGame" placeholder="新しいゲーム名を入力..." style="margin:0;flex:1">
-          <button class="btn" onclick="addGame()" style="margin:0">追加</button>
+          <button class="btn" onclick="addGame()" style="margin:0;flex-shrink:0">追加</button>
         </div>
         <div class="status-msg" id="games-msg"></div>
       </div>
@@ -277,21 +304,6 @@
         <button class="btn" onclick="savePrices()">保存する</button>
         <div class="status-msg" id="prices-msg"></div>
       </div>
-      <div class="card">
-        <div class="card-title">形式の例</div>
-        <pre style="font-size:0.75rem;color:var(--muted);line-height:1.6;overflow-x:auto">[
-  {
-    "emoji": "🦎",
-    "name": "リザードンex SAR",
-    "set": "スカーレット ex",
-    "rarity": "Secret",
-    "price": "¥38,000",
-    "change": "+12.4%",
-    "changeType": "up",
-    "prediction": "上昇継続"
-  }
-]</pre>
-      </div>
     </div>
 
     <!-- AI PROMPT -->
@@ -304,15 +316,6 @@
         <button class="btn" onclick="savePrompt()">保存する</button>
         <div class="status-msg" id="prompt-msg"></div>
       </div>
-      <div class="card">
-        <div class="card-title">ヒント</div>
-        <p style="font-size:0.82rem;color:var(--muted);line-height:1.7">
-          ・口調（友達っぽく・丁寧に など）<br>
-          ・専門知識のレベル（初心者向け・上級者向け）<br>
-          ・対応ゲームの追加<br>
-          ・禁止事項（価格断言しないなど）
-        </p>
-      </div>
     </div>
 
   </div>
@@ -324,7 +327,7 @@ let settings = {};
 let articles = [];
 let pendingArticle = null;
 
-// ── LOGIN ──
+// LOGIN
 function login() {
   const val = document.getElementById('loginInput').value;
   if (val === ADMIN_KEY) {
@@ -335,11 +338,9 @@ function login() {
     document.getElementById('loginError').textContent = 'パスワードが違います';
   }
 }
-document.getElementById('loginInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') login();
-});
+document.getElementById('loginInput').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
 
-// ── NAVIGATION ──
+// NAVIGATION
 function showPage(id, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -348,7 +349,7 @@ function showPage(id, el) {
   if (id === 'articles') renderArticles();
 }
 
-// ── LOAD ALL ──
+// LOAD
 async function loadAll() {
   await loadSettings();
   await loadArticles();
@@ -364,42 +365,24 @@ async function loadSettings() {
 }
 
 function applySettings() {
-  // Dashboard stats
-  document.getElementById('dash-articles').textContent = articles.length;
   const games = parseJSON(settings.games, []);
+  document.getElementById('dash-articles').textContent = articles.length;
   document.getElementById('dash-games').textContent = games.length;
   const isLive = settings.site_status === 'live';
   document.getElementById('dash-status').textContent = isLive ? '公開中' : '準備中';
-  const prices = parseJSON(settings.price_table, []);
-  document.getElementById('dash-prices').textContent = prices.length;
-
-  // Site status
-  const toggle = document.getElementById('statusToggle');
-  toggle.checked = isLive;
-  document.getElementById('statusLabel').textContent = isLive ? '公開中（全機能が誰でも使えます）' : '準備中（Coming Soonページを表示）';
-
-  // Launch date
-  if (settings.launch_date) {
-    document.getElementById('launchDate').value = settings.launch_date;
-  }
-
-  // Games
+  document.getElementById('dash-prices').textContent = parseJSON(settings.price_table, []).length;
+  document.getElementById('statusToggle').checked = isLive;
+  document.getElementById('statusLabel').textContent = isLive ? '公開中' : '準備中';
+  if (settings.launch_date) document.getElementById('launchDate').value = settings.launch_date;
   renderGameTags(games);
-
-  // Prices
   document.getElementById('priceData').value = JSON.stringify(parseJSON(settings.price_table, []), null, 2);
-
-  // AI prompt
-  if (settings.ai_prompt) {
-    document.getElementById('aiPromptText').value = settings.ai_prompt;
-  }
+  if (settings.ai_prompt) document.getElementById('aiPromptText').value = settings.ai_prompt;
 }
 
 function parseJSON(str, fallback) {
   try { return JSON.parse(str); } catch(e) { return fallback; }
 }
 
-// ── ARTICLES ──
 async function loadArticles() {
   try {
     const res = await fetch('/api/articles');
@@ -420,10 +403,10 @@ function renderArticles() {
       <div class="article-emoji">${a.emoji || '🃏'}</div>
       <div class="article-info">
         <div class="article-info-title">${a.title || ''}</div>
-        <div class="article-info-meta">${a.tag || ''} · ${a.date || ''}</div>
+        <div class="article-info-meta">${a.tag || ''} · ${a.date || ''}${a.author ? ' · ' + a.author : ''}</div>
       </div>
       <div class="article-actions">
-        <button class="btn btn-sm btn-outline" onclick="window.open('/', '_blank')">確認</button>
+        <button class="btn btn-sm btn-gold" onclick="openEditModal(${i})">✏️ 編集</button>
         <button class="btn btn-sm btn-danger" onclick="deleteArticle(${a.id})">削除</button>
       </div>
     </div>
@@ -433,7 +416,7 @@ function renderArticles() {
 async function deleteArticle(id) {
   if (!confirm('この記事を削除しますか？')) return;
   try {
-    const res = await fetch(`/api/articles?id=${id}`, {
+    await fetch(`/api/articles?id=${id}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminKey: ADMIN_KEY }),
@@ -443,7 +426,75 @@ async function deleteArticle(id) {
   } catch(e) { alert('削除に失敗しました'); }
 }
 
-// ── COMPOSE ──
+// EDIT MODAL
+function openEditModal(idx) {
+  const a = articles[idx];
+  document.getElementById('edit-id').value = a.id;
+  document.getElementById('edit-emoji').value = a.emoji || '';
+  document.getElementById('edit-tag').value = a.tag || '環境解説';
+  document.getElementById('edit-title').value = a.title || '';
+  document.getElementById('edit-summary').value = a.summary || '';
+  document.getElementById('edit-content').value = a.content || '';
+  document.getElementById('edit-author').value = a.author || '';
+  document.getElementById('edit-authorX').value = a.authorX || '';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function openEditFromResult() {
+  if (!pendingArticle) return;
+  document.getElementById('edit-id').value = '';
+  document.getElementById('edit-emoji').value = pendingArticle.emoji || '';
+  document.getElementById('edit-tag').value = pendingArticle.tag || '環境解説';
+  document.getElementById('edit-title').value = pendingArticle.title || '';
+  document.getElementById('edit-summary').value = pendingArticle.summary || '';
+  document.getElementById('edit-content').value = pendingArticle.content || '';
+  document.getElementById('edit-author').value = pendingArticle.author || '';
+  document.getElementById('edit-authorX').value = pendingArticle.authorX || '';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+}
+
+async function saveEdit() {
+  const id = document.getElementById('edit-id').value;
+  const body = {
+    adminKey: ADMIN_KEY,
+    title: document.getElementById('edit-title').value,
+    tag: document.getElementById('edit-tag').value,
+    summary: document.getElementById('edit-summary').value,
+    content: document.getElementById('edit-content').value,
+    emoji: document.getElementById('edit-emoji').value,
+    author: document.getElementById('edit-author').value,
+    authorX: document.getElementById('edit-authorX').value,
+  };
+
+  try {
+    if (id) {
+      // 既存記事の更新
+      const res = await fetch(`/api/articles?id=${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error('更新失敗');
+      showMsg('edit-status', 'success', '✓ 保存しました');
+      await loadArticles();
+      renderArticles();
+    } else {
+      // 新規記事を保存してから公開
+      pendingArticle = { ...pendingArticle, ...body };
+      showMsg('edit-status', 'success', '✓ 内容を更新しました。「公開する」を押して公開してください。');
+    }
+    setTimeout(() => closeEditModal(), 1500);
+  } catch(e) {
+    showMsg('edit-status', 'error', 'エラー: ' + e.message);
+  }
+}
+
+// COMPOSE
 function checkLen(el) {
   const len = el.value.length;
   const el2 = document.getElementById('c-charCount');
@@ -473,14 +524,13 @@ async function generateArticle() {
     });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error);
-
     pendingArticle = data.article;
     document.getElementById('r-tag').textContent = (data.article.emoji || '🃏') + ' ' + (data.article.tag || '');
     document.getElementById('r-title').textContent = data.article.title || '';
     document.getElementById('r-summary').textContent = data.article.summary || '';
     document.getElementById('r-content').textContent = data.article.content || '';
     document.getElementById('c-result').style.display = 'block';
-    showMsg('c-status', 'success', '記事が生成されました！内容を確認して公開してください。');
+    showMsg('c-status', 'success', '記事が生成されました！');
   } catch(err) {
     showMsg('c-status', 'error', 'エラー: ' + err.message);
   }
@@ -493,30 +543,25 @@ async function publishArticle() {
   await loadArticles();
 }
 
-// ── SITE STATUS ──
+// SITE STATUS
 async function updateStatus() {
   const isLive = document.getElementById('statusToggle').checked;
-  const value = isLive ? 'live' : 'coming_soon';
-  document.getElementById('statusLabel').textContent = isLive ? '公開中（全機能が誰でも使えます）' : '準備中（Coming Soonページを表示）';
-  const ok = await saveSetting('site_status', value);
-  showMsg('status-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラーが発生しました');
+  document.getElementById('statusLabel').textContent = isLive ? '公開中' : '準備中';
+  const ok = await saveSetting('site_status', isLive ? 'live' : 'coming_soon');
+  showMsg('status-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラー');
 }
 
 async function saveLaunchDate() {
   const value = document.getElementById('launchDate').value;
   if (!value) return;
   const ok = await saveSetting('launch_date', value);
-  showMsg('date-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラーが発生しました');
+  showMsg('date-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラー');
 }
 
-// ── GAMES ──
+// GAMES
 function renderGameTags(games) {
-  const el = document.getElementById('gameTags');
-  el.innerHTML = games.map((g, i) => `
-    <div class="game-tag">
-      <span>${g}</span>
-      <button class="game-tag-del" onclick="removeGame(${i})">×</button>
-    </div>
+  document.getElementById('gameTags').innerHTML = games.map((g, i) => `
+    <div class="game-tag"><span>${g}</span><button class="game-tag-del" onclick="removeGame(${i})">×</button></div>
   `).join('');
 }
 
@@ -528,47 +573,33 @@ async function addGame() {
   if (games.includes(name)) return;
   games.push(name);
   const ok = await saveSetting('games', JSON.stringify(games));
-  if (ok) {
-    settings.games = JSON.stringify(games);
-    renderGameTags(games);
-    input.value = '';
-    showMsg('games-msg', 'success', '✓ 追加しました');
-  }
+  if (ok) { settings.games = JSON.stringify(games); renderGameTags(games); input.value = ''; showMsg('games-msg', 'success', '✓ 追加しました'); }
 }
 
 async function removeGame(idx) {
   const games = parseJSON(settings.games, []);
   games.splice(idx, 1);
   const ok = await saveSetting('games', JSON.stringify(games));
-  if (ok) {
-    settings.games = JSON.stringify(games);
-    renderGameTags(games);
-    showMsg('games-msg', 'success', '✓ 削除しました');
-  }
+  if (ok) { settings.games = JSON.stringify(games); renderGameTags(games); showMsg('games-msg', 'success', '✓ 削除しました'); }
 }
 
-// ── PRICES ──
+// PRICES
 async function savePrices() {
   const text = document.getElementById('priceData').value;
-  try {
-    JSON.parse(text);
-  } catch(e) {
-    showMsg('prices-msg', 'error', 'JSON形式が正しくありません');
-    return;
-  }
+  try { JSON.parse(text); } catch(e) { showMsg('prices-msg', 'error', 'JSON形式が正しくありません'); return; }
   const ok = await saveSetting('price_table', text);
-  showMsg('prices-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラーが発生しました');
+  showMsg('prices-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラー');
 }
 
-// ── AI PROMPT ──
+// AI PROMPT
 async function savePrompt() {
   const value = document.getElementById('aiPromptText').value.trim();
   if (!value) return;
   const ok = await saveSetting('ai_prompt', value);
-  showMsg('prompt-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラーが発生しました');
+  showMsg('prompt-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラー');
 }
 
-// ── HELPERS ──
+// HELPERS
 async function saveSetting(key, value) {
   try {
     const res = await fetch('/api/settings', {
