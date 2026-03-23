@@ -23,10 +23,25 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
-        system: 'あなたはTCGの記事編集者です。プロの回答をQ&A三層構造の記事にしてください。コードブロックやバッククォートは使わず、必ず以下の形式のJSONのみを返してください。contentの改行は\\nを使うこと: {"title":"タイトル","tag":"環境解説","summary":"要約","content":"本文（改行は\\nで）","emoji":"絵文字","highlights":["1","2","3"]}',
+        system: `あなたはTCGの記事編集者です。プロの回答をQ&A三層構造の記事にしてください。
+
+必ず以下の形式で出力してください：
+
+TITLE: ここにタイトル（35文字以内）
+TAG: 環境解説
+SUMMARY: ここに要約（120文字以内）
+EMOJI: 🃏
+HIGHLIGHTS: 見どころ1|見どころ2|見どころ3
+CONTENT:
+ここに記事本文を書く。記号（##、**）は使わず話し言葉で。Q&A三層構造で。`,
         messages: [{
           role: 'user',
-          content: 'ゲーム:' + (game || 'ポケカ') + '\n執筆者:' + (author || 'プロ') + '\n質問:' + (questions || '環境について') + '\n回答:\n' + trimmedText + '\n\nJSONのみ返してください。'
+          content: `ゲーム: ${game || 'ポケカ'}
+執筆者: ${author || 'プロ'}
+質問: ${questions || '環境について'}
+回答: ${trimmedText}
+
+上記の形式で記事を出力してください。`
         }],
       }),
     });
@@ -37,42 +52,25 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    const rawResponse = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    console.log('Response:', text.substring(0, 200));
 
-    // コードブロック除去
-    const text = rawResponse.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
-    console.log('Response first 200:', text.substring(0, 200));
+    // テキスト形式をパース
+    const titleMatch = text.match(/TITLE:\s*(.+)/);
+    const tagMatch = text.match(/TAG:\s*(.+)/);
+    const summaryMatch = text.match(/SUMMARY:\s*(.+)/);
+    const emojiMatch = text.match(/EMOJI:\s*(.+)/);
+    const highlightsMatch = text.match(/HIGHLIGHTS:\s*(.+)/);
+    const contentMatch = text.match(/CONTENT:\s*([\s\S]+)$/);
 
-    // JSON部分を抽出して安全にパース
-    let article;
-    try {
-      // まずそのままパースを試みる
-      article = JSON.parse(text);
-    } catch(e1) {
-      try {
-        // { から } までを抽出してパース
-        const start = text.indexOf('{');
-        const end = text.lastIndexOf('}');
-        if (start === -1 || end === -1) throw new Error('no brackets');
-        article = JSON.parse(text.substring(start, end + 1));
-      } catch(e2) {
-        // 改行を含むJSONを修復してパース
-        try {
-          const start = text.indexOf('{');
-          const end = text.lastIndexOf('}');
-          if (start === -1 || end === -1) throw new Error('no brackets');
-          // contentフィールドの実際の改行を\\nに変換
-          const jsonStr = text.substring(start, end + 1)
-            .replace(/("content"\s*:\s*")([\s\S]*?)("(?:\s*,|\s*\}))/g, (match, p1, p2, p3) => {
-              return p1 + p2.replace(/\n/g, '\\n').replace(/\r/g, '') + p3;
-            });
-          article = JSON.parse(jsonStr);
-        } catch(e3) {
-          console.error('All parse attempts failed:', text.substring(0, 300));
-          return res.status(500).json({ error: 'JSON parse failed' });
-        }
-      }
-    }
+    const article = {
+      title: titleMatch ? titleMatch[1].trim() : 'TCGプロ解説記事',
+      tag: tagMatch ? tagMatch[1].trim() : '環境解説',
+      summary: summaryMatch ? summaryMatch[1].trim() : '',
+      emoji: emojiMatch ? emojiMatch[1].trim() : '🃏',
+      highlights: highlightsMatch ? highlightsMatch[1].split('|').map(h => h.trim()) : [],
+      content: contentMatch ? contentMatch[1].trim() : text,
+    };
 
     // Supabaseに保存
     try {
@@ -86,28 +84,18 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           game: game || 'pokeca',
-          tag: article.tag || '環境解説',
-          title: article.title || '',
-          summary: article.summary || '',
-          content: article.content || '',
-          emoji: article.emoji || '',
+          tag: article.tag,
+          title: article.title,
+          summary: article.summary,
+          content: article.content,
+          emoji: article.emoji,
         }),
       });
     } catch(e) {
       console.error('Supabase error:', e);
     }
 
-    return res.status(200).json({
-      success: true,
-      article: {
-        title: article.title || '',
-        tag: article.tag || '環境解説',
-        summary: article.summary || '',
-        content: (article.content || '').replace(/\\n/g, '\n'),
-        emoji: article.emoji || '',
-        highlights: article.highlights || [],
-      },
-    });
+    return res.status(200).json({ success: true, article });
 
   } catch (err) {
     console.error('Handler error:', err.message);
