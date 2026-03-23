@@ -8,214 +8,297 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #fafaf8; --bg2: #f5f3ee; --surface: #ffffff;
-    --border: rgba(0,0,0,0.07); --border2: rgba(0,0,0,0.12);
-    --text: #1a1814; --muted: #7a7570;
-    --gold: #b8952a; --gold2: #d4af5a; --gold-light: #f5edda;
+    --bg:#fafaf8; --bg2:#f5f3ee; --surface:#fff;
+    --border:rgba(0,0,0,0.07); --border2:rgba(0,0,0,0.12);
+    --text:#1a1814; --muted:#7a7570;
+    --gold:#b8952a; --gold2:#d4af5a; --gold-light:#f5edda;
   }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { font-family: 'DM Sans','Noto Sans JP',sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; line-height: 1.7; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.7;}
 
-  /* NAV */
-  nav { position: fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:1.25rem 3rem; background:rgba(250,250,248,0.88); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); }
-  .nav-logo { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:600; letter-spacing:0.08em; color:var(--text); text-decoration:none; }
-  .nav-logo span { color:var(--gold); }
-  .nav-links { display:flex; align-items:center; gap:2.5rem; list-style:none; }
-  .nav-links a { color:var(--muted); text-decoration:none; font-size:0.82rem; font-weight:400; letter-spacing:0.06em; text-transform:uppercase; transition:color 0.2s; }
-  .nav-links a:hover { color:var(--text); }
-  .nav-cta { background:var(--text)!important; color:var(--bg)!important; padding:0.5rem 1.4rem; border-radius:2px; font-size:0.75rem!important; letter-spacing:0.1em; font-weight:500!important; }
-  .nav-cta:hover { background:var(--gold)!important; color:#fff!important; }
+  /* ── COMING SOON PAGE ── */
+  #comingSoon{
+    display:none;
+    position:fixed;inset:0;z-index:9999;
+    background:var(--bg);
+    flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:2rem;
+  }
+  #comingSoon.show{display:flex;}
+  .cs-logo{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;letter-spacing:0.08em;margin-bottom:3rem;}
+  .cs-logo span{color:var(--gold);}
+  .cs-ornament{display:flex;align-items:center;gap:1rem;justify-content:center;margin-bottom:2rem;}
+  .cs-line{width:60px;height:1px;}
+  .cs-diamond{width:6px;height:6px;background:var(--gold2);transform:rotate(45deg);}
+  .cs-title{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,8vw,6rem);font-weight:300;line-height:1;margin-bottom:1rem;}
+  .cs-title em{font-style:italic;color:var(--gold);}
+  .cs-desc{color:var(--muted);font-size:0.95rem;font-weight:300;line-height:1.8;max-width:380px;margin:0 auto 3rem;}
+  .cs-countdown{display:flex;gap:2rem;justify-content:center;margin-bottom:3rem;flex-wrap:wrap;}
+  .cs-count{text-align:center;}
+  .cs-count-num{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;display:block;line-height:1;}
+  .cs-count-label{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);}
+  .cs-notify{display:flex;gap:0;max-width:400px;margin:0 auto;}
+  .cs-email{flex:1;background:var(--surface);border:1px solid var(--border2);border-right:none;padding:0.875rem 1.25rem;font-family:inherit;font-size:0.875rem;color:var(--text);outline:none;border-radius:2px 0 0 2px;}
+  .cs-email::placeholder{color:#b5b0a8;}
+  .cs-notify-btn{background:var(--text);color:var(--bg);border:none;padding:0.875rem 1.5rem;font-family:inherit;font-size:0.75rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:0 2px 2px 0;transition:background 0.2s;white-space:nowrap;}
+  .cs-notify-btn:hover{background:var(--gold);}
+  .cs-footer{margin-top:4rem;font-size:0.75rem;color:#c0bcb5;}
 
-  /* HERO */
-  .hero { min-height:100vh; display:flex; align-items:center; justify-content:center; text-align:center; padding:8rem 2rem 6rem; background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(184,149,42,0.07) 0%,transparent 70%),var(--bg); position:relative; }
-  .hero::before { content:''; position:absolute; inset:0; background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px); background-size:60px 60px; mask-image:radial-gradient(ellipse 80% 70% at 50% 50%,black 30%,transparent 80%); pointer-events:none; }
-  .hero-eyebrow { font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); font-weight:500; margin-bottom:2rem; display:flex; align-items:center; justify-content:center; gap:0.75rem; }
-  .hero-eyebrow::before,.hero-eyebrow::after { content:''; display:block; width:32px; height:1px; background:var(--gold2); opacity:0.6; }
-  .hero-title { font-family:'Cormorant Garamond',serif; font-size:clamp(5rem,13vw,11rem); font-weight:300; line-height:0.85; color:var(--text); margin-bottom:0.25rem; }
-  .hero-title-ai { font-family:'Cormorant Garamond',serif; font-size:clamp(1.5rem,4vw,3rem); font-weight:300; font-style:italic; color:var(--gold); letter-spacing:0.15em; margin-bottom:2rem; }
-  .hero-desc { max-width:420px; margin:0 auto 3rem; color:var(--muted); font-size:0.95rem; font-weight:300; line-height:1.8; }
-  .ornament { display:flex; align-items:center; gap:1rem; justify-content:center; margin:1.5rem 0; }
-  .ornament-line { width:60px; height:1px; }
-  .ornament-diamond { width:5px; height:5px; background:var(--gold2); transform:rotate(45deg); }
+  /* ── ARTICLE OVERLAY ── */
+  #articleOverlay{
+    display:none;position:fixed;inset:0;z-index:300;
+    background:var(--bg);overflow-y:auto;
+  }
+  #articleOverlay.open{display:block;}
+  .article-header{
+    position:sticky;top:0;background:rgba(250,250,248,0.92);backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);padding:1rem 2rem;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .article-back{background:none;border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-radius:2px;color:var(--muted);transition:border-color 0.2s,color 0.2s;}
+  .article-back:hover{border-color:var(--text);color:var(--text);}
+  .article-logo{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;letter-spacing:0.08em;}
+  .article-logo span{color:var(--gold);}
+  .article-body{max-width:720px;margin:4rem auto;padding:0 2rem 6rem;}
+  .article-tag-line{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:1rem;}
+  .article-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:300;line-height:1.2;margin-bottom:1rem;}
+  .article-meta{font-size:0.78rem;color:var(--muted);margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
+  .article-content{font-size:0.95rem;line-height:1.9;white-space:pre-wrap;color:var(--text);}
+  .article-review{margin-top:2.5rem;padding:1.5rem;background:var(--gold-light);border:1px solid rgba(184,149,42,0.2);border-radius:2px;}
+  .article-review-label{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:0.75rem;}
+  .article-review-text{font-size:0.9rem;line-height:1.8;}
+  .article-author{margin-top:2rem;padding:1.25rem;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .article-author-name{font-weight:500;font-size:0.9rem;}
+  .article-author-x{font-size:0.82rem;color:var(--gold);text-decoration:none;}
+  .article-author-x:hover{text-decoration:underline;}
+  .article-ai-btn{margin-top:1.5rem;display:inline-flex;align-items:center;gap:0.5rem;font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border2);padding-bottom:0.25rem;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:color 0.2s,border-color 0.2s;}
+  .article-ai-btn:hover{color:var(--gold);border-color:var(--gold2);}
 
-  /* SEARCH */
-  .hero-search-wrap { max-width:520px; margin:0 auto 2.5rem; position:relative; }
-  .hero-search-input { width:100%; background:var(--surface); border:1px solid var(--border2); padding:1rem 5.5rem 1rem 1.5rem; font-family:inherit; font-size:0.875rem; color:var(--text); outline:none; border-radius:2px; transition:border-color 0.2s; }
-  .hero-search-input::placeholder { color:#b5b0a8; }
-  .hero-search-input:focus { border-color:var(--gold2); }
-  .hero-search-btn { position:absolute; right:0; top:0; bottom:0; background:var(--text); color:var(--bg); border:none; padding:0 1.25rem; font-family:inherit; font-size:0.7rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; border-radius:0 2px 2px 0; transition:background 0.2s; }
-  .hero-search-btn:hover { background:var(--gold); }
-  .hero-stats { display:flex; gap:4rem; justify-content:center; flex-wrap:wrap; margin-top:4rem; padding-top:2.5rem; border-top:1px solid var(--border); }
-  .hero-stat-num { font-family:'Cormorant Garamond',serif; font-size:2.5rem; font-weight:300; display:block; line-height:1; }
-  .hero-stat-label { font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-top:0.3rem; display:block; }
+  /* ── NAV ── */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.25rem 3rem;background:rgba(250,250,248,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+  .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;letter-spacing:0.08em;color:var(--text);text-decoration:none;}
+  .nav-logo span{color:var(--gold);}
+  .nav-links{display:flex;align-items:center;gap:2.5rem;list-style:none;}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:0.82rem;font-weight:400;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.2s;}
+  .nav-links a:hover{color:var(--text);}
+  .nav-cta{background:var(--text)!important;color:var(--bg)!important;padding:0.5rem 1.4rem;border-radius:2px;font-size:0.75rem!important;letter-spacing:0.1em;font-weight:500!important;}
+  .nav-cta:hover{background:var(--gold)!important;color:#fff!important;}
 
-  /* SHARED */
-  section { padding:7rem 2rem; }
-  .container { max-width:1060px; margin:0 auto; }
-  .sec-label { font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); font-weight:500; display:block; margin-bottom:1rem; }
-  .sec-title { font-family:'Cormorant Garamond',serif; font-size:clamp(2.4rem,4vw,3.6rem); font-weight:300; line-height:1.1; color:var(--text); margin-bottom:1.25rem; }
-  .sec-desc { color:var(--muted); font-size:0.9rem; font-weight:300; line-height:1.8; max-width:400px; }
-  .divider { width:100%; height:1px; background:var(--border); }
-  .text-link { display:inline-flex; align-items:center; gap:0.5rem; font-size:0.78rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--text); text-decoration:none; border-bottom:1px solid var(--border2); padding-bottom:0.25rem; transition:border-color 0.2s,color 0.2s; }
-  .text-link:hover { border-color:var(--gold2); color:var(--gold); }
+  /* ── HERO ── */
+  .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:8rem 2rem 6rem;background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(184,149,42,0.07) 0%,transparent 70%),var(--bg);position:relative;}
+  .hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 70% at 50% 50%,black 30%,transparent 80%);pointer-events:none;}
+  .hero-eyebrow{font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:2rem;display:flex;align-items:center;justify-content:center;gap:0.75rem;}
+  .hero-eyebrow::before,.hero-eyebrow::after{content:'';display:block;width:32px;height:1px;background:var(--gold2);opacity:0.6;}
+  .hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(5rem,13vw,11rem);font-weight:300;line-height:0.85;color:var(--text);margin-bottom:0.25rem;}
+  .hero-title-ai{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,4vw,3rem);font-weight:300;font-style:italic;color:var(--gold);letter-spacing:0.15em;margin-bottom:2rem;}
+  .hero-desc{max-width:420px;margin:0 auto 3rem;color:var(--muted);font-size:0.95rem;font-weight:300;line-height:1.8;}
+  .ornament{display:flex;align-items:center;gap:1rem;justify-content:center;margin:1.5rem 0;}
+  .ornament-line{width:60px;height:1px;}
+  .ornament-diamond{width:5px;height:5px;background:var(--gold2);transform:rotate(45deg);}
+  .hero-search-wrap{max-width:520px;margin:0 auto 2.5rem;position:relative;}
+  .hero-search-input{width:100%;background:var(--surface);border:1px solid var(--border2);padding:1rem 5.5rem 1rem 1.5rem;font-family:inherit;font-size:0.875rem;color:var(--text);outline:none;border-radius:2px;transition:border-color 0.2s;}
+  .hero-search-input::placeholder{color:#b5b0a8;}
+  .hero-search-input:focus{border-color:var(--gold2);}
+  .hero-search-btn{position:absolute;right:0;top:0;bottom:0;background:var(--text);color:var(--bg);border:none;padding:0 1.25rem;font-family:inherit;font-size:0.7rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:0 2px 2px 0;transition:background 0.2s;}
+  .hero-search-btn:hover{background:var(--gold);}
+  .hero-stats{display:flex;gap:4rem;justify-content:center;flex-wrap:wrap;margin-top:4rem;padding-top:2.5rem;border-top:1px solid var(--border);}
+  .hero-stat-num{font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:300;display:block;line-height:1;}
+  .hero-stat-label{font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:0.3rem;display:block;}
 
-  /* GAMES */
-  .games-strip { padding:1.5rem 2rem; background:var(--bg2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
-  .games-inner { max-width:1060px; margin:0 auto; display:flex; align-items:center; gap:2.5rem; overflow-x:auto; scrollbar-width:none; }
-  .games-inner::-webkit-scrollbar { display:none; }
-  .games-label { font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); white-space:nowrap; flex-shrink:0; }
-  .games-sep { width:1px; height:20px; background:var(--border2); flex-shrink:0; }
-  .game-item { font-size:0.8rem; color:var(--muted); white-space:nowrap; cursor:pointer; transition:color 0.2s; flex-shrink:0; }
-  .game-item:hover { color:var(--text); }
+  /* ── SHARED ── */
+  section{padding:7rem 2rem;}
+  .container{max-width:1060px;margin:0 auto;}
+  .sec-label{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;display:block;margin-bottom:1rem;}
+  .sec-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,4vw,3.6rem);font-weight:300;line-height:1.1;color:var(--text);margin-bottom:1.25rem;}
+  .sec-desc{color:var(--muted);font-size:0.9rem;font-weight:300;line-height:1.8;max-width:400px;}
+  .divider{width:100%;height:1px;background:var(--border);}
+  .text-link{display:inline-flex;align-items:center;gap:0.5rem;font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border2);padding-bottom:0.25rem;transition:border-color 0.2s,color 0.2s;}
+  .text-link:hover{border-color:var(--gold2);color:var(--gold);}
 
-  /* FEATURES */
-  .features-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; border:1px solid var(--border); background:var(--border); margin-top:4rem; }
-  .feat { background:var(--surface); padding:2.5rem; transition:background 0.25s; }
-  .feat:hover { background:var(--gold-light); }
-  .feat-num { font-family:'Cormorant Garamond',serif; font-size:3rem; font-weight:300; color:rgba(0,0,0,0.08); line-height:1; margin-bottom:1rem; }
-  .feat-title { font-size:0.95rem; font-weight:500; margin-bottom:0.6rem; }
-  .feat-desc { font-size:0.83rem; color:var(--muted); line-height:1.75; font-weight:300; }
+  /* ── GAMES ── */
+  .games-strip{padding:1.5rem 2rem;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .games-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:2.5rem;overflow-x:auto;scrollbar-width:none;}
+  .games-inner::-webkit-scrollbar{display:none;}
+  .games-label{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+  .games-sep{width:1px;height:20px;background:var(--border2);flex-shrink:0;}
+  .game-item{font-size:0.8rem;color:var(--muted);white-space:nowrap;cursor:pointer;transition:color 0.2s;flex-shrink:0;}
+  .game-item:hover{color:var(--text);}
 
-  /* ── AI CHAT PAGE ── */
-  .chat-page { display:none; position:fixed; inset:0; z-index:200; background:var(--bg); flex-direction:column; }
-  .chat-page.open { display:flex; }
-  .chat-page-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 2rem; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; }
-  .chat-page-title { font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:400; }
-  .chat-page-title span { color:var(--gold); font-style:italic; }
-  .chat-close { background:none; border:1px solid var(--border2); padding:0.4rem 1rem; font-family:inherit; font-size:0.75rem; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; border-radius:2px; color:var(--muted); transition:border-color 0.2s,color 0.2s; }
-  .chat-close:hover { border-color:var(--text); color:var(--text); }
+  /* ── FEATURES ── */
+  .features-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;border:1px solid var(--border);background:var(--border);margin-top:4rem;}
+  .feat{background:var(--surface);padding:2.5rem;transition:background 0.25s;}
+  .feat:hover{background:var(--gold-light);}
+  .feat-num{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;color:rgba(0,0,0,0.08);line-height:1;margin-bottom:1rem;}
+  .feat-title{font-size:0.95rem;font-weight:500;margin-bottom:0.6rem;}
+  .feat-desc{font-size:0.83rem;color:var(--muted);line-height:1.75;font-weight:300;}
 
-  .chat-messages { flex:1; overflow-y:auto; padding:2rem; display:flex; flex-direction:column; gap:1.25rem; }
-  .chat-bubble-wrap { display:flex; flex-direction:column; max-width:680px; width:100%; }
-  .chat-bubble-wrap.user { align-self:flex-end; align-items:flex-end; }
-  .chat-bubble-wrap.ai { align-self:flex-start; align-items:flex-start; }
-  .chat-sender { font-size:0.65rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem; }
-  .chat-sender.ai-sender { color:var(--gold); }
-  .chat-bubble { padding:0.875rem 1.125rem; font-size:0.875rem; line-height:1.65; border-radius:2px; }
-  .chat-bubble.user { background:var(--text); color:var(--bg); }
-  .chat-bubble.ai { background:var(--surface); border:1px solid var(--border2); color:var(--text); }
-  .chat-bubble.typing { color:var(--muted); font-style:italic; }
+  /* ── AI CHAT ── */
+  .chat-page{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:column;}
+  .chat-page.open{display:flex;}
+  .chat-page-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+  .chat-page-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;}
+  .chat-page-title span{color:var(--gold);font-style:italic;}
+  .chat-close{background:none;border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-radius:2px;color:var(--muted);transition:border-color 0.2s,color 0.2s;}
+  .chat-close:hover{border-color:var(--text);color:var(--text);}
+  .chat-messages{flex:1;overflow-y:auto;padding:2rem;display:flex;flex-direction:column;gap:1.25rem;}
+  .chat-bubble-wrap{display:flex;flex-direction:column;max-width:680px;width:100%;}
+  .chat-bubble-wrap.user{align-self:flex-end;align-items:flex-end;}
+  .chat-bubble-wrap.ai{align-self:flex-start;align-items:flex-start;}
+  .chat-sender{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;}
+  .chat-sender.ai-sender{color:var(--gold);}
+  .chat-bubble{padding:0.875rem 1.125rem;font-size:0.875rem;line-height:1.65;border-radius:2px;}
+  .chat-bubble.user{background:var(--text);color:var(--bg);}
+  .chat-bubble.ai{background:var(--surface);border:1px solid var(--border2);color:var(--text);}
+  .chat-bubble.typing{color:var(--muted);font-style:italic;}
+  .chat-input-area{padding:1.5rem 2rem;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+  .chat-input-row{max-width:680px;margin:0 auto;display:flex;gap:0.75rem;}
+  .chat-input{flex:1;background:var(--bg);border:1px solid var(--border2);padding:0.875rem 1.25rem;font-family:inherit;font-size:0.875rem;color:var(--text);outline:none;border-radius:2px;transition:border-color 0.2s;resize:none;}
+  .chat-input:focus{border-color:var(--gold2);}
+  .chat-send{background:var(--text);color:var(--bg);border:none;padding:0.875rem 1.5rem;font-family:inherit;font-size:0.75rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:background 0.2s;white-space:nowrap;}
+  .chat-send:hover{background:var(--gold);}
+  .chat-send:disabled{opacity:0.4;cursor:not-allowed;}
+  .chat-suggestions{max-width:680px;margin:0 auto 1rem;display:flex;gap:0.5rem;flex-wrap:wrap;}
+  .chat-suggestion{background:none;border:1px solid var(--border2);padding:0.35rem 0.875rem;font-family:inherit;font-size:0.75rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:border-color 0.2s,color 0.2s;}
+  .chat-suggestion:hover{border-color:var(--gold2);color:var(--text);}
 
-  .chat-input-area { padding:1.5rem 2rem; border-top:1px solid var(--border); background:var(--surface); flex-shrink:0; }
-  .chat-input-row { max-width:680px; margin:0 auto; display:flex; gap:0.75rem; }
-  .chat-input { flex:1; background:var(--bg); border:1px solid var(--border2); padding:0.875rem 1.25rem; font-family:inherit; font-size:0.875rem; color:var(--text); outline:none; border-radius:2px; transition:border-color 0.2s; resize:none; }
-  .chat-input:focus { border-color:var(--gold2); }
-  .chat-send { background:var(--text); color:var(--bg); border:none; padding:0.875rem 1.5rem; font-family:inherit; font-size:0.75rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; border-radius:2px; transition:background 0.2s; white-space:nowrap; }
-  .chat-send:hover { background:var(--gold); }
-  .chat-send:disabled { opacity:0.4; cursor:not-allowed; }
+  /* ── DECK ── */
+  .deck-layout{display:grid;grid-template-columns:1.1fr 1fr;gap:5rem;align-items:center;margin-top:4rem;}
+  .deck-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+  .card-cell{aspect-ratio:63/88;background:var(--bg2);border:1px solid var(--border2);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;cursor:pointer;transition:border-color 0.2s,transform 0.2s;}
+  .card-cell:hover{border-color:var(--gold2);transform:scale(1.05) translateY(-2px);}
+  .card-cell.empty{opacity:0.3;border-style:dashed;font-size:0.9rem;color:var(--muted);}
+  .deck-stats{display:flex;flex-direction:column;gap:1.25rem;}
+  .dstat{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border:1px solid var(--border);background:var(--surface);}
+  .dstat-label{font-size:0.78rem;color:var(--muted);font-weight:300;}
+  .dstat-val{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;}
+  .val-green{color:#2a7a4a;}
 
-  .chat-suggestions { max-width:680px; margin:0 auto 1rem; display:flex; gap:0.5rem; flex-wrap:wrap; }
-  .chat-suggestion { background:none; border:1px solid var(--border2); padding:0.35rem 0.875rem; font-family:inherit; font-size:0.75rem; color:var(--muted); cursor:pointer; border-radius:999px; transition:border-color 0.2s,color 0.2s; }
-  .chat-suggestion:hover { border-color:var(--gold2); color:var(--text); }
+  /* ── PRICES ── */
+  .ptable{width:100%;border-collapse:collapse;margin-top:3rem;}
+  .ptable th{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);padding:0.75rem 1rem;text-align:left;border-bottom:1px solid var(--border2);font-weight:400;}
+  .ptable td{padding:1.1rem 1rem;border-bottom:1px solid var(--border);font-size:0.875rem;vertical-align:middle;}
+  .ptable tr:last-child td{border-bottom:none;}
+  .ptable tbody tr:hover td{background:var(--gold-light);}
+  .card-row{display:flex;align-items:center;gap:0.75rem;}
+  .card-thumb{width:32px;height:44px;background:var(--bg2);border:1px solid var(--border2);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;}
+  .card-name{font-weight:500;font-size:0.875rem;}
+  .card-set{font-size:0.72rem;color:var(--muted);font-weight:300;}
+  .badge{display:inline-block;font-size:0.62rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;padding:0.2rem 0.6rem;border:1px solid;}
+  .badge-gold{color:var(--gold);border-color:var(--gold2);background:var(--gold-light);}
+  .badge-mono{color:var(--muted);border-color:var(--border2);}
+  .chg-up{color:#2a7a4a;font-weight:500;font-size:0.82rem;}
+  .chg-dn{color:#8a2a2a;font-weight:500;font-size:0.82rem;}
+  .ai-pred{font-size:0.78rem;color:var(--muted);}
 
-  /* DECK */
-  .deck-layout { display:grid; grid-template-columns:1.1fr 1fr; gap:5rem; align-items:center; margin-top:4rem; }
-  .deck-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
-  .card-cell { aspect-ratio:63/88; background:var(--bg2); border:1px solid var(--border2); border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; cursor:pointer; transition:border-color 0.2s,transform 0.2s; }
-  .card-cell:hover { border-color:var(--gold2); transform:scale(1.05) translateY(-2px); }
-  .card-cell.empty { opacity:0.3; border-style:dashed; font-size:0.9rem; color:var(--muted); }
-  .deck-stats { display:flex; flex-direction:column; gap:1.25rem; }
-  .dstat { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border:1px solid var(--border); background:var(--surface); }
-  .dstat-label { font-size:0.78rem; color:var(--muted); font-weight:300; }
-  .dstat-val { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:400; }
-  .val-green { color:#2a7a4a; }
+  /* ── NEWS ── */
+  .news-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-top:3rem;}
+  .ncard{background:var(--surface);display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:background 0.2s;cursor:pointer;}
+  .ncard:hover{background:var(--gold-light);}
+  .nthumb{background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:2.8rem;border-bottom:1px solid var(--border);height:160px;}
+  .nthumb.lg{height:220px;}
+  .nbody{padding:1.5rem;flex:1;display:flex;flex-direction:column;gap:0.4rem;}
+  .ntag{font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);font-weight:500;}
+  .ntitle{font-size:0.92rem;font-weight:400;line-height:1.5;flex:1;}
+  .ntitle.lg{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;line-height:1.3;}
+  .ndate{font-size:0.7rem;color:var(--muted);font-weight:300;margin-top:auto;}
 
-  /* PRICES */
-  .ptable { width:100%; border-collapse:collapse; margin-top:3rem; }
-  .ptable th { font-size:0.65rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); padding:0.75rem 1rem; text-align:left; border-bottom:1px solid var(--border2); font-weight:400; }
-  .ptable td { padding:1.1rem 1rem; border-bottom:1px solid var(--border); font-size:0.875rem; vertical-align:middle; }
-  .ptable tr:last-child td { border-bottom:none; }
-  .ptable tbody tr:hover td { background:var(--gold-light); }
-  .card-row { display:flex; align-items:center; gap:0.75rem; }
-  .card-thumb { width:32px; height:44px; background:var(--bg2); border:1px solid var(--border2); border-radius:2px; display:flex; align-items:center; justify-content:center; font-size:0.9rem; flex-shrink:0; }
-  .card-name { font-weight:500; font-size:0.875rem; }
-  .card-set { font-size:0.72rem; color:var(--muted); font-weight:300; }
-  .badge { display:inline-block; font-size:0.62rem; font-weight:500; letter-spacing:0.07em; text-transform:uppercase; padding:0.2rem 0.6rem; border:1px solid; }
-  .badge-gold { color:var(--gold); border-color:var(--gold2); background:var(--gold-light); }
-  .badge-mono { color:var(--muted); border-color:var(--border2); }
-  .chg-up { color:#2a7a4a; font-weight:500; font-size:0.82rem; }
-  .chg-dn { color:#8a2a2a; font-weight:500; font-size:0.82rem; }
-  .ai-pred { font-size:0.78rem; color:var(--muted); }
+  /* ── CTA ── */
+  .cta-section{background:var(--text);color:var(--bg);text-align:center;padding:8rem 2rem;position:relative;overflow:hidden;}
+  .cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 50% 100%,rgba(184,149,42,0.15) 0%,transparent 70%);}
+  .cta-title{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,7vw,6rem);font-weight:300;line-height:1;margin-bottom:1.5rem;position:relative;}
+  .cta-title em{font-style:italic;color:var(--gold2);}
+  .cta-desc{color:rgba(250,250,248,0.55);font-size:0.9rem;font-weight:300;max-width:360px;margin:0 auto 2.5rem;line-height:1.8;position:relative;}
+  .btn-light{display:inline-flex;align-items:center;gap:0.5rem;padding:0.875rem 2.25rem;background:var(--bg);color:var(--text);font-size:0.8rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;border:none;cursor:pointer;border-radius:2px;transition:background 0.2s,color 0.2s;position:relative;}
+  .btn-light:hover{background:var(--gold);color:#fff;}
+  .btn-outline-light{display:inline-flex;align-items:center;gap:0.5rem;padding:0.875rem 2.25rem;background:transparent;color:rgba(250,250,248,0.6);font-size:0.8rem;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;border:1px solid rgba(250,250,248,0.2);cursor:pointer;border-radius:2px;transition:border-color 0.2s,color 0.2s;position:relative;}
+  .btn-outline-light:hover{border-color:var(--gold2);color:var(--gold2);}
 
-  /* NEWS */
-  .news-grid { display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); margin-top:3rem; }
-  .ncard { background:var(--surface); display:flex; flex-direction:column; text-decoration:none; color:inherit; transition:background 0.2s; }
-  .ncard:hover { background:var(--gold-light); }
-  .nthumb { background:var(--bg2); display:flex; align-items:center; justify-content:center; font-size:2.8rem; border-bottom:1px solid var(--border); height:160px; }
-  .nthumb.lg { height:220px; }
-  .nbody { padding:1.5rem; flex:1; display:flex; flex-direction:column; gap:0.4rem; }
-  .ntag { font-size:0.62rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); font-weight:500; }
-  .ntitle { font-size:0.92rem; font-weight:400; line-height:1.5; flex:1; }
-  .ntitle.lg { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:400; line-height:1.3; }
-  .ndate { font-size:0.7rem; color:var(--muted); font-weight:300; margin-top:auto; }
+  /* ── FOOTER ── */
+  footer{background:var(--surface);border-top:1px solid var(--border);padding:4rem 2rem 2rem;color:var(--muted);}
+  .footer-top{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;padding-bottom:3rem;border-bottom:1px solid var(--border);}
+  .footer-logo{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--text);letter-spacing:0.08em;display:block;margin-bottom:0.75rem;text-decoration:none;}
+  .footer-logo span{color:var(--gold);}
+  .footer-brand p{font-size:0.82rem;line-height:1.7;font-weight:300;}
+  .footer-col h4{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text);font-weight:500;margin-bottom:1.25rem;}
+  .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.65rem;}
+  .footer-col li a{font-size:0.82rem;color:var(--muted);text-decoration:none;font-weight:300;transition:color 0.2s;}
+  .footer-col li a:hover{color:var(--text);}
+  .footer-bottom{max-width:1060px;margin:1.5rem auto 0;display:flex;align-items:center;justify-content:space-between;font-size:0.75rem;color:#c0bcb5;}
 
-  /* CTA */
-  .cta-section { background:var(--text); color:var(--bg); text-align:center; padding:8rem 2rem; position:relative; overflow:hidden; }
-  .cta-section::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 70% at 50% 100%,rgba(184,149,42,0.15) 0%,transparent 70%); }
-  .cta-title { font-family:'Cormorant Garamond',serif; font-size:clamp(3rem,7vw,6rem); font-weight:300; line-height:1; margin-bottom:1.5rem; position:relative; }
-  .cta-title em { font-style:italic; color:var(--gold2); }
-  .cta-desc { color:rgba(250,250,248,0.55); font-size:0.9rem; font-weight:300; max-width:360px; margin:0 auto 2.5rem; line-height:1.8; position:relative; }
-  .btn-light { display:inline-flex; align-items:center; gap:0.5rem; padding:0.875rem 2.25rem; background:var(--bg); color:var(--text); font-size:0.8rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none; border:none; cursor:pointer; border-radius:2px; transition:background 0.2s,color 0.2s; position:relative; }
-  .btn-light:hover { background:var(--gold); color:#fff; }
-  .btn-outline-light { display:inline-flex; align-items:center; gap:0.5rem; padding:0.875rem 2.25rem; background:transparent; color:rgba(250,250,248,0.6); font-size:0.8rem; font-weight:400; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none; border:1px solid rgba(250,250,248,0.2); cursor:pointer; border-radius:2px; transition:border-color 0.2s,color 0.2s; position:relative; }
-  .btn-outline-light:hover { border-color:var(--gold2); color:var(--gold2); }
+  /* ── FADE IN ── */
+  .fi{opacity:0;transform:translateY(20px);transition:opacity 0.65s ease,transform 0.65s ease;}
+  .fi.vis{opacity:1;transform:translateY(0);}
 
-  /* FOOTER */
-  footer { background:var(--surface); border-top:1px solid var(--border); padding:4rem 2rem 2rem; color:var(--muted); }
-  .footer-top { max-width:1060px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:3rem; padding-bottom:3rem; border-bottom:1px solid var(--border); }
-  .footer-logo { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:600; color:var(--text); letter-spacing:0.08em; display:block; margin-bottom:0.75rem; text-decoration:none; }
-  .footer-logo span { color:var(--gold); }
-  .footer-brand p { font-size:0.82rem; line-height:1.7; font-weight:300; }
-  .footer-col h4 { font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--text); font-weight:500; margin-bottom:1.25rem; }
-  .footer-col ul { list-style:none; display:flex; flex-direction:column; gap:0.65rem; }
-  .footer-col li a { font-size:0.82rem; color:var(--muted); text-decoration:none; font-weight:300; transition:color 0.2s; }
-  .footer-col li a:hover { color:var(--text); }
-  .footer-bottom { max-width:1060px; margin:1.5rem auto 0; display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:#c0bcb5; }
-
-  /* FADE IN */
-  .fi { opacity:0; transform:translateY(20px); transition:opacity 0.65s ease,transform 0.65s ease; }
-  .fi.vis { opacity:1; transform:translateY(0); }
-
-  @media (max-width:900px) { .news-grid { grid-template-columns:1fr; } }
-  @media (max-width:768px) {
-    .deck-layout,.features-grid { grid-template-columns:1fr; }
-    .footer-top { grid-template-columns:1fr 1fr; }
-    nav .nav-links li:not(:last-child) { display:none; }
-    .chat-input-row { flex-direction:column; }
-    .chat-send { width:100%; text-align:center; }
+  @media(max-width:900px){.news-grid{grid-template-columns:1fr;}}
+  @media(max-width:768px){
+    .deck-layout,.features-grid{grid-template-columns:1fr;}
+    .footer-top{grid-template-columns:1fr 1fr;}
+    nav .nav-links li:not(:last-child){display:none;}
+    .chat-input-row{flex-direction:column;}
   }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <a href="#" class="nav-logo">TCGVIBE<span>.AI</span></a>
-  <ul class="nav-links">
-    <li><a href="#features">機能</a></li>
-    <li><a href="#deck">デッキ</a></li>
-    <li><a href="#prices">価格</a></li>
-    <li><a href="#news">ニュース</a></li>
-    <li><a href="#" class="nav-cta" onclick="openChat(event)">AIに相談</a></li>
-  </ul>
-</nav>
+<!-- ── COMING SOON PAGE ── -->
+<div id="comingSoon">
+  <div class="cs-logo">TCGVIBE<span>.AI</span></div>
+  <div class="cs-ornament">
+    <div class="cs-line" style="background:linear-gradient(90deg,transparent,var(--gold2))"></div>
+    <div class="cs-diamond"></div>
+    <div class="cs-line" style="background:linear-gradient(90deg,var(--gold2),transparent)"></div>
+  </div>
+  <h1 class="cs-title">Coming<br><em>Soon.</em></h1>
+  <p class="cs-desc">AIを活用した次世代TCGプラットフォームを準備中です。もうしばらくお待ちください。</p>
+  <div class="cs-countdown">
+    <div class="cs-count"><span class="cs-count-num" id="csDays">00</span><span class="cs-count-label">Days</span></div>
+    <div class="cs-count"><span class="cs-count-num" id="csHours">00</span><span class="cs-count-label">Hours</span></div>
+    <div class="cs-count"><span class="cs-count-num" id="csMinutes">00</span><span class="cs-count-label">Minutes</span></div>
+    <div class="cs-count"><span class="cs-count-num" id="csSeconds">00</span><span class="cs-count-label">Seconds</span></div>
+  </div>
+  <div class="cs-notify">
+    <input class="cs-email" type="email" placeholder="メールアドレスを入力...">
+    <button class="cs-notify-btn" onclick="notifySignup()">通知を受け取る</button>
+  </div>
+  <p class="cs-footer">© 2025 TCGVIBE.AI</p>
+</div>
 
-<!-- ── AI CHAT FULLSCREEN ── -->
+<!-- ── ARTICLE OVERLAY ── -->
+<div id="articleOverlay">
+  <div class="article-header">
+    <button class="article-back" onclick="closeArticle()">← 戻る</button>
+    <div class="article-logo">TCGVIBE<span>.AI</span></div>
+    <button class="article-back" onclick="openChat(event)" style="border-color:var(--gold2);color:var(--gold)">AIに質問する</button>
+  </div>
+  <div class="article-body">
+    <div class="article-tag-line" id="articleTag"></div>
+    <h1 class="article-title" id="articleTitle"></h1>
+    <div class="article-meta" id="articleDate"></div>
+    <div class="article-content" id="articleContent"></div>
+    <div class="article-review" id="articleReviewBox" style="display:none">
+      <div class="article-review-label">TCGVIBE AI 総評</div>
+      <div class="article-review-text" id="articleReview"></div>
+    </div>
+    <div class="article-author" id="articleAuthorBox" style="display:none">
+      <span class="article-author-name" id="articleAuthorName"></span>
+      <a class="article-author-x" id="articleAuthorX" href="#" target="_blank" rel="noopener"></a>
+    </div>
+  </div>
+</div>
+
+<!-- ── AI CHAT ── -->
 <div class="chat-page" id="chatPage">
   <div class="chat-page-header">
     <div class="chat-page-title">TCGVIBE<span>.AI</span> — TCGアドバイザー</div>
     <button class="chat-close" onclick="closeChat()">← サイトに戻る</button>
   </div>
-
   <div class="chat-messages" id="chatMessages">
-    <!-- Welcome -->
     <div class="chat-bubble-wrap ai">
       <div class="chat-sender ai-sender">TCGVIBE.AI</div>
       <div class="chat-bubble ai">こんにちは！TCGVIBEのAIアドバイザーです🃏<br>デッキ構築・カード評価・ルール裁定・大会対策など、何でも気軽に聞いてください。</div>
     </div>
   </div>
-
   <div class="chat-input-area">
     <div class="chat-suggestions" id="chatSuggestions">
       <button class="chat-suggestion" onclick="sendSuggestion(this)">今の環境で強いデッキは？</button>
@@ -230,7 +313,18 @@
   </div>
 </div>
 
-<!-- HERO -->
+<!-- ── MAIN SITE ── -->
+<nav>
+  <a href="#" class="nav-logo">TCGVIBE<span>.AI</span></a>
+  <ul class="nav-links">
+    <li><a href="#features">機能</a></li>
+    <li><a href="#deck">デッキ</a></li>
+    <li><a href="#prices">価格</a></li>
+    <li><a href="#news">ニュース</a></li>
+    <li><a href="#" class="nav-cta" onclick="openChat(event)">AIに相談</a></li>
+  </ul>
+</nav>
+
 <section class="hero">
   <div style="position:relative;z-index:1;width:100%;max-width:680px;margin:0 auto">
     <div class="hero-eyebrow fi">AI-Powered TCG Platform</div>
@@ -254,7 +348,6 @@
   </div>
 </section>
 
-<!-- GAMES -->
 <div class="games-strip">
   <div class="games-inner">
     <span class="games-label">対応ゲーム</span>
@@ -270,7 +363,6 @@
   </div>
 </div>
 
-<!-- FEATURES -->
 <section id="features" style="background:var(--bg2);">
   <div class="container">
     <div class="fi"><span class="sec-label">機能</span><h2 class="sec-title">AIが変える<br>TCG体験</h2></div>
@@ -280,7 +372,7 @@
       <div class="feat"><div class="feat-num">03</div><h3 class="feat-title">AIデッキビルダー</h3><p class="feat-desc">コンセプトを入力するだけで最適なデッキを自動構築。環境トップのリストも瞬時に参照・改善。</p></div>
       <div class="feat"><div class="feat-num">04</div><h3 class="feat-title">リアルタイム価格追跡</h3><p class="feat-desc">主要マーケットの相場をリアルタイム集計。AIが価格変動を予測し、買い時・売り時を通知します。</p></div>
       <div class="feat"><div class="feat-num">05</div><h3 class="feat-title">ルール裁定チェッカー</h3><p class="feat-desc">複雑なカード効果の公式裁定を即座に確認。大会前の不安を解消します。</p></div>
-      <div class="feat"><div class="feat-num">06</div><h3 class="feat-title">コレクション管理</h3><p class="feat-desc">所持カードを登録して資産価値を自動計算。欲しいカードのウィッシュリスト機能も搭載。</p></div>
+      <div class="feat"><div class="feat-num">06</div><h3 class="feat-title">プロ記事</h3><p class="feat-desc">実績あるプロプレイヤーによる独自記事。AIの解説付きで初心者にも分かりやすく。</p></div>
     </div>
     <div style="margin-top:2.5rem;text-align:center">
       <a href="#" class="text-link fi" onclick="openChat(event)">AIアドバイザーを試す →</a>
@@ -290,7 +382,6 @@
 
 <div class="divider"></div>
 
-<!-- DECK BUILDER -->
 <section id="deck" style="background:var(--bg);">
   <div class="container">
     <div class="deck-layout">
@@ -321,7 +412,6 @@
 
 <div class="divider"></div>
 
-<!-- PRICES -->
 <section id="prices" style="background:var(--bg2);">
   <div class="container">
     <div class="fi" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem">
@@ -343,7 +433,6 @@
 
 <div class="divider"></div>
 
-<!-- NEWS -->
 <section id="news" style="background:var(--bg);">
   <div class="container">
     <div class="fi" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem">
@@ -351,15 +440,13 @@
       <a href="#" style="font-size:0.75rem;color:var(--muted);text-decoration:none;letter-spacing:0.06em;text-transform:uppercase">すべて見る →</a>
     </div>
     <div class="news-grid fi" id="newsGrid">
-      <!-- ローディング表示 -->
-      <div class="ncard"><div class="nthumb lg" style="font-size:1rem;color:var(--muted)">記事を取得中...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle lg">最新情報を取得しています</h3><span class="ndate">--</span></div></div>
-      <div class="ncard"><div class="nthumb" style="font-size:1rem;color:var(--muted)">...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle">取得中</h3><span class="ndate">--</span></div></div>
-      <div class="ncard"><div class="nthumb" style="font-size:1rem;color:var(--muted)">...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle">取得中</h3><span class="ndate">--</span></div></div>
+      <div class="ncard"><div class="nthumb lg" style="font-size:1rem;color:var(--muted)">読み込み中...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle lg">最新情報を取得しています</h3><span class="ndate">--</span></div></div>
+      <div class="ncard"><div class="nthumb">...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle">取得中</h3><span class="ndate">--</span></div></div>
+      <div class="ncard"><div class="nthumb">...</div><div class="nbody"><div class="ntag">読み込み中</div><h3 class="ntitle">取得中</h3><span class="ndate">--</span></div></div>
     </div>
   </div>
 </section>
 
-<!-- CTA -->
 <section class="cta-section">
   <h2 class="cta-title fi">今すぐ始めよう、<br><em>無料で。</em></h2>
   <p class="cta-desc fi">クレジットカード不要。AIアドバイザーを今すぐ試せます。</p>
@@ -369,7 +456,6 @@
   </div>
 </section>
 
-<!-- FOOTER -->
 <footer>
   <div class="footer-top">
     <div class="footer-brand"><a href="#" class="footer-logo">TCGVIBE<span>.AI</span></a><p>AIが変えるTCGの新しい体験。<br>あなたの最強デッキを一緒に作ろう。</p></div>
@@ -381,11 +467,90 @@
 </footer>
 
 <script>
+// ── 管理者チェック ──
+const ADMIN_KEY = 'tcgvibe0106';
+const params = new URLSearchParams(window.location.search);
+const isAdmin = params.get('key') === ADMIN_KEY;
+
+// 管理者でなければ準備中ページを表示
+if (!isAdmin) {
+  document.getElementById('comingSoon').classList.add('show');
+}
+
+// ── カウントダウン（2025年6月1日オープン予定）──
+const launchDate = new Date('2025-06-01T00:00:00+09:00');
+function updateCountdown() {
+  const now = new Date();
+  const diff = launchDate - now;
+  if (diff <= 0) {
+    document.getElementById('csDays').textContent = '00';
+    document.getElementById('csHours').textContent = '00';
+    document.getElementById('csMinutes').textContent = '00';
+    document.getElementById('csSeconds').textContent = '00';
+    return;
+  }
+  const days = Math.floor(diff / (1000*60*60*24));
+  const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+  const seconds = Math.floor((diff % (1000*60)) / 1000);
+  document.getElementById('csDays').textContent = String(days).padStart(2,'0');
+  document.getElementById('csHours').textContent = String(hours).padStart(2,'0');
+  document.getElementById('csMinutes').textContent = String(minutes).padStart(2,'0');
+  document.getElementById('csSeconds').textContent = String(seconds).padStart(2,'0');
+}
+updateCountdown();
+setInterval(updateCountdown, 1000);
+
+function notifySignup() {
+  alert('通知登録ありがとうございます！オープン時にお知らせします。');
+}
+
 // ── FADE IN ──
 const obs = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
 }, { threshold: 0.08 });
 document.querySelectorAll('.fi').forEach(el => obs.observe(el));
+
+// ── ARTICLE ──
+let currentArticles = [];
+
+function showArticle(article) {
+  document.getElementById('articleTag').textContent = (article.emoji || '🃏') + ' ' + (article.tag || '');
+  document.getElementById('articleTitle').textContent = article.title || '';
+  document.getElementById('articleDate').textContent = article.date || '';
+  document.getElementById('articleContent').textContent = article.content || '';
+
+  // 総評
+  if (article.review) {
+    document.getElementById('articleReview').textContent = article.review;
+    document.getElementById('articleReviewBox').style.display = 'block';
+  } else {
+    document.getElementById('articleReviewBox').style.display = 'none';
+  }
+
+  // 著者
+  if (article.author || article.authorX) {
+    document.getElementById('articleAuthorName').textContent = article.author || '';
+    const xLink = document.getElementById('articleAuthorX');
+    if (article.authorX) {
+      const handle = article.authorX.startsWith('@') ? article.authorX : '@' + article.authorX;
+      xLink.textContent = handle + ' でフォロー →';
+      xLink.href = 'https://x.com/' + handle.replace('@','');
+      xLink.style.display = 'inline';
+    }
+    document.getElementById('articleAuthorBox').style.display = 'flex';
+  } else {
+    document.getElementById('articleAuthorBox').style.display = 'none';
+  }
+
+  document.getElementById('articleOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeArticle() {
+  document.getElementById('articleOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
 
 // ── LOAD ARTICLES ──
 async function loadArticles() {
@@ -394,43 +559,29 @@ async function loadArticles() {
     const data = await res.json();
     const grid = document.getElementById('newsGrid');
     if (!data.articles || !data.articles.length) return;
+    currentArticles = data.articles;
 
     grid.innerHTML = data.articles.map((a, i) => `
-      <a class="ncard" href="#" onclick="openArticleChat('${a.title.replace(/'/g,"\\'")}', event)">
+      <div class="ncard" onclick="showArticle(currentArticles[${i}])">
         <div class="nthumb${i === 0 ? ' lg' : ''}">${a.emoji || '🃏'}</div>
         <div class="nbody">
-          <div class="ntag">${a.tag}</div>
-          <h3 class="ntitle${i === 0 ? ' lg' : ''}">${a.title}</h3>
-          <p style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem;font-weight:300">${a.summary}</p>
-          <span class="ndate">${a.date}</span>
+          <div class="ntag">${a.tag || ''}</div>
+          <h3 class="ntitle${i === 0 ? ' lg' : ''}">${a.title || ''}</h3>
+          <p style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem;font-weight:300">${a.summary || ''}</p>
+          <span class="ndate">${a.date || ''}</span>
         </div>
-      </a>
+      </div>
     `).join('');
-
-    // re-observe for fade-in
-    grid.querySelectorAll('.ncard').forEach(el => obs.observe(el));
   } catch(e) {
     console.error('記事取得エラー:', e);
   }
 }
-
-function openArticleChat(title, e) {
-  e.preventDefault();
-  openChat();
-  setTimeout(() => {
-    document.getElementById('chatInput').value = `「${title}」について詳しく教えてください`;
-    sendMessage();
-  }, 200);
-}
-
-// ページ読み込み時に記事を取得
 loadArticles();
 
-// ── CHAT STATE ──
+// ── CHAT ──
 let chatHistory = [];
 let isLoading = false;
 
-// ── CHAT OPEN/CLOSE ──
 function openChat(e) {
   if (e) e.preventDefault();
   document.getElementById('chatPage').classList.add('open');
@@ -441,8 +592,6 @@ function closeChat() {
   document.getElementById('chatPage').classList.remove('open');
   document.body.style.overflow = '';
 }
-
-// ── HERO SEARCH → open chat with query ──
 function heroSearch() {
   const q = document.getElementById('heroSearch').value.trim();
   if (!q) { openChat(); return; }
@@ -455,47 +604,32 @@ function heroSearch() {
 document.getElementById('heroSearch').addEventListener('keydown', e => {
   if (e.key === 'Enter') heroSearch();
 });
-
-// ── SUGGESTIONS ──
 function sendSuggestion(btn) {
   document.getElementById('chatInput').value = btn.textContent;
   document.getElementById('chatSuggestions').style.display = 'none';
   sendMessage();
 }
-
-// ── SEND MESSAGE ──
 async function sendMessage() {
   if (isLoading) return;
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
   if (!text) return;
-
-  // hide suggestions after first message
   document.getElementById('chatSuggestions').style.display = 'none';
-
   input.value = '';
   input.style.height = 'auto';
-
-  // add user bubble
   addBubble('user', text);
   chatHistory.push({ role: 'user', content: text });
-
-  // show typing
   const typingId = addBubble('ai', '考え中...', true);
   isLoading = true;
   document.getElementById('chatSendBtn').disabled = true;
-
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: chatHistory }),
     });
-
     const data = await res.json();
-
     removeBubble(typingId);
-
     if (!res.ok || data.error) {
       addBubble('ai', `エラーが発生しました: ${data.error ?? '不明なエラー'}`);
     } else {
@@ -504,14 +638,12 @@ async function sendMessage() {
     }
   } catch (err) {
     removeBubble(typingId);
-    addBubble('ai', 'ネットワークエラーが発生しました。しばらくしてからもう一度お試しください。');
+    addBubble('ai', 'ネットワークエラーが発生しました。');
   }
-
   isLoading = false;
   document.getElementById('chatSendBtn').disabled = false;
   input.focus();
 }
-
 function addBubble(role, text, isTyping = false) {
   const id = 'bubble-' + Date.now() + Math.random();
   const msgs = document.getElementById('chatMessages');
@@ -523,7 +655,6 @@ function addBubble(role, text, isTyping = false) {
   sender.textContent = role === 'ai' ? 'TCGVIBE.AI' : 'あなた';
   const bubble = document.createElement('div');
   bubble.className = `chat-bubble ${role}${isTyping ? ' typing' : ''}`;
-  // convert newlines to <br>
   bubble.innerHTML = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   wrap.appendChild(sender);
   wrap.appendChild(bubble);
@@ -531,18 +662,12 @@ function addBubble(role, text, isTyping = false) {
   msgs.scrollTop = msgs.scrollHeight;
   return id;
 }
-
 function removeBubble(id) {
   const el = document.getElementById(id);
   if (el) el.remove();
 }
-
-// ── INPUT HANDLERS ──
 function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
 function autoResize(el) {
   el.style.height = 'auto';
