@@ -7,11 +7,9 @@ export default async function handler(req, res) {
   const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
 
   try {
-    const { game, rarity, shop, search, page = 1 } = req.query;
-    const limit = 50;
-    const offset = (page - 1) * limit;
+    const { game, rarity, shop, search } = req.query;
 
-    let url = `${SUPABASE_URL}/rest/v1/card_prices?select=*&order=buy_price.desc&limit=${limit}&offset=${offset}`;
+    let url = `${SUPABASE_URL}/rest/v1/card_prices?select=*&limit=5000&order=id.asc`;
 
     if (game) url += `&game=eq.${game}`;
     if (rarity) url += `&rarity=eq.${rarity}`;
