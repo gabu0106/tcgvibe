@@ -17,7 +17,6 @@
   html{scroll-behavior:smooth;}
   body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
 
-  /* NAV */
   nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.25rem 3rem;background:rgba(250,250,248,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
   .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;letter-spacing:0.08em;color:var(--text);text-decoration:none;}
   .nav-logo span{color:var(--gold);}
@@ -27,7 +26,6 @@
   .nav-ai-btn:hover{background:var(--gold);}
   .nav-ai-btn.show{display:block;}
 
-  /* HERO */
   .hero{padding:10rem 2rem 5rem;text-align:center;background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(184,149,42,0.07) 0%,transparent 70%),var(--bg);position:relative;}
   .hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 60% at 50% 50%,black 30%,transparent 80%);pointer-events:none;}
   .hero-eyebrow{font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:center;gap:0.75rem;}
@@ -39,19 +37,15 @@
   .hero-stat-num{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;display:block;line-height:1;}
   .hero-stat-label{font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;display:block;}
 
-  /* FILTER */
   .filter-bar{padding:1.5rem 2rem;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:72px;z-index:50;}
   .filter-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:0.75rem;overflow-x:auto;scrollbar-width:none;}
   .filter-inner::-webkit-scrollbar{display:none;}
   .filter-btn{background:none;border:1px solid var(--border2);padding:0.35rem 1rem;font-family:inherit;font-size:0.78rem;color:var(--muted);cursor:pointer;border-radius:999px;white-space:nowrap;transition:all 0.2s;}
   .filter-btn:hover,.filter-btn.active{border-color:var(--gold2);color:var(--text);background:var(--gold-light);}
 
-  /* ARTICLES */
   .articles-section{padding:4rem 2rem 6rem;}
   .container{max-width:1060px;margin:0 auto;}
   .articles-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
-  .articles-grid.list-view{grid-template-columns:1fr;}
-
   .article-card{background:var(--surface);display:flex;flex-direction:column;cursor:pointer;transition:background 0.2s;}
   .article-card:hover{background:var(--gold-light);}
   .article-thumb{background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:3rem;border-bottom:1px solid var(--border);height:180px;}
@@ -64,12 +58,8 @@
   .article-meta{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:0.75rem;border-top:1px solid var(--border);}
   .article-date{font-size:0.7rem;color:var(--muted);font-weight:300;}
   .article-read{font-size:0.7rem;color:var(--gold);font-weight:500;letter-spacing:0.05em;}
-
-  /* EMPTY STATE */
   .empty-state{grid-column:1/-1;padding:5rem 2rem;text-align:center;background:var(--surface);}
   .empty-state p{color:var(--muted);font-size:0.9rem;}
-
-  /* LOADING */
   .loading-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
   .loading-card{background:var(--surface);padding:2rem;}
   .skeleton{background:var(--bg2);border-radius:2px;animation:shimmer 1.5s ease-in-out infinite;}
@@ -80,7 +70,29 @@
   .skeleton-line.medium{width:70%;}
   @keyframes shimmer{0%,100%{opacity:1}50%{opacity:0.5}}
 
-  /* ARTICLE OVERLAY */
+  /* 価格テーブル */
+  .prices-section{padding:4rem 2rem;background:var(--bg2);border-top:1px solid var(--border);}
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;}
+  .section-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;}
+  .section-title span{color:var(--gold);}
+  .prices-filters{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+  .price-filter-btn{background:none;border:1px solid var(--border2);padding:0.3rem 0.875rem;font-family:inherit;font-size:0.75rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:all 0.2s;}
+  .price-filter-btn:hover,.price-filter-btn.active{border-color:var(--gold2);color:var(--text);background:var(--gold-light);}
+  .price-search{display:flex;gap:0.5rem;margin-bottom:1.5rem;}
+  .price-search-input{flex:1;max-width:320px;background:var(--surface);border:1px solid var(--border2);padding:0.5rem 1rem;font-family:inherit;font-size:0.85rem;color:var(--text);outline:none;border-radius:2px;}
+  .price-search-input:focus{border-color:var(--gold2);}
+  .prices-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);}
+  .prices-table th{padding:0.75rem 1rem;text-align:left;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);background:var(--bg2);}
+  .prices-table td{padding:0.75rem 1rem;font-size:0.85rem;border-bottom:1px solid var(--border);}
+  .prices-table tr:hover td{background:var(--gold-light);}
+  .rarity-badge{display:inline-block;padding:0.15rem 0.5rem;font-size:0.65rem;font-weight:600;letter-spacing:0.08em;border-radius:2px;background:var(--gold-light);color:var(--gold);}
+  .price-val{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:400;color:var(--text);}
+  .prices-pagination{display:flex;align-items:center;gap:0.5rem;margin-top:1.5rem;justify-content:center;}
+  .page-btn{background:none;border:1px solid var(--border2);padding:0.35rem 0.875rem;font-family:inherit;font-size:0.8rem;color:var(--muted);cursor:pointer;border-radius:2px;transition:all 0.2s;}
+  .page-btn:hover,.page-btn.active{border-color:var(--gold2);color:var(--text);background:var(--gold-light);}
+  .page-btn:disabled{opacity:0.3;cursor:not-allowed;}
+  .prices-count{font-size:0.75rem;color:var(--muted);margin-left:1rem;}
+
   #articleOverlay{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;}
   #articleOverlay.open{display:block;}
   .article-header{position:sticky;top:0;background:rgba(250,250,248,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;}
@@ -105,7 +117,6 @@
   .a-ai-cta-text{color:var(--bg);font-size:0.9rem;font-weight:400;}
   .a-ai-cta-btn{color:var(--gold2);font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;}
 
-  /* AI CHAT */
   .chat-page{display:none;position:fixed;inset:0;z-index:300;background:var(--bg);flex-direction:column;}
   .chat-page.open{display:flex;}
   .chat-page-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
@@ -134,24 +145,21 @@
   .chat-suggestion{background:none;border:1px solid var(--border2);padding:0.35rem 0.875rem;font-family:inherit;font-size:0.75rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:all 0.2s;}
   .chat-suggestion:hover{border-color:var(--gold2);color:var(--text);}
 
-  /* FOOTER */
   footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem 2rem 2rem;}
   .footer-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
   .footer-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--text);letter-spacing:0.08em;text-decoration:none;}
   .footer-logo span{color:var(--gold);}
   .footer-copy{font-size:0.75rem;color:#c0bcb5;}
 
-  /* FADE */
   .fi{opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease;}
   .fi.vis{opacity:1;transform:translateY(0);}
 
-  @media(max-width:900px){.articles-grid,.loading-grid{grid-template-columns:1fr;}}
+  @media(max-width:900px){.articles-grid,.loading-grid{grid-template-columns:1fr;}.prices-table th:nth-child(4),.prices-table td:nth-child(4){display:none;}}
   @media(max-width:768px){nav{padding:1rem 1.5rem;}.filter-bar{top:64px;}.chat-input-row{flex-direction:column;}}
 </style>
 </head>
 <body>
 
-<!-- AI CHAT -->
 <div class="chat-page" id="chatPage">
   <div class="chat-page-header">
     <div class="chat-page-title">TCGVIBE<span>.AI</span> — TCGアドバイザー</div>
@@ -176,7 +184,6 @@
   </div>
 </div>
 
-<!-- ARTICLE OVERLAY -->
 <div id="articleOverlay">
   <div class="article-header">
     <button class="article-back" onclick="closeArticle()">← 記事一覧</button>
@@ -203,7 +210,6 @@
   </div>
 </div>
 
-<!-- NAV -->
 <nav>
   <a href="/" class="nav-logo">TCGVIBE<span>.AI</span></a>
   <div class="nav-right">
@@ -212,7 +218,6 @@
   </div>
 </nav>
 
-<!-- HERO -->
 <section class="hero">
   <div style="position:relative;z-index:1;">
     <div class="hero-eyebrow fi">プロの知見 × AIの分析力</div>
@@ -226,7 +231,6 @@
   </div>
 </section>
 
-<!-- FILTER -->
 <div class="filter-bar">
   <div class="filter-inner">
     <button class="filter-btn active" onclick="filterArticles('all', this)">すべて</button>
@@ -240,7 +244,6 @@
   </div>
 </div>
 
-<!-- ARTICLES -->
 <section class="articles-section">
   <div class="container">
     <div id="articlesGrid" class="loading-grid">
@@ -248,6 +251,48 @@
       <div class="loading-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line short" style="margin-bottom:12px"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line medium"></div></div>
       <div class="loading-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line short" style="margin-bottom:12px"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line medium"></div></div>
     </div>
+  </div>
+</section>
+
+<!-- 価格テーブル -->
+<section class="prices-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">カード<span>買取価格</span>一覧</h2>
+      <span class="prices-count" id="pricesCount">読み込み中...</span>
+    </div>
+    <div class="prices-filters">
+      <button class="price-filter-btn active" onclick="filterPrices('all', this)">すべて</button>
+      <button class="price-filter-btn" onclick="filterPrices('SAR', this)">SAR</button>
+      <button class="price-filter-btn" onclick="filterPrices('MUR', this)">MUR</button>
+      <button class="price-filter-btn" onclick="filterPrices('UR', this)">UR</button>
+      <button class="price-filter-btn" onclick="filterPrices('HR', this)">HR</button>
+      <button class="price-filter-btn" onclick="filterPrices('SR', this)">SR</button>
+      <button class="price-filter-btn" onclick="filterPrices('RRR', this)">RRR</button>
+      <button class="price-filter-btn" onclick="filterPrices('RR', this)">RR</button>
+      <button class="price-filter-btn" onclick="filterPrices('AR', this)">AR</button>
+    </div>
+    <div class="price-search">
+      <input class="price-search-input" type="text" placeholder="カード名で検索..." id="priceSearchInput" oninput="searchPrices(this.value)">
+    </div>
+    <div id="pricesTableWrap">
+      <table class="prices-table">
+        <thead>
+          <tr>
+            <th>カード名</th>
+            <th>パック</th>
+            <th>レアリティ</th>
+            <th>型番</th>
+            <th>買取価格</th>
+            <th>ショップ</th>
+          </tr>
+        </thead>
+        <tbody id="pricesTableBody">
+          <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">読み込み中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prices-pagination" id="pricesPagination"></div>
   </div>
 </section>
 
@@ -262,13 +307,8 @@
 const ADMIN_KEY = 'tcgvibe0106';
 const params = new URLSearchParams(window.location.search);
 const isAdmin = params.get('key') === ADMIN_KEY;
+if (isAdmin) document.getElementById('navAiBtn').classList.add('show');
 
-// 管理者のみAIボタンを表示
-if (isAdmin) {
-  document.getElementById('navAiBtn').classList.add('show');
-}
-
-// FADE IN
 const obs = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
 }, { threshold: 0.08 });
@@ -285,21 +325,16 @@ async function loadArticles() {
     allArticles = data.articles || [];
     document.getElementById('articleCount').textContent = allArticles.length;
     renderArticles(allArticles);
-  } catch(e) {
-    console.error(e);
-    renderArticles([]);
-  }
+  } catch(e) { renderArticles([]); }
 }
 
 function renderArticles(articles) {
   const grid = document.getElementById('articlesGrid');
   grid.className = 'articles-grid';
-
   if (!articles.length) {
     grid.innerHTML = '<div class="empty-state"><p>記事を準備中です。もうしばらくお待ちください。</p></div>';
     return;
   }
-
   grid.innerHTML = articles.map((a, i) => `
     <div class="article-card" onclick="openArticle(${allArticles.indexOf(a)})">
       <div class="article-thumb${i === 0 ? ' lg' : ''}">${a.emoji || '🃏'}</div>
@@ -319,11 +354,7 @@ function renderArticles(articles) {
 function filterArticles(tag, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  if (tag === 'all') {
-    renderArticles(allArticles);
-  } else {
-    renderArticles(allArticles.filter(a => a.tag === tag || a.game === tag));
-  }
+  renderArticles(tag === 'all' ? allArticles : allArticles.filter(a => a.tag === tag || a.game === tag));
 }
 
 function openArticle(idx) {
@@ -333,27 +364,14 @@ function openArticle(idx) {
   document.getElementById('aTitle').textContent = a.title || '';
   document.getElementById('aMeta').textContent = a.date || '';
   document.getElementById('aContent').textContent = a.content || '';
-
-  if (a.review) {
-    document.getElementById('aReview').textContent = a.review;
-    document.getElementById('aReviewBox').style.display = 'block';
-  } else {
-    document.getElementById('aReviewBox').style.display = 'none';
-  }
-
+  if (a.review) { document.getElementById('aReview').textContent = a.review; document.getElementById('aReviewBox').style.display = 'block'; }
+  else { document.getElementById('aReviewBox').style.display = 'none'; }
   if (a.author || a.authorX) {
     document.getElementById('aAuthorName').textContent = a.author || '';
     const xLink = document.getElementById('aAuthorX');
-    if (a.authorX) {
-      const handle = a.authorX.startsWith('@') ? a.authorX : '@' + a.authorX;
-      xLink.textContent = handle + ' でフォロー →';
-      xLink.href = 'https://x.com/' + handle.replace('@','');
-    }
+    if (a.authorX) { const h = a.authorX.startsWith('@') ? a.authorX : '@' + a.authorX; xLink.textContent = h + ' でフォロー →'; xLink.href = 'https://x.com/' + h.replace('@',''); }
     document.getElementById('aAuthorBox').style.display = 'flex';
-  } else {
-    document.getElementById('aAuthorBox').style.display = 'none';
-  }
-
+  } else { document.getElementById('aAuthorBox').style.display = 'none'; }
   document.getElementById('articleOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0, 0);
@@ -365,18 +383,98 @@ function closeArticle() {
 }
 
 function openChatFromArticle() {
-  if (!isAdmin) {
-    alert('AIチャット機能は近日公開予定です！');
+  if (!isAdmin) { alert('AIチャット機能は近日公開予定です！'); return; }
+  closeArticle(); openChat();
+  if (currentArticle) {
+    setTimeout(() => { document.getElementById('chatInput').value = `「${currentArticle.title}」についてもっと詳しく教えてください`; sendMessage(); }, 200);
+  }
+}
+
+// 価格テーブル
+let allPrices = [];
+let filteredPrices = [];
+let currentPricePage = 1;
+const pricesPerPage = 50;
+let currentRarityFilter = 'all';
+let currentSearchQuery = '';
+
+async function loadPrices() {
+  try {
+    const res = await fetch('/api/prices');
+    const data = await res.json();
+    allPrices = data.prices || [];
+    filteredPrices = allPrices;
+    document.getElementById('pricesCount').textContent = `${allPrices.length.toLocaleString()}件`;
+    renderPrices();
+  } catch(e) {
+    document.getElementById('pricesTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">データを読み込めませんでした</td></tr>';
+  }
+}
+
+function filterPrices(rarity, btn) {
+  document.querySelectorAll('.price-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentRarityFilter = rarity;
+  currentPricePage = 1;
+  applyPriceFilters();
+}
+
+function searchPrices(query) {
+  currentSearchQuery = query;
+  currentPricePage = 1;
+  applyPriceFilters();
+}
+
+function applyPriceFilters() {
+  filteredPrices = allPrices.filter(p => {
+    const rarityMatch = currentRarityFilter === 'all' || p.rarity === currentRarityFilter;
+    const searchMatch = !currentSearchQuery || p.card_name.includes(currentSearchQuery);
+    return rarityMatch && searchMatch;
+  });
+  document.getElementById('pricesCount').textContent = `${filteredPrices.length.toLocaleString()}件`;
+  renderPrices();
+}
+
+function renderPrices() {
+  const start = (currentPricePage - 1) * pricesPerPage;
+  const pageData = filteredPrices.slice(start, start + pricesPerPage);
+  const tbody = document.getElementById('pricesTableBody');
+
+  if (!pageData.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">該当するカードが見つかりません</td></tr>';
+    document.getElementById('pricesPagination').innerHTML = '';
     return;
   }
-  closeArticle();
-  openChat();
-  if (currentArticle) {
-    setTimeout(() => {
-      document.getElementById('chatInput').value = `「${currentArticle.title}」についてもっと詳しく教えてください`;
-      sendMessage();
-    }, 200);
-  }
+
+  tbody.innerHTML = pageData.map(p => `
+    <tr>
+      <td>${p.card_name || ''}</td>
+      <td style="color:var(--muted);font-size:0.8rem">${p.pack_name || ''}</td>
+      <td><span class="rarity-badge">${p.rarity || ''}</span></td>
+      <td style="color:var(--muted);font-size:0.8rem">${p.model_number || ''}</td>
+      <td><span class="price-val">${p.buy_price || '-'}</span></td>
+      <td style="color:var(--muted);font-size:0.8rem">${p.shop || ''}</td>
+    </tr>
+  `).join('');
+
+  renderPricesPagination();
+}
+
+function renderPricesPagination() {
+  const totalPages = Math.ceil(filteredPrices.length / pricesPerPage);
+  const pag = document.getElementById('pricesPagination');
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+
+  let html = `<button class="page-btn" onclick="changePricePage(${currentPricePage - 1})" ${currentPricePage === 1 ? 'disabled' : ''}>← 前へ</button>`;
+  html += `<span style="font-size:0.8rem;color:var(--muted)">${currentPricePage} / ${totalPages}</span>`;
+  html += `<button class="page-btn" onclick="changePricePage(${currentPricePage + 1})" ${currentPricePage === totalPages ? 'disabled' : ''}>次へ →</button>`;
+  pag.innerHTML = html;
+}
+
+function changePricePage(page) {
+  currentPricePage = page;
+  renderPrices();
+  document.querySelector('.prices-section').scrollIntoView({ behavior: 'smooth' });
 }
 
 // CHAT
@@ -390,81 +488,44 @@ function openChat(e) {
   document.body.style.overflow = 'hidden';
   setTimeout(() => document.getElementById('chatInput').focus(), 100);
 }
-function closeChat() {
-  document.getElementById('chatPage').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function sendSuggestion(btn) {
-  document.getElementById('chatInput').value = btn.textContent;
-  document.getElementById('chatSuggestions').style.display = 'none';
-  sendMessage();
-}
+function closeChat() { document.getElementById('chatPage').classList.remove('open'); document.body.style.overflow = ''; }
+function sendSuggestion(btn) { document.getElementById('chatInput').value = btn.textContent; document.getElementById('chatSuggestions').style.display = 'none'; sendMessage(); }
 async function sendMessage() {
   if (isLoading) return;
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
   if (!text) return;
   document.getElementById('chatSuggestions').style.display = 'none';
-  input.value = '';
-  input.style.height = 'auto';
+  input.value = ''; input.style.height = 'auto';
   addBubble('user', text);
   chatHistory.push({ role: 'user', content: text });
   const typingId = addBubble('ai', '考え中...', true);
-  isLoading = true;
-  document.getElementById('chatSendBtn').disabled = true;
+  isLoading = true; document.getElementById('chatSendBtn').disabled = true;
   try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: chatHistory }),
-    });
+    const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: chatHistory }) });
     const data = await res.json();
     removeBubble(typingId);
-    if (!res.ok || data.error) {
-      addBubble('ai', 'エラーが発生しました。');
-    } else {
-      addBubble('ai', data.reply);
-      chatHistory.push({ role: 'assistant', content: data.reply });
-    }
-  } catch(err) {
-    removeBubble(typingId);
-    addBubble('ai', 'ネットワークエラーが発生しました。');
-  }
-  isLoading = false;
-  document.getElementById('chatSendBtn').disabled = false;
-  input.focus();
+    if (!res.ok || data.error) { addBubble('ai', 'エラーが発生しました。'); }
+    else { addBubble('ai', data.reply); chatHistory.push({ role: 'assistant', content: data.reply }); }
+  } catch(err) { removeBubble(typingId); addBubble('ai', 'ネットワークエラーが発生しました。'); }
+  isLoading = false; document.getElementById('chatSendBtn').disabled = false; input.focus();
 }
 function addBubble(role, text, isTyping = false) {
   const id = 'bubble-' + Date.now() + Math.random();
   const msgs = document.getElementById('chatMessages');
-  const wrap = document.createElement('div');
-  wrap.className = `chat-bubble-wrap ${role}`;
-  wrap.id = id;
-  const sender = document.createElement('div');
-  sender.className = `chat-sender${role === 'ai' ? ' ai-sender' : ''}`;
-  sender.textContent = role === 'ai' ? 'TCGVIBE.AI' : 'あなた';
-  const bubble = document.createElement('div');
-  bubble.className = `chat-bubble ${role}${isTyping ? ' typing' : ''}`;
+  const wrap = document.createElement('div'); wrap.className = `chat-bubble-wrap ${role}`; wrap.id = id;
+  const sender = document.createElement('div'); sender.className = `chat-sender${role === 'ai' ? ' ai-sender' : ''}`; sender.textContent = role === 'ai' ? 'TCGVIBE.AI' : 'あなた';
+  const bubble = document.createElement('div'); bubble.className = `chat-bubble ${role}${isTyping ? ' typing' : ''}`;
   bubble.innerHTML = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  wrap.appendChild(sender);
-  wrap.appendChild(bubble);
-  msgs.appendChild(wrap);
-  msgs.scrollTop = msgs.scrollHeight;
+  wrap.appendChild(sender); wrap.appendChild(bubble); msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
   return id;
 }
-function removeBubble(id) {
-  const el = document.getElementById(id);
-  if (el) el.remove();
-}
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-}
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-}
+function removeBubble(id) { const el = document.getElementById(id); if (el) el.remove(); }
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
 
 loadArticles();
+loadPrices();
 </script>
 </body>
 </html>
