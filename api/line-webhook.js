@@ -1,5 +1,7 @@
 const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
 
 async function sendLineMessage(replyToken, text) {
   const res = await fetch('https://api.line.me/v2/bot/message/reply', {
@@ -17,7 +19,49 @@ async function sendLineMessage(replyToken, text) {
   console.log('LINE reply result:', JSON.stringify(data));
 }
 
-async function askClaudeWithSearch(userMessage) {
+async function loadHistory() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/chat_history?select=*&order=created_at.asc&limit=20`, {
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'apikey': SUPABASE_KEY,
+      }
+    });
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    return data.map(row => ({
+      role: row.role,
+      content: row.content,
+    }));
+  } catch (e) {
+    console.log('履歴取得失敗:', e.message);
+    return [];
+  }
+}
+
+async function saveMessage(role, content) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/chat_history`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ role, content }),
+    });
+  } catch (e) {
+    console.log('履歴保存失敗:', e.message);
+  }
+}
+
+async function askClaudeWithSearch(userMessage, history) {
+  const messages = [
+    ...history,
+    { role: 'user', content: userMessage }
+  ];
+
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -28,46 +72,37 @@ async function askClaudeWithSearch(userMessage) {
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
-      tools: [
-        {
-          type: 'web_search_20250305',
-          name: 'web_search',
-        }
-      ],
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       system: `あなたはTCGVIBE.AIの司令塔エージェントです。
 ポケモンカード・ワンピースカード・遊戯王などTCGの専門家として、オーナー（俺）からの指示に答えます。
 
 口調はフランクで友達感覚にしてください。
 ・敬語は使わない
 ・「〜だよ」「〜だね」「〜じゃん」などカジュアルに
-・※や補足説明は不要、要点だけ端的に
 ・絵文字は1〜2個だけ使ってOK
 ・300文字以内で答える
-必ずweb_searchツールを使って最新情報を取得してから答えてください。
-特に以下は必ず検索してください：
-- カード環境・tier情報
-- 新弾・最新パック情報  
-- カード相場・買取価格
-- 大会結果・優勝デッキ
 
-返答は300文字以内の日本語で、要点だけ簡潔に答えてください。`,
-      messages: [{ role: 'user', content: userMessage }],
+文章のルール：
+・改行は最小限にする（1〜2回まで）
+・※や「---」などの記号は使わない
+・箇条書きは3つまで、それ以上は文章にまとめる
+・マークダウン記法（**や##など）は絶対に使わない
+
+最新情報が必要な質問は必ずweb_searchで検索してから答える。`,
+      messages,
     }),
   });
 
   const data = await res.json();
   console.log('Claude response:', JSON.stringify(data).slice(0, 200));
 
-  // tool_useとtextブロックを処理
   const textBlocks = data.content?.filter(b => b.type === 'text');
   if (textBlocks?.length > 0) {
     return textBlocks.map(b => b.text).join('\n');
   }
 
-  // tool_useのみの場合は再度呼び出し
   if (data.content?.some(b => b.type === 'tool_use')) {
     const toolUse = data.content.find(b => b.type === 'tool_use');
-    const toolResult = data.content.find(b => b.type === 'tool_result') || { content: '検索完了' };
 
     const res2 = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -80,11 +115,11 @@ async function askClaudeWithSearch(userMessage) {
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        system: `あなたはTCGVIBE.AIの司令塔エージェントです。検索結果をもとに300文字以内の日本語で簡潔に答えてください。`,
+        system: `あなたはTCGVIBE.AIの司令塔エージェントです。フランクに、マークダウンなし、改行最小限、300文字以内で答えてください。`,
         messages: [
-          { role: 'user', content: userMessage },
+          ...messages,
           { role: 'assistant', content: data.content },
-          { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: JSON.stringify(toolResult) }] },
+          { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: '検索完了' }] },
         ],
       }),
     });
@@ -110,7 +145,10 @@ export default async function handler(req, res) {
         const replyToken = event.replyToken;
         console.log('受信:', userMessage);
 
-        const reply = await askClaudeWithSearch(userMessage);
+        const history = await loadHistory();
+        const reply = await askClaudeWithSearch(userMessage, history);
+        await saveMessage('user', userMessage);
+        await saveMessage('assistant', reply);
         await sendLineMessage(replyToken, reply);
       }
     }
