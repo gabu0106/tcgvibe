@@ -1,135 +1,73 @@
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+name: TCG Crawler
 
-const SITES = [
-  { name: 'カードラッシュ_ポケカ', url: 'https://www.cardrush-pokemon.jp/' },
-  { name: 'カードラッシュ_ワンピース', url: 'https://www.cardrush-op.jp/' },
-  { name: 'トレカラフテル', url: 'https://www.tcg-raftel.com/' },
-  { name: 'ワンハッピー', url: 'https://www.onehappy.co.jp/' },
-  { name: 'トレカキャンプ', url: 'https://torecacamp-pokemon.com/' },
-  { name: '晴れるや2', url: 'https://www.hareruya2.com/' },
-  { name: 'トレチャ_ポケカ', url: 'https://torechart.com/pokemon' },
-  { name: 'トレチャ_ワンピース', url: 'https://torechart.com/onepiece' },
-  { name: 'note_PROS', url: 'https://note.com/pros_02' },
-  { name: 'スニーカーダンク', url: 'https://snkrdunk.com/' },
-];
+on:
+  schedule:
+    - cron: '0 21 * * *'
+  workflow_dispatch:
 
-async function crawlSite(site) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      tools: [
-        { type: 'web_search_20250305', name: 'web_search' },
-      ],
-      system: `あなたはTCG情報収集エージェントです。
-指定されたURLのサイトから最新情報を収集して、以下のJSON形式のみで返してください：
-{
-  "site": "サイト名",
-  "date": "取得日",
-  "highlights": ["注目情報1", "注目情報2", "注目情報3"],
-  "high_price_cards": ["高額カード名と価格1", "高額カード名と価格2"],
-  "summary": "全体サマリー200文字以内"
-}
-JSONのみ返してください。前置きや説明は不要です。`,
-      messages: [{ 
-        role: 'user', 
-        content: `以下のサイトの最新情報を収集してください。
-サイト名: ${site.name}
-URL: ${site.url}
-今日の日付: ${new Date().toLocaleDateString('ja-JP')}
+jobs:
+  crawl-cardrush-pokemon:
+    runs-on: ubuntu-latest
+    steps:
+      - name: カードラッシュ_ポケカ
+        run: curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d '{"site":"cardrush_pokemon"}'
 
-買取価格、高額カード、注目情報を取得してください。` 
-      }],
-    }),
-  });
+  crawl-cardrush-op:
+    runs-on: ubuntu-latest
+    steps:
+      - name: カードラッシュ_ワンピース
+        run: curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d '{"site":"cardrush_op"}'
 
-  const data = await res.json();
-  
-  if (data.content?.some(b => b.type === 'tool_use')) {
-    const toolUse = data.content.find(b => b.type === 'tool_use');
-    const res2 = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        system: `JSONのみ返してください。`,
-        messages: [
-          { role: 'user', content: `${site.name} (${site.url}) の最新情報を収集してください。` },
-          { role: 'assistant', content: data.content },
-          { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: '検索完了' }] },
-        ],
-      }),
-    });
-    const data2 = await res2.json();
-    const text = data2.content?.find(b => b.type === 'text')?.text || '{}';
-    try {
-      return JSON.parse(text.replace(/```json|```/g, '').trim());
-    } catch {
-      return { site: site.name, summary: text.slice(0, 200) };
-    }
-  }
+  crawl-raftel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: トレカラフテル
+        run: curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d '{"site":"raftel"}'
 
-  const text = data.content?.find(b => b.type === 'text')?.text || '{}';
-  try {
-    return JSON.parse(text.replace(/```json|```/g, '').trim());
-  } catch {
-    return { site: site.name, summary: text.slice(0, 200) };
-  }
-}
+  crawl-onehappy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ワンハッピー
+        run: curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d '{"site":"onehappy"}'
 
-async function saveToSupabase(data) {
-  await fetch(`${SUPABASE_URL}/rest/v1/crawler_data`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'apikey': SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal',
-    },
-    body: JSON.stringify({
-      site_name: data.site || '',
-      highlights: JSON.stringify(data.highlights || []),
-      high_price_cards: JSON.stringify(data.high_price_cards || []),
-      summary: data.summary || '',
-      raw_data: JSON.stringify(data),
-      crawled_at: new Date().toISOString(),
-    }),
-  });
-}
+  crawl-torecacamp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: トレカキャンプ
+        run: curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d '{"site":"torecacamp"}'
 
-export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    return res.status(200).json({ status: 'Crawler agent ready' });
-  }
-  if (req.method !== 'POST') return res.status(405).end();
+  crawl-hareruya:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 晴れるや2
+        run: curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d '{"site":"hareruya"}'
 
-  const results = [];
-  for (const site of SITES) {
-    try {
-      console.log(`巡回中: ${site.name} (${site.url})`);
-      const data = await crawlSite(site);
-      await saveToSupabase(data);
-      results.push({ site: site.name, status: 'ok' });
-      await new Promise(r => setTimeout(r, 1500));
-    } catch (e) {
-      console.error(`${site.name} エラー:`, e.message);
-      results.push({ site: site.name, status: 'error', error: e.message });
-    }
-  }
+  crawl-torechart-pokemon:
+    runs-on: ubuntu-latest
+    steps:
+      - name: トレチャ_ポケカ
+        run: curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d '{"site":"torechart_pokemon"}'
 
-  return res.status(200).json({ status: 'done', results });
-}
+  crawl-torechart-op:
+    runs-on: ubuntu-latest
+    steps:
+      - name: トレチャ_ワンピース
+        run: curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d '{"site":"torechart_op"}'
+
+  crawl-note:
+    runs-on: ubuntu-latest
+    steps:
+      - name: note_PROS
+        run: curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d '{"site":"note_pros"}'
+
+  crawl-snkrdunk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: スニーカーダンク
+        run: curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d '{"site":"snkrdunk"}'
+
+  collect-x:
+    runs-on: ubuntu-latest
+    steps:
+      - name: X収集
+        run: curl -X POST https://tcgvibe.com/api/agent-x-collector -H "Content-Type: application/json" -d '{}'
