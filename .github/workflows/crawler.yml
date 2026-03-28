@@ -1,4 +1,4 @@
-name: TCG Agent System v2
+name: TCG Agent System v3
 
 on:
   schedule:
@@ -9,72 +9,72 @@ jobs:
   crawl-cardrush-pokemon:
     runs-on: ubuntu-latest
     steps:
-      - name: カードラッシュ_ポケカ
-        run: 'curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d "{\"site\":\"cardrush_pokemon\"}"'
+      - name: cardrush_pokemon
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-crawler/cardrush_pokemon
 
   crawl-cardrush-op:
     runs-on: ubuntu-latest
     steps:
-      - name: カードラッシュ_ワンピース
-        run: 'curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d "{\"site\":\"cardrush_op\"}"'
+      - name: cardrush_op
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-crawler/cardrush_op
 
   crawl-raftel:
     runs-on: ubuntu-latest
     steps:
-      - name: トレカラフテル
-        run: 'curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d "{\"site\":\"raftel\"}"'
+      - name: raftel
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-crawler/raftel
 
   crawl-onehappy:
     runs-on: ubuntu-latest
     steps:
-      - name: ワンハッピー
-        run: 'curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d "{\"site\":\"onehappy\"}"'
+      - name: onehappy
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-crawler/onehappy
 
   crawl-torecacamp:
     runs-on: ubuntu-latest
     steps:
-      - name: トレカキャンプ
-        run: 'curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d "{\"site\":\"torecacamp\"}"'
+      - name: torecacamp
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-crawler/torecacamp
 
   crawl-hareruya:
     runs-on: ubuntu-latest
     steps:
-      - name: 晴れるや2
-        run: 'curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d "{\"site\":\"hareruya\"}"'
+      - name: hareruya
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-crawler/hareruya
 
   crawl-torechart-pokemon:
     runs-on: ubuntu-latest
     steps:
-      - name: トレチャ_ポケカ
-        run: 'curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d "{\"site\":\"torechart_pokemon\"}"'
+      - name: torechart_pokemon
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-crawler/torechart_pokemon
 
   crawl-torechart-op:
     runs-on: ubuntu-latest
     steps:
-      - name: トレチャ_ワンピース
-        run: 'curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d "{\"site\":\"torechart_op\"}"'
+      - name: torechart_op
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-crawler/torechart_op
 
   crawl-note:
     runs-on: ubuntu-latest
     steps:
-      - name: note_PROS
-        run: 'curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d "{\"site\":\"note_pros\"}"'
+      - name: note_pros
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-crawler/note_pros
 
   crawl-snkrdunk:
     runs-on: ubuntu-latest
     steps:
-      - name: スニーカーダンク
-        run: 'curl -X POST https://tcgvibe.com/api/agent-crawler -H "Content-Type: application/json" -d "{\"site\":\"snkrdunk\"}"'
+      - name: snkrdunk
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-crawler/snkrdunk
 
   collect-x:
     runs-on: ubuntu-latest
     steps:
-      - name: X収集
-        run: 'curl -X POST https://tcgvibe.com/api/agent-x-collector -H "Content-Type: application/json" -d "{}"'
+      - name: x_collector
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-x-collector
 
   run-master:
     runs-on: ubuntu-latest
     needs: [crawl-cardrush-pokemon, crawl-cardrush-op, crawl-raftel, crawl-onehappy, crawl-torecacamp, crawl-hareruya, crawl-torechart-pokemon, crawl-torechart-op, crawl-note, crawl-snkrdunk, collect-x]
     steps:
-      - name: マスターエージェント起動
-        run: 'curl -X POST https://tcgvibe.com/api/agent-master -H "Content-Type: application/json" -d "{}"'
+      - name: master
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-master
