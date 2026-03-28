@@ -28,27 +28,18 @@ async function crawlSite(site) {
       max_tokens: 1500,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       system: `あなたはTCG情報収集エージェントです。
-指定されたURLのサイトから最新情報を収集して、以下のJSON形式のみで返してください：
-{
-  "site": "サイト名",
-  "date": "取得日",
-  "highlights": ["注目情報1", "注目情報2", "注目情報3"],
-  "high_price_cards": ["高額カード名と価格1", "高額カード名と価格2"],
-  "summary": "全体サマリー200文字以内"
-}
-JSONのみ返してください。`,
+指定されたURLのサイトから最新情報を収集して、必ず以下のJSON形式のみで返してください。
+前置きや説明は絶対に書かないでください。JSONのみです：
+{"site":"サイト名","date":"取得日","highlights":["注目情報1","注目情報2"],"high_price_cards":["高額カード名と価格"],"summary":"200文字以内のサマリー"}`,
       messages: [{ 
         role: 'user', 
-        content: `以下のサイトの最新情報を収集してください。
-サイト名: ${site.name}
-URL: ${site.url}
-今日の日付: ${new Date().toLocaleDateString('ja-JP')}
-買取価格、高額カード、注目情報を取得してください。` 
+        content: `サイト名: ${site.name}\nURL: ${site.url}\n今日: ${new Date().toLocaleDateString('ja-JP')}\n\nこのサイトの最新買取価格・高額カード・注目情報を収集してJSONで返してください。` 
       }],
     }),
   });
 
   const data = await res.json();
+  let resultText = '';
   
   if (data.content?.some(b => b.type === 'tool_use')) {
     const toolUse = data.content.find(b => b.type === 'tool_use');
@@ -63,33 +54,36 @@ URL: ${site.url}
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1500,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        system: `JSONのみ返してください。`,
+        system: `JSONのみ返してください。前置き不要。`,
         messages: [
-          { role: 'user', content: `${site.name} (${site.url}) の最新情報を収集してください。` },
+          { role: 'user', content: `${site.name}の最新情報をJSONで返してください。` },
           { role: 'assistant', content: data.content },
           { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: '検索完了' }] },
         ],
       }),
     });
     const data2 = await res2.json();
-    const text = data2.content?.find(b => b.type === 'text')?.text || '{}';
-    try {
-      return JSON.parse(text.replace(/```json|```/g, '').trim());
-    } catch {
-      return { site: site.name, summary: text.slice(0, 200) };
-    }
+    resultText = data2.content?.find(b => b.type === 'text')?.text || '';
+  } else {
+    resultText = data.content?.find(b => b.type === 'text')?.text || '';
   }
 
-  const text = data.content?.find(b => b.type === 'text')?.text || '{}';
-  try {
-    return JSON.parse(text.replace(/```json|```/g, '').trim());
-  } catch {
-    return { site: site.name, summary: text.slice(0, 200) };
+  console.log(`${site.name} 結果:`, resultText.slice(0, 100));
+
+  const jsonMatch = resultText.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch(e) {
+      console.log('JSONパース失敗:', e.message);
+    }
   }
+  
+  return { site: site.name, summary: resultText.slice(0, 200), highlights: [], high_price_cards: [] };
 }
 
 async function saveToSupabase(data) {
-  await fetch(`${SUPABASE_URL}/rest/v1/crawler_data`, {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/crawler_data`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${SUPABASE_KEY}`,
@@ -106,6 +100,7 @@ async function saveToSupabase(data) {
       crawled_at: new Date().toISOString(),
     }),
   });
+  console.log('Supabase保存:', res.status);
 }
 
 export default async function handler(req, res) {
@@ -122,14 +117,13 @@ export default async function handler(req, res) {
       console.log(`巡回中: ${site.name}`);
       const data = await crawlSite(site);
       await saveToSupabase(data);
-      return res.status(200).json({ status: 'done', site: site.name });
+      return res.status(200).json({ status: 'done', site: site.name, summary: data.summary });
     } catch (e) {
       console.error(`エラー:`, e.message);
       return res.status(500).json({ error: e.message });
     }
   }
 
-  // サイト指定なしの場合は全件処理
   const results = [];
   for (const [key, site] of Object.entries(SITES)) {
     try {
