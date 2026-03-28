@@ -3,14 +3,16 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
 
 const SITES = [
-  { name: 'カードラッシュ', query: 'カードラッシュ ポケカ 買取価格 高騰 最新' },
-  { name: 'トレカラフテル', query: 'トレカラフテル ポケカ 買取 最新情報' },
-  { name: 'ワンハッピー', query: 'ワンハッピー トレカ 買取価格 最新' },
-  { name: 'トレカキャンプ', query: 'トレカキャンプ ポケカ 買取 最新' },
-  { name: '晴れるや2', query: '晴れるや2 トレカ 買取価格 最新情報' },
-  { name: 'TCG PORTAL', query: 'TCG PORTAL ポケカ 環境 最新' },
-  { name: 'ポケカ環境', query: 'ポケモンカード 環境デッキ tier 最新 2026' },
-  { name: 'X買取情報', query: 'site:x.com ポケカ 買取表 最新 入荷' },
+  { name: 'カードラッシュ_ポケカ', url: 'https://www.cardrush-pokemon.jp/' },
+  { name: 'カードラッシュ_ワンピース', url: 'https://www.cardrush-op.jp/' },
+  { name: 'トレカラフテル', url: 'https://www.tcg-raftel.com/' },
+  { name: 'ワンハッピー', url: 'https://www.onehappy.co.jp/' },
+  { name: 'トレカキャンプ', url: 'https://torecacamp-pokemon.com/' },
+  { name: '晴れるや2', url: 'https://www.hareruya2.com/' },
+  { name: 'トレチャ_ポケカ', url: 'https://torechart.com/pokemon' },
+  { name: 'トレチャ_ワンピース', url: 'https://torechart.com/onepiece' },
+  { name: 'note_PROS', url: 'https://note.com/pros_02' },
+  { name: 'スニーカーダンク', url: 'https://snkrdunk.com/' },
 ];
 
 async function crawlSite(site) {
@@ -23,25 +25,34 @@ async function crawlSite(site) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      max_tokens: 1500,
+      tools: [
+        { type: 'web_search_20250305', name: 'web_search' },
+      ],
       system: `あなたはTCG情報収集エージェントです。
-指定されたキーワードで検索して、以下の情報をJSON形式で返してください：
+指定されたURLのサイトから最新情報を収集して、以下のJSON形式のみで返してください：
 {
   "site": "サイト名",
   "date": "取得日",
   "highlights": ["注目情報1", "注目情報2", "注目情報3"],
-  "high_price_cards": ["高額カード1", "高額カード2"],
+  "high_price_cards": ["高額カード名と価格1", "高額カード名と価格2"],
   "summary": "全体サマリー200文字以内"
 }
-必ずJSONのみ返してください。前置きや説明は不要です。`,
-      messages: [{ role: 'user', content: `${site.query} の最新情報を収集してください。今日の日付: ${new Date().toLocaleDateString('ja-JP')}` }],
+JSONのみ返してください。前置きや説明は不要です。`,
+      messages: [{ 
+        role: 'user', 
+        content: `以下のサイトの最新情報を収集してください。
+サイト名: ${site.name}
+URL: ${site.url}
+今日の日付: ${new Date().toLocaleDateString('ja-JP')}
+
+買取価格、高額カード、注目情報を取得してください。` 
+      }],
     }),
   });
 
   const data = await res.json();
   
-  // tool_useの結果を処理
   if (data.content?.some(b => b.type === 'tool_use')) {
     const toolUse = data.content.find(b => b.type === 'tool_use');
     const res2 = await fetch('https://api.anthropic.com/v1/messages', {
@@ -53,11 +64,11 @@ async function crawlSite(site) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+        max_tokens: 1500,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         system: `JSONのみ返してください。`,
         messages: [
-          { role: 'user', content: `${site.query} の最新情報を収集してください。` },
+          { role: 'user', content: `${site.name} (${site.url}) の最新情報を収集してください。` },
           { role: 'assistant', content: data.content },
           { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: '検索完了' }] },
         ],
@@ -109,11 +120,11 @@ export default async function handler(req, res) {
   const results = [];
   for (const site of SITES) {
     try {
-      console.log(`巡回中: ${site.name}`);
+      console.log(`巡回中: ${site.name} (${site.url})`);
       const data = await crawlSite(site);
       await saveToSupabase(data);
       results.push({ site: site.name, status: 'ok' });
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 1500));
     } catch (e) {
       console.error(`${site.name} エラー:`, e.message);
       results.push({ site: site.name, status: 'error', error: e.message });
