@@ -1,4 +1,4 @@
-name: TCG Agent System
+name: TCG Agent System v2
 
 on:
   schedule:
