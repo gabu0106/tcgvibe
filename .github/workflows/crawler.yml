@@ -3,14 +3,20 @@ name: TCG Crawler
 on:
   schedule:
     - cron: '0 21 * * *'  # 毎朝6時（JST）
-  workflow_dispatch:  # 手動実行も可能
+  workflow_dispatch:
 
 jobs:
   crawl:
     runs-on: ubuntu-latest
     steps:
-      - name: Run crawler
+      - name: Run site crawler
         run: |
           curl -X POST https://tcgvibe.com/api/agent-crawler \
+            -H "Content-Type: application/json" \
+            -d '{}'
+
+      - name: Run X collector
+        run: |
+          curl -X POST https://tcgvibe.com/api/agent-x-collector \
             -H "Content-Type: application/json" \
             -d '{}'
