@@ -62,7 +62,7 @@ async function crawlSite(site, memory) {
   "high_price_cards": ["カード名 買取価格円"],
   "trending_cards": ["注目カード名"],
   "summary": "具体的なカード名と価格を含む200文字以内のサマリー",
-  "new_insight": "このサイトから学んだ新しい知見（次回に活かせること）"
+  "new_insight": "このサイトから学んだ新しい知見"
 }
 JSONのみ返してください。`,
       messages: [{
@@ -137,10 +137,12 @@ async function saveToSupabase(data) {
 
 export default async function handler(req, res) {
   if (req.method === 'GET') return res.status(200).json({ status: 'Crawler ready', sites: Object.keys(SITES) });
-  if (req.method !== 'POST') return res.status(405).end();
 
-  const { site: siteKey } = req.body;
   const memory = await loadMemory();
+
+  const urlParts = req.url?.split('/');
+  const siteKeyFromUrl = urlParts?.[urlParts.length - 1];
+  const siteKey = req.body?.site || siteKeyFromUrl;
 
   if (siteKey && SITES[siteKey]) {
     const site = SITES[siteKey];
