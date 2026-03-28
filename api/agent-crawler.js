@@ -15,7 +15,31 @@ const SITES = {
   snkrdunk: { name: 'スニーカーダンク', url: 'https://snkrdunk.com/' },
 };
 
-async function crawlSite(site) {
+async function loadMemory() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/agent_memory?agent_name=eq.crawler&order=importance.desc&limit=10`,
+      { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY } }
+    );
+    const data = await res.json();
+    return Array.isArray(data) ? data.map(m => m.content).join('\n') : '';
+  } catch { return ''; }
+}
+
+async function saveMemory(content, importance = 5) {
+  await fetch(`${SUPABASE_URL}/rest/v1/agent_memory`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'apikey': SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ agent_name: 'crawler', memory_type: 'site_insight', content, importance }),
+  });
+}
+
+async function crawlSite(site, memory) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -25,22 +49,32 @@ async function crawlSite(site) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
+      max_tokens: 2000,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      system: `あなたはTCG情報収集エージェントです。
-指定されたURLのサイトから最新情報を収集して、必ず以下のJSON形式のみで返してください。
-前置きや説明は絶対に書かないでください。JSONのみです：
-{"site":"サイト名","date":"取得日","highlights":["注目情報1","注目情報2"],"high_price_cards":["高額カード名と価格"],"summary":"200文字以内のサマリー"}`,
-      messages: [{ 
-        role: 'user', 
-        content: `サイト名: ${site.name}\nURL: ${site.url}\n今日: ${new Date().toLocaleDateString('ja-JP')}\n\nこのサイトの最新買取価格・高額カード・注目情報を収集してJSONで返してください。` 
+      system: `あなたはTCGVIBEの情報収集エージェントです。
+過去の学習：${memory || 'なし'}
+
+指定サイトを徹底調査して以下のJSONのみ返してください：
+{
+  "site": "サイト名",
+  "date": "YYYY/MM/DD",
+  "highlights": ["具体的な注目情報（カード名・価格・数量を含む）"],
+  "high_price_cards": ["カード名 買取価格円"],
+  "trending_cards": ["注目カード名"],
+  "summary": "具体的なカード名と価格を含む200文字以内のサマリー",
+  "new_insight": "このサイトから学んだ新しい知見（次回に活かせること）"
+}
+JSONのみ返してください。`,
+      messages: [{
+        role: 'user',
+        content: `サイト名: ${site.name}\nURL: ${site.url}\n今日: ${new Date().toLocaleDateString('ja-JP')}\n\n高額買取カード・価格変動・新入荷・注目情報を徹底収集してください。`
       }],
     }),
   });
 
   const data = await res.json();
   let resultText = '';
-  
+
   if (data.content?.some(b => b.type === 'tool_use')) {
     const toolUse = data.content.find(b => b.type === 'tool_use');
     const res2 = await fetch('https://api.anthropic.com/v1/messages', {
@@ -52,9 +86,9 @@ async function crawlSite(site) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
+        max_tokens: 2000,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        system: `JSONのみ返してください。前置き不要。`,
+        system: `具体的なカード名と価格を含むJSONのみ返してください。`,
         messages: [
           { role: 'user', content: `${site.name}の最新情報をJSONで返してください。` },
           { role: 'assistant', content: data.content },
@@ -68,18 +102,16 @@ async function crawlSite(site) {
     resultText = data.content?.find(b => b.type === 'text')?.text || '';
   }
 
-  console.log(`${site.name} 結果:`, resultText.slice(0, 100));
-
+  console.log(`${site.name}:`, resultText.slice(0, 150));
   const jsonMatch = resultText.match(/\{[\s\S]*\}/);
   if (jsonMatch) {
     try {
-      return JSON.parse(jsonMatch[0]);
-    } catch(e) {
-      console.log('JSONパース失敗:', e.message);
-    }
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.new_insight) await saveMemory(parsed.new_insight, 6);
+      return parsed;
+    } catch(e) { console.log('パース失敗'); }
   }
-  
-  return { site: site.name, summary: resultText.slice(0, 200), highlights: [], high_price_cards: [] };
+  return { site: site.name, summary: resultText.slice(0, 200), highlights: [], high_price_cards: [], trending_cards: [] };
 }
 
 async function saveToSupabase(data) {
@@ -100,41 +132,27 @@ async function saveToSupabase(data) {
       crawled_at: new Date().toISOString(),
     }),
   });
-  console.log('Supabase保存:', res.status);
+  console.log('保存:', res.status);
 }
 
 export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    return res.status(200).json({ status: 'Crawler agent ready', sites: Object.keys(SITES) });
-  }
+  if (req.method === 'GET') return res.status(200).json({ status: 'Crawler ready', sites: Object.keys(SITES) });
   if (req.method !== 'POST') return res.status(405).end();
 
   const { site: siteKey } = req.body;
-  
+  const memory = await loadMemory();
+
   if (siteKey && SITES[siteKey]) {
     const site = SITES[siteKey];
     try {
-      console.log(`巡回中: ${site.name}`);
-      const data = await crawlSite(site);
+      console.log(`巡回: ${site.name}`);
+      const data = await crawlSite(site, memory);
       await saveToSupabase(data);
       return res.status(200).json({ status: 'done', site: site.name, summary: data.summary });
     } catch (e) {
-      console.error(`エラー:`, e.message);
       return res.status(500).json({ error: e.message });
     }
   }
 
-  const results = [];
-  for (const [key, site] of Object.entries(SITES)) {
-    try {
-      console.log(`巡回中: ${site.name}`);
-      const data = await crawlSite(site);
-      await saveToSupabase(data);
-      results.push({ site: site.name, status: 'ok' });
-      await new Promise(r => setTimeout(r, 1000));
-    } catch (e) {
-      results.push({ site: site.name, status: 'error', error: e.message });
-    }
-  }
-  return res.status(200).json({ status: 'done', results });
+  return res.status(200).json({ status: 'ok', sites: Object.keys(SITES) });
 }
