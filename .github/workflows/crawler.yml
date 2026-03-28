@@ -1,0 +1,16 @@
+name: TCG Crawler
+
+on:
+  schedule:
+    - cron: '0 21 * * *'  # 毎朝6時（JST）
+  workflow_dispatch:  # 手動実行も可能
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run crawler
+        run: |
+          curl -X POST https://tcgvibe.com/api/agent-crawler \
+            -H "Content-Type: application/json" \
+            -d '{}'
