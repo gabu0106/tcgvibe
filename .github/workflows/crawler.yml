@@ -10,11 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: collect
-        run: curl -s -X POST https://tcgvibe.com/api/agent-master -H "Content-Type: application/json" --data-raw '{"action":"collect"}'
+        env:
+          BODY: '{"action":"collect"}'
+        run: curl -s -X POST https://tcgvibe.com/api/agent-master -H "Content-Type: application/json" -d "$BODY"
 
   step2-generate:
     runs-on: ubuntu-latest
     needs: step1-collect
     steps:
       - name: generate
-        run: curl -s -X POST https://tcgvibe.com/api/agent-master -H "Content-Type: application/json" --data-raw '{"action":"generate"}'
+        env:
+          BODY: '{"action":"generate"}'
+        run: curl -s -X POST https://tcgvibe.com/api/agent-master -H "Content-Type: application/json" -d "$BODY"
