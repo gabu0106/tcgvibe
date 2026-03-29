@@ -120,7 +120,6 @@ async function callClaude(system, userContent, maxTokens = 1500) {
   }
 }
 
-// ===== Step1: 情報収集 =====
 async function runCollect() {
   console.log('情報収集開始');
   const memory = await loadMemory('collector');
@@ -131,7 +130,6 @@ async function runCollect() {
     `あなたはTCGVIBE情報収集エージェントです。
 過去の学習：${memory || 'なし'}
 既知の優良サイト：${knownStr || 'なし'}
-
 web_searchで自由にTCG情報を収集してください。
 以下のJSONのみ返してください：
 {
@@ -149,7 +147,7 @@ web_searchで自由にTCG情報を収集してください。
   ],
   "new_insight": "学んだこと"
 }`,
-    `今日(${new Date().toLocaleDateString('ja-JP')})のポケカ・ワンピースカードの最新情報を収集してください。高騰カード・買取価格・大会結果・新弾情報など調査してください。`
+    `今日(${new Date().toLocaleDateString('ja-JP')})のポケカ・ワンピースカードの最新情報を収集してください。`
   );
 
   const match = text.match(/\{[\s\S]*\}/);
@@ -166,7 +164,6 @@ web_searchで自由にTCG情報を収集してください。
             raw_data: JSON.stringify(site),
             crawled_at: new Date().toISOString(),
           });
-
           const existing = await supabaseGet('discovered_sites', `url=eq.${encodeURIComponent(site.url)}`);
           if (Array.isArray(existing) && existing.length > 0) {
             await supabasePatch('discovered_sites', `url=eq.${encodeURIComponent(site.url)}`, {
@@ -194,7 +191,6 @@ web_searchで自由にTCG情報を収集してください。
   return 0;
 }
 
-// ===== Step2: 記事・ランキング生成 =====
 async function runGenerate() {
   console.log('記事・ランキング生成開始');
   const [topCards, memory] = await Promise.all([getTopCards(), loadMemory('writer')]);
@@ -294,3 +290,45 @@ async function runGenerate() {
 export default async function handler(req, res) {
   if (req.method === 'GET') return res.status(200).json({ status: 'Master agent ready' });
   if (req.method !== 'POST') return res.status(405).end();
+
+  const { action, article_id } = req.body || {};
+
+  if (action === 'approve' && article_id) {
+    try {
+      await supabasePatch('auto_articles', `id=eq.${article_id}`, { approved: true, status: 'approved' });
+      const articles = await supabaseGet('auto_articles', `id=eq.${article_id}&select=*`);
+      if (articles[0]) {
+        await supabasePost('tcg_articles', {
+          title: articles[0].title, content: articles[0].content,
+          tag: articles[0].tag, emoji: '🃏',
+          summary: articles[0].title,
+          date: new Date().toLocaleDateString('ja-JP'),
+        });
+      }
+      return res.status(200).json({ status: 'approved', article_id });
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  if (action === 'collect') {
+    try {
+      const count = await runCollect();
+      return res.status(200).json({ status: 'done', sites_collected: count });
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  if (action === 'generate') {
+    try {
+      const results = await runGenerate();
+      return res.status(200).json({ status: 'done', results });
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  try {
+    await runCollect();
+    const results = await runGenerate();
+    return res.status(200).json({ status: 'done', results });
+  } catch (e) {
+    await sendLine(`⚠️ エラー: ${e.message}`);
+    return res.status(500).json({ error: e.message });
+  }
+}
