@@ -1,29 +1,95 @@
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN;
 
 const MODEL = 'claude-haiku-4-5-20251001';
 
-const TARGET_KEYWORDS = [
-  'ポケカ 買取',
-  'ポケモンカード 高騰',
-  'ポケカ 入荷',
+const RSS_QUERIES = [
+  'ポケカ 買取 高騰',
+  'ポケモンカード 相場',
   'ワンピースカード 買取',
-  'TCG 高騰',
+  'TCG 投資 高騰',
+  'ポケカ 入荷 速報',
 ];
 
-async function searchTweets(query) {
-  const url = `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,text`;
-  const res = await fetch(url, { headers: { 'Authorization': `Bearer ${X_BEARER_TOKEN}` } });
-  const data = await res.json();
-  console.log(`検索「${query}」結果:`, data.meta?.result_count || 0, '件');
-  return data.data || [];
+async function fetchRSS(query) {
+  try {
+    const url = `https://nitter.net/search/rss?q=${encodeURIComponent(query)}&f=tweets`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    const text = await res.text();
+    
+    // RSSからテキストを抽出
+    const items = text.match(/<item>[\s\S]*?<\/item>/g) || [];
+    return items.slice(0, 20).map(item => {
+      const title = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1] || '';
+      const desc = item.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/)?.[1] || '';
+      return `${title} ${desc}`.replace(/<[^>]+>/g, '').trim();
+    }).filter(t => t.length > 10);
+  } catch (e) {
+    console.log('RSS取得失敗:', e.message);
+    return [];
+  }
 }
 
-async function analyzeWithClaude(tweets, keyword) {
-  if (!tweets.length) return null;
-  const tweetTexts = tweets.map(t => t.text).join('\n---\n');
+async function fetchWithWebSearch(query) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1000,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      system: `TCG情報収集エージェントです。X(Twitter)の最新投稿から情報を収集してください。
+以下のJSONのみ返してください：
+{"posts":["投稿内容1","投稿内容2","投稿内容3"]}`,
+      messages: [{ 
+        role: 'user', 
+        content: `site:x.com OR site:twitter.com ${query} の最新投稿を10件収集してください。今日: ${new Date().toLocaleDateString('ja-JP')}` 
+      }],
+    }),
+  });
+
+  const data = await res.json();
+  let text = '';
+
+  if (data.content?.some(b => b.type === 'tool_use')) {
+    const toolUse = data.content.find(b => b.type === 'tool_use');
+    const res2 = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: MODEL, max_tokens: 1000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        system: 'JSONのみ返してください。',
+        messages: [
+          { role: 'user', content: `${query}のX投稿をJSONで返してください。` },
+          { role: 'assistant', content: data.content },
+          { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: '検索完了' }] },
+        ],
+      }),
+    });
+    const d2 = await res2.json();
+    text = d2.content?.find(b => b.type === 'text')?.text || '';
+  } else {
+    text = data.content?.find(b => b.type === 'text')?.text || '';
+  }
+
+  const match = text.match(/\{[\s\S]*\}/);
+  if (match) {
+    try { return JSON.parse(match[0]).posts || []; } catch {}
+  }
+  return [];
+}
+
+async function analyzeWithClaude(posts, keyword) {
+  if (!posts.length) return null;
+  const postsText = posts.join('\n---\n');
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -31,10 +97,9 @@ async function analyzeWithClaude(tweets, keyword) {
     body: JSON.stringify({
       model: MODEL,
       max_tokens: 800,
-      system: `あなたはTCG情報分析エージェントです。
-X（Twitter）の投稿を分析して以下のJSONのみ返してください：
-{"keyword":"検索キーワード","highlights":["注目情報1","注目情報2"],"high_price_cards":["高額カード名と価格"],"trending":["トレンドカード名"],"summary":"200文字以内のサマリー","alert":true}`,
-      messages: [{ role: 'user', content: `キーワード: ${keyword}\n\n${tweetTexts}\n\n分析してください。` }],
+      system: `TCG情報分析エージェントです。投稿を分析して以下のJSONのみ返してください：
+{"keyword":"検索キーワード","highlights":["注目情報1","注目情報2"],"high_price_cards":["高額カード名と価格"],"trending":["トレンドカード名"],"summary":"200文字以内のサマリー","alert":false}`,
+      messages: [{ role: 'user', content: `キーワード: ${keyword}\n\n${postsText}\n\n分析してください。` }],
     }),
   });
   const data = await res.json();
@@ -71,23 +136,33 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const results = [];
-  for (const keyword of TARGET_KEYWORDS) {
+
+  for (const query of RSS_QUERIES) {
     try {
-      console.log(`X検索中: ${keyword}`);
-      const tweets = await searchTweets(keyword);
-      if (tweets.length > 0) {
-        const analysis = await analyzeWithClaude(tweets, keyword);
+      console.log(`収集中: ${query}`);
+      
+      // RSSとweb_searchを組み合わせて取得
+      const [rssPosts, searchPosts] = await Promise.all([
+        fetchRSS(query),
+        fetchWithWebSearch(query),
+      ]);
+      
+      const allPosts = [...new Set([...rssPosts, ...searchPosts])];
+      console.log(`${query}: ${allPosts.length}件取得`);
+
+      if (allPosts.length > 0) {
+        const analysis = await analyzeWithClaude(allPosts, query);
         if (analysis) {
           await saveToSupabase(analysis);
-          results.push({ keyword, status: 'ok', count: tweets.length });
+          results.push({ query, status: 'ok', count: allPosts.length });
         }
       } else {
-        results.push({ keyword, status: 'no_results' });
+        results.push({ query, status: 'no_results' });
       }
       await new Promise(r => setTimeout(r, 1000));
     } catch (e) {
-      console.error(`${keyword} エラー:`, e.message);
-      results.push({ keyword, status: 'error', error: e.message });
+      console.error(`${query} エラー:`, e.message);
+      results.push({ query, status: 'error', error: e.message });
     }
   }
 
