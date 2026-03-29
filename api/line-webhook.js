@@ -21,22 +21,14 @@ async function sendLineMessage(replyToken, text) {
 
 async function loadHistory() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/chat_history?select=*&order=created_at.asc&limit=20`, {
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'apikey': SUPABASE_KEY,
-      }
-    });
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/chat_history?select=*&order=created_at.asc&limit=10`,
+      { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY } }
+    );
     const data = await res.json();
     if (!Array.isArray(data)) return [];
-    return data.map(row => ({
-      role: row.role,
-      content: row.content,
-    }));
-  } catch (e) {
-    console.log('履歴取得失敗:', e.message);
-    return [];
-  }
+    return data.map(row => ({ role: row.role, content: row.content }));
+  } catch { return []; }
 }
 
 async function saveMessage(role, content) {
@@ -51,16 +43,11 @@ async function saveMessage(role, content) {
       },
       body: JSON.stringify({ role, content }),
     });
-  } catch (e) {
-    console.log('履歴保存失敗:', e.message);
-  }
+  } catch {}
 }
 
-async function askClaudeWithSearch(userMessage, history) {
-  const messages = [
-    ...history,
-    { role: 'user', content: userMessage }
-  ];
+async function askClaude(userMessage, history) {
+  const messages = [...history, { role: 'user', content: userMessage }];
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -70,8 +57,8 @@ async function askClaudeWithSearch(userMessage, history) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 500,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       system: `あなたはTCGVIBE.AIの司令塔エージェントです。
 ポケモンカード・ワンピースカード・遊戯王などTCGの専門家として、オーナー（俺）からの指示に答えます。
@@ -85,8 +72,8 @@ async function askClaudeWithSearch(userMessage, history) {
 文章のルール：
 ・改行は最小限にする（1〜2回まで）
 ・※や「---」などの記号は使わない
-・箇条書きは3つまで、それ以上は文章にまとめる
-・マークダウン記法（**や##など）は絶対に使わない
+・箇条書きは3つまで
+・マークダウン記法は絶対に使わない
 
 最新情報が必要な質問は必ずweb_searchで検索してから答える。`,
       messages,
@@ -97,13 +84,10 @@ async function askClaudeWithSearch(userMessage, history) {
   console.log('Claude response:', JSON.stringify(data).slice(0, 200));
 
   const textBlocks = data.content?.filter(b => b.type === 'text');
-  if (textBlocks?.length > 0) {
-    return textBlocks.map(b => b.text).join('\n');
-  }
+  if (textBlocks?.length > 0) return textBlocks.map(b => b.text).join('\n');
 
   if (data.content?.some(b => b.type === 'tool_use')) {
     const toolUse = data.content.find(b => b.type === 'tool_use');
-
     const res2 = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -112,10 +96,10 @@ async function askClaudeWithSearch(userMessage, history) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 500,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        system: `あなたはTCGVIBE.AIの司令塔エージェントです。フランクに、マークダウンなし、改行最小限、300文字以内で答えてください。`,
+        system: `フランクに、マークダウンなし、改行最小限、300文字以内で答えてください。`,
         messages: [
           ...messages,
           { role: 'assistant', content: data.content },
@@ -132,9 +116,7 @@ async function askClaudeWithSearch(userMessage, history) {
 }
 
 export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    return res.status(200).json({ status: 'LINE Webhook is running' });
-  }
+  if (req.method === 'GET') return res.status(200).json({ status: 'LINE Webhook is running' });
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
@@ -146,7 +128,7 @@ export default async function handler(req, res) {
         console.log('受信:', userMessage);
 
         const history = await loadHistory();
-        const reply = await askClaudeWithSearch(userMessage, history);
+        const reply = await askClaude(userMessage, history);
         await saveMessage('user', userMessage);
         await saveMessage('assistant', reply);
         await sendLineMessage(replyToken, reply);
