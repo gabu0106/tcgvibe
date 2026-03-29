@@ -3,6 +3,8 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
 
+const MODEL = 'claude-haiku-4-5-20251001';
+
 async function sendLineMessage(replyToken, text) {
   const res = await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
@@ -46,6 +48,46 @@ async function saveMessage(role, content) {
   } catch {}
 }
 
+async function approveArticle(articleId) {
+  await fetch(`${SUPABASE_URL}/rest/v1/auto_articles?id=eq.${articleId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'apikey': SUPABASE_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ approved: true, status: 'approved' }),
+  });
+
+  // tcg_articlesテーブルにも追加して公開
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/auto_articles?id=eq.${articleId}&select=*`,
+    { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY } }
+  );
+  const articles = await res.json();
+  if (articles[0]) {
+    const a = articles[0];
+    await fetch(`${SUPABASE_URL}/rest/v1/tcg_articles`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        title: a.title,
+        content: a.content,
+        tag: a.tag,
+        emoji: '🃏',
+        summary: a.title,
+        date: new Date().toLocaleDateString('ja-JP'),
+      }),
+    });
+  }
+  return true;
+}
+
 async function askClaude(userMessage, history) {
   const messages = [...history, { role: 'user', content: userMessage }];
 
@@ -57,7 +99,7 @@ async function askClaude(userMessage, history) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: MODEL,
       max_tokens: 500,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       system: `あなたはTCGVIBE.AIの司令塔エージェントです。
@@ -68,11 +110,8 @@ async function askClaude(userMessage, history) {
 ・「〜だよ」「〜だね」「〜じゃん」などカジュアルに
 ・絵文字は1〜2個だけ使ってOK
 ・300文字以内で答える
-
-文章のルール：
-・改行は最小限にする（1〜2回まで）
+・改行は最小限（1〜2回まで）
 ・※や「---」などの記号は使わない
-・箇条書きは3つまで
 ・マークダウン記法は絶対に使わない
 
 最新情報が必要な質問は必ずweb_searchで検索してから答える。`,
@@ -81,8 +120,6 @@ async function askClaude(userMessage, history) {
   });
 
   const data = await res.json();
-  console.log('Claude response:', JSON.stringify(data).slice(0, 200));
-
   const textBlocks = data.content?.filter(b => b.type === 'text');
   if (textBlocks?.length > 0) return textBlocks.map(b => b.text).join('\n');
 
@@ -96,7 +133,7 @@ async function askClaude(userMessage, history) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: MODEL,
         max_tokens: 500,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         system: `フランクに、マークダウンなし、改行最小限、300文字以内で答えてください。`,
@@ -127,6 +164,16 @@ export default async function handler(req, res) {
         const replyToken = event.replyToken;
         console.log('受信:', userMessage);
 
+        // 承認コマンド処理
+        const approveMatch = userMessage.match(/^承認(\d+)$/);
+        if (approveMatch) {
+          const articleId = parseInt(approveMatch[1]);
+          await approveArticle(articleId);
+          await sendLineMessage(replyToken, `✅ 記事ID:${articleId}を承認してサイトに公開しました！`);
+          continue;
+        }
+
+        // 通常の会話
         const history = await loadHistory();
         const reply = await askClaude(userMessage, history);
         await saveMessage('user', userMessage);
