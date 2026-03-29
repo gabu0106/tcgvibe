@@ -206,7 +206,7 @@ async function runGenerate() {
     const text = await callClaude(
       `TCGVIBEの記事執筆エージェントです。過去の学習：${memory || 'なし'}
 以下のJSONのみ返してください：
-{"title":"大会・環境系タイトル（具体的なカード名含む）","tag":"環境解説","emoji":"🏆","summary":"100文字","content":"800文字以上の本文","new_insight":"学んだこと"}`,
+{"title":"大会・環境系タイトル（具体的なカード名含む）","tag":"環境解説","game":"pokeca","summary":"100文字","content":"800文字以上の本文","new_insight":"学んだこと"}`,
       `【高額カードTOP10】\n${topCardsStr}\n\n【最新情報】\n${crawlerStr}\n\n今日(${new Date().toLocaleDateString('ja-JP')})の大会・環境記事を生成してください。`
     );
     const match = text.match(/\{[\s\S]*\}/);
@@ -218,7 +218,7 @@ async function runGenerate() {
           title: article.title, content: article.content || '', tag: article.tag || '環境解説',
           status: 'pending', approved: false, x_posted: false,
         });
-        results.tournament = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id };
+        results.tournament = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id, game: article.game || 'pokeca' };
         console.log('大会記事生成:', article.title);
       }
     }
@@ -229,7 +229,7 @@ async function runGenerate() {
     const text = await callClaude(
       `TCGVIBEの記事執筆エージェントです。過去の学習：${memory || 'なし'}
 以下のJSONのみ返してください：
-{"title":"コレクター向けタイトル（具体的なカード名含む）","tag":"価格情報","emoji":"💎","summary":"100文字","content":"800文字以上の本文","new_insight":"学んだこと"}`,
+{"title":"コレクター向けタイトル（具体的なカード名含む）","tag":"価格情報","game":"pokeca","summary":"100文字","content":"800文字以上の本文","new_insight":"学んだこと"}`,
       `【高額カードTOP10】\n${topCardsStr}\n\n【最新情報】\n${crawlerStr}\n\n今日(${new Date().toLocaleDateString('ja-JP')})のコレクター向け記事を生成してください。`
     );
     const match = text.match(/\{[\s\S]*\}/);
@@ -241,7 +241,7 @@ async function runGenerate() {
           title: article.title, content: article.content || '', tag: article.tag || '価格情報',
           status: 'pending', approved: false, x_posted: false,
         });
-        results.collector = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id };
+        results.collector = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id, game: article.game || 'pokeca' };
         console.log('コレクター記事生成:', article.title);
       }
     }
@@ -298,11 +298,15 @@ export default async function handler(req, res) {
       await supabasePatch('auto_articles', `id=eq.${article_id}`, { approved: true, status: 'approved' });
       const articles = await supabaseGet('auto_articles', `id=eq.${article_id}&select=*`);
       if (articles[0]) {
+        const a = articles[0];
         await supabasePost('tcg_articles', {
-          title: articles[0].title, content: articles[0].content,
-          tag: articles[0].tag, emoji: '🃏',
-          summary: articles[0].title,
-          date: new Date().toLocaleDateString('ja-JP'),
+          title: a.title,
+          content: a.content,
+          tag: a.tag,
+          emoji: '🃏',
+          summary: a.title,
+          game: 'pokeca',
+          author: 'TCGVIBE AI',
         });
       }
       return res.status(200).json({ status: 'approved', article_id });
