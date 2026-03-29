@@ -1,15 +1,9 @@
-const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN;
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN;
 
-const TARGET_ACCOUNTS = [
-  'cardrush_pokemon',
-  'cardrush_op',
-  'hareruya2',
-  'torecacamp',
-  'onehappy_tcg',
-];
+const MODEL = 'claude-haiku-4-5-20251001';
 
 const TARGET_KEYWORDS = [
   'ポケカ 買取',
@@ -20,10 +14,8 @@ const TARGET_KEYWORDS = [
 ];
 
 async function searchTweets(query) {
-  const url = `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,author_id,text`;
-  const res = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${X_BEARER_TOKEN}` }
-  });
+  const url = `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,text`;
+  const res = await fetch(url, { headers: { 'Authorization': `Bearer ${X_BEARER_TOKEN}` } });
   const data = await res.json();
   console.log(`検索「${query}」結果:`, data.meta?.result_count || 0, '件');
   return data.data || [];
@@ -31,43 +23,25 @@ async function searchTweets(query) {
 
 async function analyzeWithClaude(tweets, keyword) {
   if (!tweets.length) return null;
-
   const tweetTexts = tweets.map(t => t.text).join('\n---\n');
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-    },
+    headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: MODEL,
       max_tokens: 800,
       system: `あなたはTCG情報分析エージェントです。
 X（Twitter）の投稿を分析して以下のJSONのみ返してください：
-{
-  "keyword": "検索キーワード",
-  "highlights": ["注目情報1", "注目情報2"],
-  "high_price_cards": ["高額カード名と価格"],
-  "trending": ["トレンドカード名"],
-  "summary": "200文字以内のサマリー",
-  "alert": true or false  // 高騰・重要情報があればtrue
-}`,
-      messages: [{ 
-        role: 'user', 
-        content: `以下のXの投稿を分析してください：\n\nキーワード: ${keyword}\n\n${tweetTexts}` 
-      }],
+{"keyword":"検索キーワード","highlights":["注目情報1","注目情報2"],"high_price_cards":["高額カード名と価格"],"trending":["トレンドカード名"],"summary":"200文字以内のサマリー","alert":true}`,
+      messages: [{ role: 'user', content: `キーワード: ${keyword}\n\n${tweetTexts}\n\n分析してください。` }],
     }),
   });
-
   const data = await res.json();
-  const text = data.content?.[0]?.text || '{}';
-  try {
-    return JSON.parse(text.replace(/```json|```/g, '').trim());
-  } catch {
-    return { keyword, summary: text.slice(0, 200) };
-  }
+  const text = data.content?.find(b => b.type === 'text')?.text || '{}';
+  const match = text.match(/\{[\s\S]*\}/);
+  if (match) { try { return JSON.parse(match[0]); } catch {} }
+  return { keyword, summary: text.slice(0, 200) };
 }
 
 async function saveToSupabase(data) {
@@ -93,13 +67,10 @@ async function saveToSupabase(data) {
 }
 
 export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    return res.status(200).json({ status: 'X collector agent ready' });
-  }
+  if (req.method === 'GET') return res.status(200).json({ status: 'X collector agent ready' });
   if (req.method !== 'POST') return res.status(405).end();
 
   const results = [];
-
   for (const keyword of TARGET_KEYWORDS) {
     try {
       console.log(`X検索中: ${keyword}`);
@@ -108,7 +79,7 @@ export default async function handler(req, res) {
         const analysis = await analyzeWithClaude(tweets, keyword);
         if (analysis) {
           await saveToSupabase(analysis);
-          results.push({ keyword, status: 'ok', count: tweets.length, alert: analysis.alert });
+          results.push({ keyword, status: 'ok', count: tweets.length });
         }
       } else {
         results.push({ keyword, status: 'no_results' });
