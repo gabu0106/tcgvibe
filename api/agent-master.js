@@ -79,47 +79,7 @@ async function getTopCards() {
   } catch { return []; }
 }
 
-async function getDiscoveredSites() {
-  try {
-    const data = await supabaseGet('discovered_sites', 
-      'order=quality_score.desc,last_updated.desc&limit=20&active=eq.true'
-    );
-    return Array.isArray(data) ? data : [];
-  } catch { return []; }
-}
-
-async function saveSite(url, name, category, qualityScore, updateFrequency) {
-  try {
-    // URLが既に存在するか確認
-    const existing = await supabaseGet('discovered_sites', `url=eq.${encodeURIComponent(url)}`);
-    if (Array.isArray(existing) && existing.length > 0) {
-      // 既存サイトのスコアを更新
-      await supabasePatch('discovered_sites', `url=eq.${encodeURIComponent(url)}`, {
-        quality_score: Math.min(10, (existing[0].quality_score || 5) + 1),
-        last_updated: new Date().toISOString(),
-        last_crawled: new Date().toISOString(),
-        success_count: (existing[0].success_count || 0) + 1,
-        update_frequency: updateFrequency,
-      });
-    } else {
-      // 新規サイトを追加
-      await supabasePost('discovered_sites', {
-        url,
-        name,
-        category,
-        quality_score: qualityScore,
-        update_frequency: updateFrequency,
-        last_updated: new Date().toISOString(),
-        last_crawled: new Date().toISOString(),
-        success_count: 1,
-        fail_count: 0,
-      });
-      console.log(`新サイト発見・記録: ${name} (${url})`);
-    }
-  } catch (e) { console.log('サイト保存失敗:', e.message); }
-}
-
-async function callClaude(system, userContent, maxTokens = 2000) {
+async function callClaude(system, userContent, maxTokens = 1500) {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -155,37 +115,33 @@ async function callClaude(system, userContent, maxTokens = 2000) {
     }
     return data.content?.find(b => b.type === 'text')?.text || '';
   } catch (e) {
-    console.log('Claude呼び出し失敗:', e.message);
+    console.log('Claude失敗:', e.message);
     return '';
   }
 }
 
-async function collectAndLearn(memory, knownSites) {
-  console.log('自由探索型情報収集開始');
-  
-  const knownSitesStr = knownSites.map(s => `${s.name}(${s.url}) 品質:${s.quality_score} 更新頻度:${s.update_frequency}`).join('\n');
-  
+// ===== Step1: 情報収集 =====
+async function runCollect() {
+  console.log('情報収集開始');
+  const memory = await loadMemory('collector');
+  const knownSites = await supabaseGet('discovered_sites', 'order=quality_score.desc&limit=10');
+  const knownStr = Array.isArray(knownSites) ? knownSites.map(s => `${s.name}(${s.url})`).join('\n') : '';
+
   const text = await callClaude(
     `あなたはTCGVIBE情報収集エージェントです。
 過去の学習：${memory || 'なし'}
+既知の優良サイト：${knownStr || 'なし'}
 
-既知の優良サイト：
-${knownSitesStr || 'なし（初回探索）'}
-
-web_searchを使って自由にTCG情報を収集してください。
-既知サイトも確認しつつ、新しい情報源も積極的に探してください。
-情報の鮮度を最優先にしてください。
-
+web_searchで自由にTCG情報を収集してください。
 以下のJSONのみ返してください：
 {
   "collected": [
     {
       "site_name": "サイト名",
       "url": "URL",
-      "category": "価格情報 or 環境情報 or 大会情報 or コレクター",
-      "quality_score": 8,
-      "update_frequency": "毎日 or 週数回 or 週1 or 不定期",
-      "last_updated": "今日 or 昨日 or 数日前",
+      "category": "価格情報 or 環境情報 or 大会情報",
+      "quality_score": 7,
+      "update_frequency": "毎日",
       "highlights": ["具体的な情報1", "情報2"],
       "high_price_cards": ["カード名 価格円"],
       "summary": "150文字以内のサマリー"
@@ -193,27 +149,15 @@ web_searchを使って自由にTCG情報を収集してください。
   ],
   "new_insight": "学んだこと"
 }`,
-    `今日(${new Date().toLocaleDateString('ja-JP')})のポケカ・ワンピースカードの最新情報を収集してください。
-高騰カード・買取価格・大会結果・新弾情報など幅広く調査し、情報源のURLも記録してください。`
+    `今日(${new Date().toLocaleDateString('ja-JP')})のポケカ・ワンピースカードの最新情報を収集してください。高騰カード・買取価格・大会結果・新弾情報など調査してください。`
   );
 
   const match = text.match(/\{[\s\S]*\}/);
   if (match) {
     try {
       const result = JSON.parse(match[0]);
-      
-      // 各サイトを学習・保存
       for (const site of (result.collected || [])) {
         if (site.url && site.site_name) {
-          await saveSite(
-            site.url,
-            site.site_name,
-            site.category,
-            site.quality_score || 5,
-            site.update_frequency || '不定期'
-          );
-          
-          // crawler_dataに保存
           await supabasePost('crawler_data', {
             site_name: site.site_name,
             highlights: JSON.stringify(site.highlights || []),
@@ -222,87 +166,104 @@ web_searchを使って自由にTCG情報を収集してください。
             raw_data: JSON.stringify(site),
             crawled_at: new Date().toISOString(),
           });
+
+          const existing = await supabaseGet('discovered_sites', `url=eq.${encodeURIComponent(site.url)}`);
+          if (Array.isArray(existing) && existing.length > 0) {
+            await supabasePatch('discovered_sites', `url=eq.${encodeURIComponent(site.url)}`, {
+              quality_score: Math.min(10, (existing[0].quality_score || 5) + 1),
+              last_crawled: new Date().toISOString(),
+              success_count: (existing[0].success_count || 0) + 1,
+            });
+          } else {
+            await supabasePost('discovered_sites', {
+              url: site.url, name: site.site_name, category: site.category,
+              quality_score: site.quality_score || 5,
+              update_frequency: site.update_frequency || '不定期',
+              last_crawled: new Date().toISOString(),
+              success_count: 1, fail_count: 0,
+            });
+            console.log('新サイト発見:', site.site_name);
+          }
         }
       }
-
       if (result.new_insight) await saveMemory('collector', result.new_insight, 7);
-      console.log(`情報収集完了: ${result.collected?.length || 0}サイト`);
-      return result.collected || [];
-    } catch (e) {
-      console.log('収集結果パース失敗:', e.message);
-    }
+      console.log('収集完了:', result.collected?.length, 'サイト');
+      return result.collected?.length || 0;
+    } catch (e) { console.log('収集パース失敗:', e.message); }
   }
-  return [];
+  return 0;
 }
 
-async function generateArticle(type, topCards, crawlerData, memory) {
+// ===== Step2: 記事・ランキング生成 =====
+async function runGenerate() {
+  console.log('記事・ランキング生成開始');
+  const [topCards, memory] = await Promise.all([getTopCards(), loadMemory('writer')]);
+  const today = new Date().toISOString().split('T')[0];
+  const crawlerData = await supabaseGet('crawler_data', `crawled_at=gte.${today}&order=crawled_at.desc&limit=10`);
+  const crawlerStr = Array.isArray(crawlerData) ? crawlerData.map(d => d.summary).filter(Boolean).join('\n') : '';
   const topCardsStr = topCards.slice(0, 10).map(c => `${c.card_name} ${c.buy_price}`).join('\n');
-  const crawlerStr = crawlerData.slice(0, 5).map(d => d.summary).filter(Boolean).join('\n');
 
-  const isTourn = type === 'tournament';
-  const text = await callClaude(
-    `あなたはTCGVIBEの記事執筆エージェントです。
-過去の学習：${memory || 'なし'}
+  const results = { tournament: null, collector: null, ranking: null };
+
+  // 大会記事
+  try {
+    const text = await callClaude(
+      `TCGVIBEの記事執筆エージェントです。過去の学習：${memory || 'なし'}
 以下のJSONのみ返してください：
-{
-  "title": "${isTourn ? '大会・環境系' : 'コレクター向け'}の記事タイトル（具体的なカード名含む）",
-  "tag": "${isTourn ? '環境解説' : '価格情報'}",
-  "emoji": "${isTourn ? '🏆' : '💎'}",
-  "summary": "100文字の要約",
-  "content": "800文字以上の記事本文（具体的なカード名・価格・理由含む）",
-  "new_insight": "学んだこと"
-}`,
-    `【高額カードTOP10】\n${topCardsStr}\n\n【最新情報】\n${crawlerStr}\n\n今日(${new Date().toLocaleDateString('ja-JP')})の${isTourn ? '大会・環境' : 'コレクター向け'}記事を生成してください。`
-  );
-
-  const match = text.match(/\{[\s\S]*\}/);
-  if (match) {
-    try {
+{"title":"大会・環境系タイトル（具体的なカード名含む）","tag":"環境解説","emoji":"🏆","summary":"100文字","content":"800文字以上の本文","new_insight":"学んだこと"}`,
+      `【高額カードTOP10】\n${topCardsStr}\n\n【最新情報】\n${crawlerStr}\n\n今日(${new Date().toLocaleDateString('ja-JP')})の大会・環境記事を生成してください。`
+    );
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
       const article = JSON.parse(match[0]);
-      if (!article.title || article.title.includes('タイトル')) return null;
-      if (article.new_insight) await saveMemory('writer', article.new_insight, 6);
-      
-      const saved = await supabasePost('auto_articles', {
-        title: article.title,
-        content: article.content || '',
-        tag: article.tag || '価格情報',
-        status: 'pending',
-        approved: false,
-        x_posted: false,
-      });
-      
-      const articleId = Array.isArray(saved) ? saved[0]?.id : saved?.id;
-      console.log(`記事生成: ${article.title} (ID:${articleId})`);
-      return { ...article, id: articleId };
-    } catch (e) { console.log('記事パース失敗:', e.message); }
-  }
-  return null;
-}
+      if (article.title && !article.title.includes('タイトル')) {
+        if (article.new_insight) await saveMemory('writer', article.new_insight, 6);
+        const saved = await supabasePost('auto_articles', {
+          title: article.title, content: article.content || '', tag: article.tag || '環境解説',
+          status: 'pending', approved: false, x_posted: false,
+        });
+        results.tournament = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id };
+        console.log('大会記事生成:', article.title);
+      }
+    }
+  } catch (e) { console.log('大会記事失敗:', e.message); }
 
-async function generateRanking(topCards, crawlerData, memory) {
-  const cardsStr = topCards.slice(0, 20).map((c, i) => `${i+1}. ${c.card_name} ${c.buy_price} (${c.rarity})`).join('\n');
-  const infoStr = crawlerData.slice(0, 3).map(d => d.summary).filter(Boolean).join('\n');
-  
-  const text = await callClaude(
-    `TCGVIBEのランキング生成エージェントです。
-過去の学習：${memory || 'なし'}
+  // コレクター記事
+  try {
+    const text = await callClaude(
+      `TCGVIBEの記事執筆エージェントです。過去の学習：${memory || 'なし'}
 以下のJSONのみ返してください：
-{
-  "ranking": [
-    {"rank": 1, "card": "カード名", "price": "価格", "reason": "注目理由30文字", "buy_recommend": true}
-  ],
-  "summary": "200文字以内のランキング解説",
-  "new_insight": "学んだこと"
-}`,
-    `【買取価格データ】\n${cardsStr}\n\n【最新市場情報】\n${infoStr}\n\n今日のおすすめカードランキングTOP10を生成してください。`
-  );
+{"title":"コレクター向けタイトル（具体的なカード名含む）","tag":"価格情報","emoji":"💎","summary":"100文字","content":"800文字以上の本文","new_insight":"学んだこと"}`,
+      `【高額カードTOP10】\n${topCardsStr}\n\n【最新情報】\n${crawlerStr}\n\n今日(${new Date().toLocaleDateString('ja-JP')})のコレクター向け記事を生成してください。`
+    );
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const article = JSON.parse(match[0]);
+      if (article.title && !article.title.includes('タイトル')) {
+        if (article.new_insight) await saveMemory('writer', article.new_insight, 6);
+        const saved = await supabasePost('auto_articles', {
+          title: article.title, content: article.content || '', tag: article.tag || '価格情報',
+          status: 'pending', approved: false, x_posted: false,
+        });
+        results.collector = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id };
+        console.log('コレクター記事生成:', article.title);
+      }
+    }
+  } catch (e) { console.log('コレクター記事失敗:', e.message); }
 
-  const match = text.match(/\{[\s\S]*\}/);
-  if (match) {
-    try {
+  // ランキング
+  try {
+    const cardsStr = topCards.slice(0, 20).map((c, i) => `${i+1}. ${c.card_name} ${c.buy_price} (${c.rarity})`).join('\n');
+    const text = await callClaude(
+      `TCGVIBEランキング生成エージェントです。
+以下のJSONのみ返してください：
+{"ranking":[{"rank":1,"card":"カード名","price":"価格","reason":"理由30文字","buy_recommend":true}],"summary":"200文字以内の解説","new_insight":"学んだこと"}`,
+      `【買取価格データ】\n${cardsStr}\n\n【最新情報】\n${crawlerStr}\n\n今日のおすすめカードランキングTOP10を生成してください。`
+    );
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
       const result = JSON.parse(match[0]);
       if (result.new_insight) await saveMemory('ranking', result.new_insight, 6);
-      
       await supabasePost('crawler_data', {
         site_name: 'daily_ranking',
         summary: result.summary || '',
@@ -311,12 +272,23 @@ async function generateRanking(topCards, crawlerData, memory) {
         raw_data: JSON.stringify(result),
         crawled_at: new Date().toISOString(),
       });
-      
+      results.ranking = result.summary;
       console.log('ランキング生成完了');
-      return result;
-    } catch (e) { console.log('ランキングパース失敗:', e.message); }
-  }
-  return null;
+    }
+  } catch (e) { console.log('ランキング失敗:', e.message); }
+
+  // LINE日報
+  let report = `🌅 TCGVIBEデイリーレポート\n${new Date().toLocaleDateString('ja-JP')}\n\n`;
+  report += `🏆 大会記事: ${results.tournament ? `「${results.tournament.title}」` : '生成失敗'}\n`;
+  report += `💎 コレクター記事: ${results.collector ? `「${results.collector.title}」` : '生成失敗'}\n`;
+  report += `📈 ランキング: ${results.ranking ? '生成完了' : '生成失敗'}\n`;
+  if (results.tournament?.id) report += `\n承認→「承認${results.tournament.id}」`;
+  if (results.collector?.id) report += `\n承認→「承認${results.collector.id}」`;
+
+  await sendLine(report);
+  await saveMemory('master', `${new Date().toLocaleDateString('ja-JP')}生成完了`, 5);
+  console.log('日報送信完了');
+  return results;
 }
 
 export default async function handler(req, res) {
@@ -325,89 +297,45 @@ export default async function handler(req, res) {
 
   const { action, article_id } = req.body || {};
 
+  // 記事承認
   if (action === 'approve' && article_id) {
     try {
       await supabasePatch('auto_articles', `id=eq.${article_id}`, { approved: true, status: 'approved' });
       const articles = await supabaseGet('auto_articles', `id=eq.${article_id}&select=*`);
       if (articles[0]) {
         await supabasePost('tcg_articles', {
-          title: articles[0].title,
-          content: articles[0].content,
-          tag: articles[0].tag,
-          emoji: '🃏',
+          title: articles[0].title, content: articles[0].content,
+          tag: articles[0].tag, emoji: '🃏',
           summary: articles[0].title,
           date: new Date().toLocaleDateString('ja-JP'),
         });
       }
       return res.status(200).json({ status: 'approved', article_id });
-    } catch (e) {
-      return res.status(500).json({ error: e.message });
-    }
+    } catch (e) { return res.status(500).json({ error: e.message }); }
   }
 
-  console.log('🚀 エージェントシステム起動');
-  const results = { collect: false, sites_learned: 0, tournament_article: false, collector_article: false, ranking: false };
+  // 情報収集のみ
+  if (action === 'collect') {
+    try {
+      const count = await runCollect();
+      return res.status(200).json({ status: 'done', sites_collected: count });
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
 
+  // 記事・ランキング生成のみ
+  if (action === 'generate') {
+    try {
+      const results = await runGenerate();
+      return res.status(200).json({ status: 'done', results });
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  // デフォルト（両方実行）
   try {
-    const [memory, knownSites, topCards] = await Promise.all([
-      loadMemory('master'),
-      getDiscoveredSites(),
-      getTopCards(),
-    ]);
-
-    console.log(`既知サイト: ${knownSites.length}件, カードデータ: ${topCards.length}件`);
-
-    // Step1: 自由探索型情報収集
-    let collectedData = [];
-    try {
-      collectedData = await collectAndLearn(memory, knownSites);
-      results.collect = true;
-      results.sites_learned = collectedData.length;
-    } catch (e) { console.log('収集失敗（続行）:', e.message); }
-
-    const crawlerData = await supabaseGet('crawler_data', 
-      `crawled_at=gte.${new Date().toISOString().split('T')[0]}&order=crawled_at.desc&limit=20`
-    );
-
-    // Step2: 大会記事生成
-    let tournamentArticle = null;
-    try {
-      tournamentArticle = await generateArticle('tournament', topCards, crawlerData, memory);
-      if (tournamentArticle) results.tournament_article = true;
-    } catch (e) { console.log('大会記事失敗（続行）:', e.message); }
-
-    // Step3: コレクター記事生成
-    let collectorArticle = null;
-    try {
-      collectorArticle = await generateArticle('collector', topCards, crawlerData, memory);
-      if (collectorArticle) results.collector_article = true;
-    } catch (e) { console.log('コレクター記事失敗（続行）:', e.message); }
-
-    // Step4: ランキング生成
-    let ranking = null;
-    try {
-      ranking = await generateRanking(topCards, crawlerData, memory);
-      if (ranking) results.ranking = true;
-    } catch (e) { console.log('ランキング失敗（続行）:', e.message); }
-
-    await saveMemory('master', `${new Date().toLocaleDateString('ja-JP')}処理完了 新規サイト:${results.sites_learned}件`, 5);
-
-    // LINE日報
-    let report = `🌅 TCGVIBEデイリーレポート\n${new Date().toLocaleDateString('ja-JP')}\n\n`;
-    report += `🔍 情報収集: ${results.collect ? `${results.sites_learned}サイト発見・学習` : '失敗'}\n`;
-    report += `📊 既知サイト: ${knownSites.length}件\n`;
-    report += `🏆 大会記事: ${tournamentArticle ? `「${tournamentArticle.title}」` : '生成失敗'}\n`;
-    report += `💎 コレクター記事: ${collectorArticle ? `「${collectorArticle.title}」` : '生成失敗'}\n`;
-    report += `📈 ランキング: ${ranking ? '生成完了' : '生成失敗'}\n`;
-
-    if (tournamentArticle?.id) report += `\n承認→「承認${tournamentArticle.id}」`;
-    if (collectorArticle?.id) report += `\n承認→「承認${collectorArticle.id}」`;
-
-    await sendLine(report);
-
+    await runCollect();
+    const results = await runGenerate();
     return res.status(200).json({ status: 'done', results });
   } catch (e) {
-    console.error('致命的エラー:', e.message);
     await sendLine(`⚠️ エラー: ${e.message}`);
     return res.status(500).json({ error: e.message });
   }
