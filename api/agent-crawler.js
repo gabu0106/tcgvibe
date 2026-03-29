@@ -48,8 +48,8 @@ async function crawlSite(site, memory) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1500,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       system: `あなたはTCGVIBEの情報収集エージェントです。
 過去の学習：${memory || 'なし'}
@@ -85,8 +85,8 @@ JSONのみ返してください。`,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1500,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         system: `具体的なカード名と価格を含むJSONのみ返してください。`,
         messages: [
@@ -139,7 +139,6 @@ export default async function handler(req, res) {
   if (req.method === 'GET') return res.status(200).json({ status: 'Crawler ready', sites: Object.keys(SITES) });
 
   const memory = await loadMemory();
-
   const urlParts = req.url?.split('/');
   const siteKeyFromUrl = urlParts?.[urlParts.length - 1];
   const siteKey = req.body?.site || siteKeyFromUrl;
