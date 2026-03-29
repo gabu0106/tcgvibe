@@ -9,12 +9,12 @@ jobs:
   step1-collect:
     runs-on: ubuntu-latest
     steps:
-      - name: 情報収集
-        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-master -H "Content-Type: application/json" -d "{\"action\":\"collect\"}"
+      - name: collect
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-master/collect
 
   step2-generate:
     runs-on: ubuntu-latest
     needs: step1-collect
     steps:
-      - name: 記事・ランキング生成
-        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-master -H "Content-Type: application/json" -d "{\"action\":\"generate\"}"
+      - name: generate
+        run: curl -s -o /dev/null -X POST https://tcgvibe.com/api/agent-master/generate
