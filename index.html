@@ -87,6 +87,9 @@
   .prices-table tr:hover td{background:var(--gold-light);}
   .rarity-badge{display:inline-block;padding:0.15rem 0.5rem;font-size:0.65rem;font-weight:600;letter-spacing:0.08em;border-radius:2px;background:var(--gold-light);color:var(--gold);}
   .price-val{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:400;color:var(--text);}
+  .ebay-price{font-size:0.8rem;color:var(--gold2);cursor:pointer;white-space:nowrap;}
+  .ebay-price:hover{text-decoration:underline;}
+  .ebay-loading{font-size:0.75rem;color:var(--muted);}
   .prices-pagination{display:flex;align-items:center;gap:0.5rem;margin-top:1.5rem;justify-content:center;}
   .page-btn{background:none;border:1px solid var(--border2);padding:0.35rem 0.875rem;font-family:inherit;font-size:0.8rem;color:var(--muted);cursor:pointer;border-radius:2px;transition:all 0.2s;}
   .page-btn:hover,.page-btn.active{border-color:var(--gold2);color:var(--text);background:var(--gold-light);}
@@ -154,7 +157,7 @@
   .fi{opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease;}
   .fi.vis{opacity:1;transform:translateY(0);}
 
-  @media(max-width:900px){.articles-grid,.loading-grid{grid-template-columns:1fr;}.prices-table th:nth-child(4),.prices-table td:nth-child(4){display:none;}}
+  @media(max-width:900px){.articles-grid,.loading-grid{grid-template-columns:1fr;}.prices-table th:nth-child(4),.prices-table td:nth-child(4),.prices-table th:nth-child(6),.prices-table td:nth-child(6){display:none;}}
   @media(max-width:768px){nav{padding:1rem 1.5rem;}.filter-bar{top:64px;}.chat-input-row{flex-direction:column;}}
 </style>
 </head>
@@ -258,7 +261,7 @@
 <section class="prices-section">
   <div class="container">
     <div class="section-header">
-      <h2 class="section-title">カード<span>買取価格</span>一覧</h2>
+      <h2 class="section-title">カード<span>買取価格</span>一覧 <span style="font-size:0.6em;color:var(--muted);font-weight:400">+ eBay海外相場</span></h2>
       <span class="prices-count" id="pricesCount">読み込み中...</span>
     </div>
     <div class="prices-filters">
@@ -284,11 +287,12 @@
             <th>レアリティ</th>
             <th>型番</th>
             <th>買取価格</th>
+            <th>eBay相場</th>
             <th>ショップ</th>
           </tr>
         </thead>
         <tbody id="pricesTableBody">
-          <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">読み込み中...</td></tr>
+          <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">読み込み中...</td></tr>
         </tbody>
       </table>
     </div>
@@ -410,7 +414,7 @@ async function loadPrices() {
     document.getElementById('pricesCount').textContent = `${allPrices.length.toLocaleString()}件`;
     renderPrices();
   } catch(e) {
-    document.getElementById('pricesTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">データを読み込めませんでした</td></tr>';
+    document.getElementById('pricesTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">データを読み込めませんでした</td></tr>';
   }
 }
 
@@ -444,21 +448,27 @@ function renderPrices() {
   const tbody = document.getElementById('pricesTableBody');
 
   if (!pageData.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">該当するカードが見つかりません</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">該当するカードが見つかりません</td></tr>';
     document.getElementById('pricesPagination').innerHTML = '';
     return;
   }
 
-  tbody.innerHTML = pageData.map(p => `
-    <tr>
+  tbody.innerHTML = pageData.map((p, i) => {
+    const rowIdx = (currentPricePage - 1) * pricesPerPage + i;
+    const ebayCache = ebayPriceCache[p.card_name];
+    const ebayCell = ebayCache
+      ? `<span class="ebay-price" title="eBayで見る">$${ebayCache.avg} avg</span>`
+      : `<span class="ebay-loading" data-card="${encodeURIComponent(p.card_name)}" onclick="fetchEbayPrice(this, '${p.card_name.replace(/'/g, "\\'")}')">取得</span>`;
+    return `<tr>
       <td>${p.card_name || ''}</td>
       <td style="color:var(--muted);font-size:0.8rem">${p.pack_name || ''}</td>
       <td><span class="rarity-badge">${p.rarity || ''}</span></td>
       <td style="color:var(--muted);font-size:0.8rem">${p.model_number || ''}</td>
       <td><span class="price-val">${p.buy_price || '-'}</span></td>
+      <td>${ebayCell}</td>
       <td style="color:var(--muted);font-size:0.8rem">${p.shop || ''}</td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 
   renderPricesPagination();
 }
@@ -478,6 +488,30 @@ function changePricePage(page) {
   currentPricePage = page;
   renderPrices();
   document.querySelector('.prices-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+// eBay price lookup
+const ebayPriceCache = {};
+
+async function fetchEbayPrice(el, cardName) {
+  if (ebayPriceCache[cardName]) return;
+  el.textContent = '...';
+  try {
+    const res = await fetch(`/api/ebay?q=${encodeURIComponent(cardName)}`);
+    const data = await res.json();
+    if (data.stats) {
+      ebayPriceCache[cardName] = data.stats;
+      el.className = 'ebay-price';
+      el.textContent = `$${data.stats.avg} avg`;
+      el.title = `Min: $${data.stats.min} / Max: $${data.stats.max} (${data.stats.count}件)`;
+    } else {
+      el.textContent = '-';
+      el.title = 'eBayにデータなし';
+    }
+  } catch(e) {
+    el.textContent = 'err';
+    el.title = e.message;
+  }
 }
 
 // CHAT

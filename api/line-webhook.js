@@ -124,6 +124,35 @@ async function searchCardPrices(query) {
   } catch { return ''; }
 }
 
+async function searchEbayPrices(query) {
+  try {
+    const EBAY_APP_ID = process.env.EBAY_APP_ID;
+    const EBAY_CERT_ID = process.env.EBAY_CERT_ID;
+    if (!EBAY_APP_ID || !EBAY_CERT_ID) return '';
+
+    const credentials = Buffer.from(`${EBAY_APP_ID}:${EBAY_CERT_ID}`).toString('base64');
+    const tokenRes = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': `Basic ${credentials}` },
+      body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope',
+    });
+    if (!tokenRes.ok) return '';
+    const tokenData = await tokenRes.json();
+
+    const params = new URLSearchParams({ q: `pokemon card ${query}`, limit: '5', category_ids: '183454', sort: 'price' });
+    const res = await fetch(`https://api.ebay.com/buy/browse/v1/item_summary/search?${params}`, {
+      headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
+    });
+    if (!res.ok) return '';
+    const data = await res.json();
+    const items = (data.itemSummaries || []).filter(i => i.price);
+    if (items.length === 0) return '';
+    const prices = items.map(i => parseFloat(i.price.value));
+    const avg = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length * 100) / 100;
+    return `\n\n【eBay海外相場】${query}: 平均$${avg} (${items.length}件, $${Math.min(...prices)}〜$${Math.max(...prices)})`;
+  } catch { return ''; }
+}
+
 async function getTopPrices() {
   try {
     const res = await fetch(
@@ -143,16 +172,19 @@ async function getTopPrices() {
 }
 
 async function askClaude(userMessage, history) {
-  // 価格関連キーワードがあればcard_pricesを検索
-  const priceKeywords = ['価格', '値段', '買取', '相場', '高い', '高額', 'いくら', '円'];
+  // 価格関連キーワードがあればcard_prices+eBayを検索
+  const priceKeywords = ['価格', '値段', '買取', '相場', '高い', '高額', 'いくら', '円', 'eBay', 'ebay', '海外'];
   let priceContext = '';
   if (priceKeywords.some(kw => userMessage.includes(kw))) {
-    // カード名を抽出して検索を試みる（キーワード以外の部分）
     let searchTerm = userMessage;
     priceKeywords.forEach(kw => { searchTerm = searchTerm.replace(kw, ''); });
     searchTerm = searchTerm.replace(/[のはがをにで？?、。]/g, '').trim();
     if (searchTerm.length >= 2) {
-      priceContext = await searchCardPrices(searchTerm);
+      const [domestic, ebay] = await Promise.all([
+        searchCardPrices(searchTerm),
+        searchEbayPrices(searchTerm),
+      ]);
+      priceContext = domestic + ebay;
     }
     if (!priceContext) {
       priceContext = await getTopPrices();
@@ -184,7 +216,7 @@ async function askClaude(userMessage, history) {
 ・※や「---」などの記号は使わない
 ・マークダウン記法は絶対に使わない
 
-カード価格の質問には以下のデータを参照して正確に答えてください。データにないカードは「データにないから最新はショップで確認して」と伝える。
+カード価格の質問には以下のデータを参照して正確に答えてください。国内買取価格とeBay海外相場の両方があれば両方答える。データにないカードは「データにないから最新はショップで確認して」と伝える。
 最新情報が必要な質問は必ずweb_searchで検索してから答える。${priceContext}`,
       messages,
     }),
