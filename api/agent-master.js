@@ -26,8 +26,18 @@ async function supabasePost(table, data) {
       },
       body: JSON.stringify(data),
     });
-    return await res.json();
-  } catch { return null; }
+    if (!res.ok) {
+      const errText = await res.text();
+      console.log(`supabasePost ${table} エラー:`, res.status, errText.substring(0, 200));
+      return null;
+    }
+    const result = await res.json();
+    console.log(`supabasePost ${table} 結果:`, Array.isArray(result) ? `配列[${result.length}] id=${result[0]?.id}` : typeof result);
+    return result;
+  } catch (e) {
+    console.log(`supabasePost ${table} 例外:`, e.message);
+    return null;
+  }
 }
 
 async function supabasePatch(table, query, data) {
@@ -270,8 +280,9 @@ async function runGenerate() {
           summary: article.summary || '', game: article.game || 'pokeca', author: 'TCGVIBE AI',
           status: 'pending', approved: false, x_posted: false,
         });
-        console.log('大会記事保存結果:', JSON.stringify(saved)?.substring(0, 200));
-        results.tournament = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id, game: article.game || 'pokeca' };
+        const savedId = Array.isArray(saved) ? saved[0]?.id : saved?.id;
+        console.log('大会記事保存 id:', savedId);
+        results.tournament = { title: article.title, id: savedId || null, game: article.game || 'pokeca' };
         console.log('大会記事生成:', article.title);
       } else {
         console.log('大会記事タイトル不正:', article.title);
@@ -306,8 +317,9 @@ async function runGenerate() {
           summary: article.summary || '', game: article.game || 'pokeca', author: 'TCGVIBE AI',
           status: 'pending', approved: false, x_posted: false,
         });
-        console.log('コレクター記事保存結果:', JSON.stringify(saved)?.substring(0, 200));
-        results.collector = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id, game: article.game || 'pokeca' };
+        const savedId = Array.isArray(saved) ? saved[0]?.id : saved?.id;
+        console.log('コレクター記事保存 id:', savedId);
+        results.collector = { title: article.title, id: savedId || null, game: article.game || 'pokeca' };
         console.log('コレクター記事生成:', article.title);
       } else {
         console.log('コレクター記事タイトル不正:', article.title);
@@ -355,8 +367,27 @@ async function runGenerate() {
   report += `🏆 大会記事: ${results.tournament ? `「${results.tournament.title}」` : '生成失敗'}\n`;
   report += `💎 コレクター記事: ${results.collector ? `「${results.collector.title}」` : '生成失敗'}\n`;
   report += `📈 ランキング: ${results.ranking ? '生成完了' : '生成失敗'}\n`;
-  if (results.tournament?.id) report += `\n承認→「承認${results.tournament.id}」`;
-  if (results.collector?.id) report += `\n承認→「承認${results.collector.id}」`;
+
+  // 承認コマンドを追加（idが取れない場合はDB最新を取得）
+  if (results.tournament || results.collector) {
+    let tournamentId = results.tournament?.id;
+    let collectorId = results.collector?.id;
+
+    // idが取れなかった場合、auto_articlesから最新のpending記事を取得
+    if ((!tournamentId && results.tournament) || (!collectorId && results.collector)) {
+      const pending = await supabaseGet('auto_articles', 'status=eq.pending&approved=eq.false&order=id.desc&limit=5');
+      if (Array.isArray(pending)) {
+        for (const p of pending) {
+          if (!tournamentId && results.tournament && p.title === results.tournament.title) tournamentId = p.id;
+          if (!collectorId && results.collector && p.title === results.collector.title) collectorId = p.id;
+        }
+      }
+    }
+
+    if (tournamentId) report += `\n承認→「承認${tournamentId}」`;
+    if (collectorId) report += `\n承認→「承認${collectorId}」`;
+    if (!tournamentId && !collectorId) report += `\n※IDが取得できませんでした。管理画面から承認してください。`;
+  }
 
   await sendLine(report);
   await saveMemory('master', `${new Date().toLocaleDateString('ja-JP')}生成完了`, 5);
