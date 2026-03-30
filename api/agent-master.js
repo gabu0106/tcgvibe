@@ -1,6 +1,6 @@
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 
 const MODEL = 'claude-haiku-4-5-20251001';
@@ -375,12 +375,16 @@ async function runGenerate() {
 
     // idが取れなかった場合、auto_articlesから最新のpending記事を取得
     if ((!tournamentId && results.tournament) || (!collectorId && results.collector)) {
-      const pending = await supabaseGet('auto_articles', 'status=eq.pending&approved=eq.false&order=id.desc&limit=5');
-      if (Array.isArray(pending)) {
+      const pending = await supabaseGet('auto_articles', 'status=eq.pending&approved=eq.false&order=id.desc&limit=10');
+      console.log('フォールバックpending取得:', Array.isArray(pending) ? pending.length + '件' : 'エラー', JSON.stringify(pending)?.substring(0, 300));
+      if (Array.isArray(pending) && pending.length > 0) {
         for (const p of pending) {
-          if (!tournamentId && results.tournament && p.title === results.tournament.title) tournamentId = p.id;
-          if (!collectorId && results.collector && p.title === results.collector.title) collectorId = p.id;
+          if (!tournamentId && results.tournament && p.title?.includes(results.tournament.title.substring(0, 15))) tournamentId = p.id;
+          if (!collectorId && results.collector && p.title?.includes(results.collector.title.substring(0, 15))) collectorId = p.id;
         }
+        // タイトルマッチも失敗なら最新2件を使う
+        if (!tournamentId && results.tournament && pending[0]) tournamentId = pending[0].id;
+        if (!collectorId && results.collector && pending[1]) collectorId = pending[1].id;
       }
     }
 
