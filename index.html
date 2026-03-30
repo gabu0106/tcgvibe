@@ -304,10 +304,13 @@
 </footer>
 
 <script>
-const ADMIN_KEY = 'tcgvibe0106';
 const params = new URLSearchParams(window.location.search);
-const isAdmin = params.get('key') === ADMIN_KEY;
-if (isAdmin) document.getElementById('navAiBtn').classList.add('show');
+if (params.get('key')) {
+  fetch('/api/admin?action=verify&key=' + encodeURIComponent(params.get('key')))
+    .then(r => r.json())
+    .then(d => { if (d.valid) document.getElementById('navAiBtn').classList.add('show'); })
+    .catch(() => {});
+}
 
 const obs = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });

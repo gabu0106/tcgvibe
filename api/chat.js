@@ -12,7 +12,9 @@ export default async function handler(req, res) {
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
+  // TCGメタ情報を取得
   let tcgContext = '';
   try {
     const dbRes = await fetch(
@@ -35,14 +37,56 @@ export default async function handler(req, res) {
     console.error('DB取得エラー:', e);
   }
 
+  // ユーザーの最新メッセージから価格情報を検索
+  const lastMessage = messages[messages.length - 1]?.content || '';
+  let priceContext = '';
+  const priceKeywords = ['価格', '値段', '買取', '相場', '高い', '高額', 'いくら', '円'];
+  if (priceKeywords.some(kw => lastMessage.includes(kw))) {
+    try {
+      let searchTerm = lastMessage;
+      priceKeywords.forEach(kw => { searchTerm = searchTerm.replace(kw, ''); });
+      searchTerm = searchTerm.replace(/[のはがをにで？?、。]/g, '').trim();
+
+      if (searchTerm.length >= 2) {
+        const priceRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/card_prices?select=card_name,buy_price,rarity,shop,game&card_name=ilike.*${encodeURIComponent(searchTerm)}*&limit=20`,
+          { headers: { 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}` } }
+        );
+        const priceData = await priceRes.json();
+        if (Array.isArray(priceData) && priceData.length > 0) {
+          priceContext = '\n\n【カード価格データ】\n' + priceData.map(c => `${c.card_name} / ${c.buy_price} / ${c.rarity} / ${c.shop}`).join('\n');
+        }
+      }
+
+      if (!priceContext) {
+        const topRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/card_prices?select=card_name,buy_price,rarity,shop,game&order=id.asc&limit=5000`,
+          { headers: { 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}` } }
+        );
+        const topData = await topRes.json();
+        if (Array.isArray(topData)) {
+          const sorted = topData
+            .map(c => ({ ...c, price_num: parseInt((c.buy_price || '0').replace(/[^0-9]/g, '')) }))
+            .filter(c => c.price_num > 0)
+            .sort((a, b) => b.price_num - a.price_num)
+            .slice(0, 15);
+          if (sorted.length > 0) {
+            priceContext = '\n\n【高額カードTOP15】\n' + sorted.map((c, i) => `${i+1}. ${c.card_name} ${c.buy_price} (${c.rarity}/${c.shop})`).join('\n');
+          }
+        }
+      }
+    } catch (e) {
+      console.error('価格データ取得エラー:', e);
+    }
+  }
+
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'web-search-2025-03-05',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
@@ -51,7 +95,9 @@ export default async function handler(req, res) {
 ポケモンカード、遊戯王、MTG、デュエルマスターズ、ヴァイスシュヴァルツ、ワンピースカードの専門家です。
 
 【重要】以下のデータベース情報を最優先で参照して回答してください。
-データベースにない情報はweb_searchで検索してください。${tcgContext}
+データベースにない情報はweb_searchで検索してください。${tcgContext}${priceContext}
+
+カード価格の質問にはデータを参照して正確に答えてください。データにないカードは「最新情報はショップでご確認ください」と伝える。
 
 【回答スタイル】
 ・友達に話しかけるような自然な日本語で話すこと
@@ -59,7 +105,6 @@ export default async function handler(req, res) {
 ・箇条書きは「・」のみ使う
 ・「〜だよ」「〜だね」「〜かな」など話し言葉で答える
 ・専門知識は持ちつつも堅くなりすぎない
-・価格情報には「最新情報はショップでご確認ください」を添える
 ・回答は長すぎず、テンポよく答える`,
         messages: messages,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
@@ -72,12 +117,41 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    const text = data.content
-      .filter(block => block.type === 'text')
-      .map(block => block.text)
-      .join('\n');
 
-    return res.status(200).json({ reply: text });
+    // テキストブロックがあればそのまま返す
+    const textBlocks = data.content?.filter(b => b.type === 'text');
+    if (textBlocks?.length > 0) {
+      return res.status(200).json({ reply: textBlocks.map(b => b.text).join('\n') });
+    }
+
+    // tool_useが返された場合（web_search結果を処理）
+    if (data.content?.some(b => b.type === 'tool_use')) {
+      const toolUse = data.content.find(b => b.type === 'tool_use');
+      const res2 = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1024,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          system: 'マークダウンなし、話し言葉で答えてください。',
+          messages: [
+            ...messages,
+            { role: 'assistant', content: data.content },
+            { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: '検索完了' }] },
+          ],
+        }),
+      });
+      const data2 = await res2.json();
+      const texts = data2.content?.filter(b => b.type === 'text');
+      return res.status(200).json({ reply: texts?.map(b => b.text).join('\n') || '処理できませんでした' });
+    }
+
+    return res.status(200).json({ reply: '処理できませんでした' });
 
   } catch (err) {
     console.error('Server error:', err);

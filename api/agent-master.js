@@ -216,7 +216,7 @@ async function runGenerate() {
         if (article.new_insight) await saveMemory('writer', article.new_insight, 6);
         const saved = await supabasePost('auto_articles', {
           title: article.title, content: article.content || '', tag: article.tag || '環境解説',
-          game: article.game || 'pokeca', author: 'TCGVIBE AI',
+          summary: article.summary || '', game: article.game || 'pokeca', author: 'TCGVIBE AI',
           status: 'pending', approved: false, x_posted: false,
         });
         results.tournament = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id, game: article.game || 'pokeca' };
@@ -240,7 +240,7 @@ async function runGenerate() {
         if (article.new_insight) await saveMemory('writer', article.new_insight, 6);
         const saved = await supabasePost('auto_articles', {
           title: article.title, content: article.content || '', tag: article.tag || '価格情報',
-          game: article.game || 'pokeca', author: 'TCGVIBE AI',
+          summary: article.summary || '', game: article.game || 'pokeca', author: 'TCGVIBE AI',
           status: 'pending', approved: false, x_posted: false,
         });
         results.collector = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id, game: article.game || 'pokeca' };
@@ -305,8 +305,8 @@ export default async function handler(req, res) {
           title: a.title,
           content: a.content,
           tag: a.tag,
-          emoji: '🃏',
-          summary: a.title,
+          emoji: a.emoji || '🃏',
+          summary: a.summary || a.title,
           game: a.game || 'pokeca',
           author: a.author || 'TCGVIBE AI',
         });

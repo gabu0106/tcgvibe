@@ -1,9 +1,32 @@
+import crypto from 'crypto';
+
 const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
 
 const MODEL = 'claude-haiku-4-5-20251001';
+
+function verifyLineSignature(rawBody, signature) {
+  if (!LINE_CHANNEL_SECRET || !signature) return false;
+  const hash = crypto.createHmac('SHA256', LINE_CHANNEL_SECRET)
+    .update(rawBody)
+    .digest('base64');
+  return hash === signature;
+}
+
+// Disable Vercel body parsing to get raw body for signature verification
+export const config = { api: { bodyParser: false } };
+
+function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
 
 async function sendLineMessage(replyToken, text) {
   const res = await fetch('https://api.line.me/v2/bot/message/reply', {
@@ -79,16 +102,63 @@ async function approveArticle(articleId) {
         title: a.title,
         content: a.content,
         tag: a.tag,
-        emoji: '🃏',
-        summary: a.title,
-        date: new Date().toLocaleDateString('ja-JP'),
+        emoji: a.emoji || '🃏',
+        summary: a.summary || a.title,
+        game: a.game || 'pokeca',
+        author: a.author || 'TCGVIBE AI',
       }),
     });
   }
   return true;
 }
 
+async function searchCardPrices(query) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/card_prices?select=card_name,buy_price,rarity,shop,game&card_name=ilike.*${encodeURIComponent(query)}*&limit=20`,
+      { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY } }
+    );
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) return '';
+    return '\n\n【カード価格データ】\n' + data.map(c => `${c.card_name} / ${c.buy_price} / ${c.rarity} / ${c.shop}`).join('\n');
+  } catch { return ''; }
+}
+
+async function getTopPrices() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/card_prices?select=card_name,buy_price,rarity,shop,game&order=id.asc&limit=5000`,
+      { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY } }
+    );
+    const data = await res.json();
+    if (!Array.isArray(data)) return '';
+    const sorted = data
+      .map(c => ({ ...c, price_num: parseInt((c.buy_price || '0').replace(/[^0-9]/g, '')) }))
+      .filter(c => c.price_num > 0)
+      .sort((a, b) => b.price_num - a.price_num)
+      .slice(0, 15);
+    if (sorted.length === 0) return '';
+    return '\n\n【高額カードTOP15】\n' + sorted.map((c, i) => `${i+1}. ${c.card_name} ${c.buy_price} (${c.rarity}/${c.shop})`).join('\n');
+  } catch { return ''; }
+}
+
 async function askClaude(userMessage, history) {
+  // 価格関連キーワードがあればcard_pricesを検索
+  const priceKeywords = ['価格', '値段', '買取', '相場', '高い', '高額', 'いくら', '円'];
+  let priceContext = '';
+  if (priceKeywords.some(kw => userMessage.includes(kw))) {
+    // カード名を抽出して検索を試みる（キーワード以外の部分）
+    let searchTerm = userMessage;
+    priceKeywords.forEach(kw => { searchTerm = searchTerm.replace(kw, ''); });
+    searchTerm = searchTerm.replace(/[のはがをにで？?、。]/g, '').trim();
+    if (searchTerm.length >= 2) {
+      priceContext = await searchCardPrices(searchTerm);
+    }
+    if (!priceContext) {
+      priceContext = await getTopPrices();
+    }
+  }
+
   const messages = [...history, { role: 'user', content: userMessage }];
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -114,7 +184,8 @@ async function askClaude(userMessage, history) {
 ・※や「---」などの記号は使わない
 ・マークダウン記法は絶対に使わない
 
-最新情報が必要な質問は必ずweb_searchで検索してから答える。`,
+カード価格の質問には以下のデータを参照して正確に答えてください。データにないカードは「データにないから最新はショップで確認して」と伝える。
+最新情報が必要な質問は必ずweb_searchで検索してから答える。${priceContext}`,
       messages,
     }),
   });
@@ -157,7 +228,15 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    const events = req.body.events || [];
+    // Read raw body and verify LINE signature
+    const rawBody = await getRawBody(req);
+    const signature = req.headers['x-line-signature'];
+    if (!verifyLineSignature(rawBody, signature)) {
+      console.error('LINE署名検証失敗');
+      return res.status(403).json({ error: 'Invalid signature' });
+    }
+    const body = JSON.parse(rawBody.toString());
+    const events = body.events || [];
     for (const event of events) {
       if (event.type === 'message' && event.message.type === 'text') {
         const userMessage = event.message.text;

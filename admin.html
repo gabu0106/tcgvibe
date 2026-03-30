@@ -322,20 +322,27 @@
 </div>
 
 <script>
-const ADMIN_KEY = 'tcgvibe0106';
+let ADMIN_KEY = '';
 let settings = {};
 let articles = [];
 let pendingArticle = null;
 
 // LOGIN
-function login() {
+async function login() {
   const val = document.getElementById('loginInput').value;
-  if (val === ADMIN_KEY) {
-    document.getElementById('loginPage').classList.add('hide');
-    document.getElementById('app').classList.add('show');
-    loadAll();
-  } else {
-    document.getElementById('loginError').textContent = 'パスワードが違います';
+  try {
+    const res = await fetch('/api/admin?action=verify&key=' + encodeURIComponent(val));
+    const data = await res.json();
+    if (data.valid) {
+      ADMIN_KEY = val;
+      document.getElementById('loginPage').classList.add('hide');
+      document.getElementById('app').classList.add('show');
+      loadAll();
+    } else {
+      document.getElementById('loginError').textContent = 'パスワードが違います';
+    }
+  } catch(e) {
+    document.getElementById('loginError').textContent = 'サーバーエラーです';
   }
 }
 document.getElementById('loginInput').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
