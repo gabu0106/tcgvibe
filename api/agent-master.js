@@ -82,15 +82,36 @@ async function getTopCards() {
 // 診断情報を蓄積するグローバル配列
 const diagnostics = [];
 
-async function callClaude(system, userContent, maxTokens = 4096) {
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function extractJSON(text) {
+  // マークダウンコードブロック内のJSONを優先
+  const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlock) {
+    const m = codeBlock[1].match(/\{[\s\S]*\}/);
+    if (m) return m[0];
+  }
+  // 全てのJSONブロックを探して最長のものを返す（最も記事本体らしいもの）
+  const matches = [];
+  let depth = 0, start = -1;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '{') { if (depth === 0) start = i; depth++; }
+    else if (text[i] === '}') { depth--; if (depth === 0 && start !== -1) { matches.push(text.substring(start, i + 1)); start = -1; } }
+  }
+  // 最長のJSONブロックを返す
+  return matches.sort((a, b) => b.length - a.length)[0] || null;
+}
+
+async function callClaude(system, userContent, maxTokens = 4096, useSearch = true) {
   try {
+    const tools = useSearch ? [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }] : undefined;
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: MODEL,
         max_tokens: maxTokens,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        ...(tools && { tools }),
         system,
         messages: [{ role: 'user', content: userContent }],
       }),
@@ -98,73 +119,51 @@ async function callClaude(system, userContent, maxTokens = 4096) {
 
     if (!res.ok) {
       const errText = await res.text();
-      const msg = `Claude APIエラー: ${res.status} ${errText.substring(0, 500)}`;
+      const msg = `Claude APIエラー: ${res.status} ${errText.substring(0, 300)}`;
       console.log(msg);
       diagnostics.push(msg);
 
-      // web_searchが原因の可能性 → web_searchなしでリトライ
-      console.log('web_searchなしでリトライ');
-      diagnostics.push('web_searchなしでリトライ');
+      // 429の場合は60秒待ってweb_searchなしでリトライ
+      if (res.status === 429) {
+        console.log('レートリミット、60秒待機後リトライ');
+        diagnostics.push('レートリミット、60秒待機後リトライ');
+        await sleep(60000);
+      }
+
+      // web_searchなしでリトライ
       const res_retry = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
-          model: MODEL,
-          max_tokens: maxTokens,
-          system,
+          model: MODEL, max_tokens: maxTokens, system,
           messages: [{ role: 'user', content: userContent }],
         }),
       });
       if (!res_retry.ok) {
         const errText2 = await res_retry.text();
-        const msg2 = `リトライも失敗: ${res_retry.status} ${errText2.substring(0, 500)}`;
-        console.log(msg2);
-        diagnostics.push(msg2);
+        diagnostics.push(`リトライも失敗: ${res_retry.status} ${errText2.substring(0, 200)}`);
         return '';
       }
       const data_retry = await res_retry.json();
-      diagnostics.push(`リトライ成功 stop_reason: ${data_retry.stop_reason}`);
-      return data_retry.content?.find(b => b.type === 'text')?.text || '';
+      const allText = data_retry.content?.filter(b => b.type === 'text').map(b => b.text).join('\n') || '';
+      diagnostics.push(`リトライ成功 ${allText.length}文字`);
+      return allText;
     }
 
     const data = await res.json();
-    console.log('Claude応答 stop_reason:', data.stop_reason, 'blocks:', data.content?.map(b => b.type));
-    diagnostics.push(`Claude応答OK stop_reason:${data.stop_reason} blocks:${data.content?.map(b => b.type).join(',')}`);
+    const blockTypes = data.content?.map(b => b.type) || [];
+    console.log('Claude応答 stop_reason:', data.stop_reason, 'blocks:', blockTypes);
+    diagnostics.push(`応答OK stop:${data.stop_reason} blocks:${blockTypes.join(',')}`);
 
-    // server-side web_searchの結果を含むテキストブロックを取得
-    const textBlock = data.content?.find(b => b.type === 'text');
-    if (textBlock?.text) return textBlock.text;
+    // 全テキストブロックを結合して返す
+    const allText = data.content?.filter(b => b.type === 'text').map(b => b.text).join('\n') || '';
+    if (allText) return allText;
 
-    // tool_use対応（フォールバック）
-    if (data.content?.some(b => b.type === 'tool_use')) {
-      const toolUse = data.content.find(b => b.type === 'tool_use');
-      console.log('tool_use検出、2回目のリクエスト送信');
-      const res2 = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({
-          model: MODEL, max_tokens: maxTokens,
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-          system,
-          messages: [
-            { role: 'user', content: userContent },
-            { role: 'assistant', content: data.content },
-            { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: '検索完了' }] },
-          ],
-        }),
-      });
-      const d2 = await res2.json();
-      console.log('2回目応答 stop_reason:', d2.stop_reason);
-      return d2.content?.find(b => b.type === 'text')?.text || '';
-    }
-
-    console.log('Claude応答にテキストブロックなし', JSON.stringify(data).substring(0, 300));
-    diagnostics.push('テキストブロックなし: ' + JSON.stringify(data).substring(0, 200));
+    console.log('テキストブロックなし', JSON.stringify(data).substring(0, 300));
+    diagnostics.push('テキストなし');
     return '';
   } catch (e) {
-    const msg = `Claude例外: ${e.message}`;
-    console.log(msg);
-    diagnostics.push(msg);
+    diagnostics.push(`Claude例外: ${e.message}`);
     return '';
   }
 }
@@ -199,10 +198,10 @@ web_searchで自由にTCG情報を収集してください。
     `今日(${new Date().toLocaleDateString('ja-JP')})のポケカ・ワンピースカードの最新情報を収集してください。`
   );
 
-  const match = text.match(/\{[\s\S]*\}/);
+  const match = extractJSON(text);
   if (match) {
     try {
-      const result = JSON.parse(match[0]);
+      const result = JSON.parse(match);
       for (const site of (result.collected || [])) {
         if (site.url && site.site_name) {
           await supabasePost('crawler_data', {
@@ -260,9 +259,10 @@ async function runGenerate() {
       `【高額カードTOP10】\n${topCardsStr || 'データなし'}\n\n【最新情報】\n${crawlerStr || 'データなし'}\n\n今日(${new Date().toLocaleDateString('ja-JP')})の大会・環境記事を生成してください。web_searchで最新の大会結果や環境情報を検索してから記事を書いてください。`
     );
     console.log('大会記事Claude応答:', text.length, '文字', text.substring(0, 100));
-    const match = text.match(/\{[\s\S]*\}/);
+    const match = extractJSON(text);
+    // extractJSON returns a string or null
     if (match) {
-      const article = JSON.parse(match[0]);
+      const article = JSON.parse(match);
       if (article.title && !article.title.includes('タイトル')) {
         if (article.new_insight) await saveMemory('writer', article.new_insight, 6);
         const saved = await supabasePost('auto_articles', {
@@ -281,6 +281,10 @@ async function runGenerate() {
     }
   } catch (e) { console.log('大会記事失敗:', e.message, e.stack); }
 
+  // レートリミット回避のため60秒待機
+  console.log('レートリミット回避: 60秒待機');
+  await sleep(60000);
+
   // コレクター記事
   try {
     console.log('コレクター記事生成開始');
@@ -291,9 +295,10 @@ async function runGenerate() {
       `【高額カードTOP10】\n${topCardsStr || 'データなし'}\n\n【最新情報】\n${crawlerStr || 'データなし'}\n\n今日(${new Date().toLocaleDateString('ja-JP')})のコレクター向け記事を生成してください。web_searchで最新のカード価格情報を検索してから記事を書いてください。`
     );
     console.log('コレクター記事Claude応答:', text.length, '文字', text.substring(0, 100));
-    const match = text.match(/\{[\s\S]*\}/);
+    const match = extractJSON(text);
+    // extractJSON returns a string or null
     if (match) {
-      const article = JSON.parse(match[0]);
+      const article = JSON.parse(match);
       if (article.title && !article.title.includes('タイトル')) {
         if (article.new_insight) await saveMemory('writer', article.new_insight, 6);
         const saved = await supabasePost('auto_articles', {
@@ -312,18 +317,25 @@ async function runGenerate() {
     }
   } catch (e) { console.log('コレクター記事失敗:', e.message, e.stack); }
 
+  // レートリミット回避のため60秒待機
+  console.log('レートリミット回避: 60秒待機');
+  await sleep(60000);
+
   // ランキング
   try {
     const cardsStr = topCards.slice(0, 20).map((c, i) => `${i+1}. ${c.card_name} ${c.buy_price} (${c.rarity})`).join('\n');
     const text = await callClaude(
       `TCGVIBEランキング生成エージェントです。
-以下のJSONのみ返してください：
+以下のJSON形式のみ返してください（マークダウンのコードブロックは使わないこと）：
 {"ranking":[{"rank":1,"card":"カード名","price":"価格","reason":"理由30文字","buy_recommend":true}],"summary":"200文字以内の解説","new_insight":"学んだこと"}`,
-      `【買取価格データ】\n${cardsStr}\n\n【最新情報】\n${crawlerStr}\n\n今日のおすすめカードランキングTOP10を生成してください。`
+      `【買取価格データ】\n${cardsStr}\n\n【最新情報】\n${crawlerStr}\n\n今日のおすすめカードランキングTOP10を生成してください。`,
+      4096,
+      false  // ランキングはweb_search不要
     );
-    const match = text.match(/\{[\s\S]*\}/);
+    const match = extractJSON(text);
+    // extractJSON returns a string or null
     if (match) {
-      const result = JSON.parse(match[0]);
+      const result = JSON.parse(match);
       if (result.new_insight) await saveMemory('ranking', result.new_insight, 6);
       await supabasePost('crawler_data', {
         site_name: 'daily_ranking',
