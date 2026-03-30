@@ -28,11 +28,15 @@ async function supabasePost(table, data) {
     });
     if (!res.ok) {
       const errText = await res.text();
-      console.log(`supabasePost ${table} エラー:`, res.status, errText.substring(0, 200));
+      const msg = `supabasePost ${table} エラー: ${res.status} ${errText.substring(0, 200)}`;
+      console.log(msg);
+      diagnostics.push(msg);
       return null;
     }
     const result = await res.json();
-    console.log(`supabasePost ${table} 結果:`, Array.isArray(result) ? `配列[${result.length}] id=${result[0]?.id}` : typeof result);
+    const msg = `supabasePost ${table}: ${Array.isArray(result) ? `[${result.length}] id=${result[0]?.id}` : JSON.stringify(result).substring(0, 100)}`;
+    console.log(msg);
+    diagnostics.push(msg);
     return result;
   } catch (e) {
     console.log(`supabasePost ${table} 例外:`, e.message);
