@@ -79,6 +79,9 @@ async function getTopCards() {
   } catch { return []; }
 }
 
+// 診断情報を蓄積するグローバル配列
+const diagnostics = [];
+
 async function callClaude(system, userContent, maxTokens = 4096) {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -95,18 +98,44 @@ async function callClaude(system, userContent, maxTokens = 4096) {
 
     if (!res.ok) {
       const errText = await res.text();
-      console.log('Claude APIエラー:', res.status, errText);
-      return '';
+      const msg = `Claude APIエラー: ${res.status} ${errText.substring(0, 500)}`;
+      console.log(msg);
+      diagnostics.push(msg);
+
+      // web_searchが原因の可能性 → web_searchなしでリトライ
+      console.log('web_searchなしでリトライ');
+      diagnostics.push('web_searchなしでリトライ');
+      const res_retry = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: MODEL,
+          max_tokens: maxTokens,
+          system,
+          messages: [{ role: 'user', content: userContent }],
+        }),
+      });
+      if (!res_retry.ok) {
+        const errText2 = await res_retry.text();
+        const msg2 = `リトライも失敗: ${res_retry.status} ${errText2.substring(0, 500)}`;
+        console.log(msg2);
+        diagnostics.push(msg2);
+        return '';
+      }
+      const data_retry = await res_retry.json();
+      diagnostics.push(`リトライ成功 stop_reason: ${data_retry.stop_reason}`);
+      return data_retry.content?.find(b => b.type === 'text')?.text || '';
     }
 
     const data = await res.json();
     console.log('Claude応答 stop_reason:', data.stop_reason, 'blocks:', data.content?.map(b => b.type));
+    diagnostics.push(`Claude応答OK stop_reason:${data.stop_reason} blocks:${data.content?.map(b => b.type).join(',')}`);
 
     // server-side web_searchの結果を含むテキストブロックを取得
     const textBlock = data.content?.find(b => b.type === 'text');
     if (textBlock?.text) return textBlock.text;
 
-    // 旧形式のtool_use対応（フォールバック）
+    // tool_use対応（フォールバック）
     if (data.content?.some(b => b.type === 'tool_use')) {
       const toolUse = data.content.find(b => b.type === 'tool_use');
       console.log('tool_use検出、2回目のリクエスト送信');
@@ -129,10 +158,13 @@ async function callClaude(system, userContent, maxTokens = 4096) {
       return d2.content?.find(b => b.type === 'text')?.text || '';
     }
 
-    console.log('Claude応答にテキストブロックなし');
+    console.log('Claude応答にテキストブロックなし', JSON.stringify(data).substring(0, 300));
+    diagnostics.push('テキストブロックなし: ' + JSON.stringify(data).substring(0, 200));
     return '';
   } catch (e) {
-    console.log('Claude失敗:', e.message);
+    const msg = `Claude例外: ${e.message}`;
+    console.log(msg);
+    diagnostics.push(msg);
     return '';
   }
 }
@@ -348,16 +380,18 @@ export default async function handler(req, res) {
 
   if (action === 'collect') {
     try {
+      diagnostics.length = 0;
       const count = await runCollect();
-      return res.status(200).json({ status: 'done', sites_collected: count });
-    } catch (e) { return res.status(500).json({ error: e.message }); }
+      return res.status(200).json({ status: 'done', sites_collected: count, diagnostics });
+    } catch (e) { return res.status(500).json({ error: e.message, diagnostics }); }
   }
 
   if (action === 'generate') {
     try {
+      diagnostics.length = 0;
       const results = await runGenerate();
-      return res.status(200).json({ status: 'done', results });
-    } catch (e) { return res.status(500).json({ error: e.message }); }
+      return res.status(200).json({ status: 'done', results, diagnostics });
+    } catch (e) { return res.status(500).json({ error: e.message, diagnostics }); }
   }
 
   try {
