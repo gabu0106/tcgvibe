@@ -400,7 +400,20 @@ async function runGenerate() {
 }
 
 export default async function handler(req, res) {
-  if (req.method === 'GET') return res.status(200).json({ status: 'Master agent ready' });
+  if (req.method === 'GET') {
+    // テスト: DB接続とキーの確認
+    if (req.query.test === 'db') {
+      const keyType = process.env.SUPABASE_SECRET_KEY ? 'secret' : 'publishable';
+      const testInsert = await supabasePost('auto_articles', {
+        title: 'TEST_DELETE_ME', content: 'test', tag: 'test', status: 'pending', approved: false,
+      });
+      const testId = Array.isArray(testInsert) ? testInsert[0]?.id : testInsert?.id;
+      // Clean up
+      if (testId) await supabasePatch('auto_articles', `id=eq.${testId}`, { status: 'deleted' });
+      return res.status(200).json({ keyType, testInsert, testId });
+    }
+    return res.status(200).json({ status: 'Master agent ready' });
+  }
   if (req.method !== 'POST') return res.status(405).end();
 
   const { action, article_id } = req.body || {};
