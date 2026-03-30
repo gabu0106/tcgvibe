@@ -281,7 +281,7 @@ async function runGenerate() {
         if (article.new_insight) await saveMemory('writer', article.new_insight, 6);
         const saved = await supabasePost('auto_articles', {
           title: article.title, content: article.content || '', tag: article.tag || '環境解説',
-          summary: article.summary || '', status: 'pending', approved: false,
+          status: 'pending', approved: false,
         });
         const savedId = Array.isArray(saved) ? saved[0]?.id : saved?.id;
         console.log('大会記事保存 id:', savedId);
@@ -317,7 +317,7 @@ async function runGenerate() {
         if (article.new_insight) await saveMemory('writer', article.new_insight, 6);
         const saved = await supabasePost('auto_articles', {
           title: article.title, content: article.content || '', tag: article.tag || '価格情報',
-          summary: article.summary || '', status: 'pending', approved: false,
+          status: 'pending', approved: false,
         });
         const savedId = Array.isArray(saved) ? saved[0]?.id : saved?.id;
         console.log('コレクター記事保存 id:', savedId);
