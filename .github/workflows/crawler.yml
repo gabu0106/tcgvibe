@@ -8,19 +8,46 @@ on:
 jobs:
   step1-collect:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: collect
         run: |
-          curl -s -X POST https://tcgvibe.com/api/agent-master \
+          echo "=== Collect開始 ==="
+          RESPONSE=$(curl -sS --max-time 300 -w "\nHTTP_STATUS:%{http_code}" -X POST https://tcgvibe.com/api/agent-master \
             -H "Content-Type: application/json" \
-            -d '{"action":"collect"}'
+            -d '{"action":"collect"}')
+          HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
+          echo "Status: $HTTP_STATUS"
+          echo "Response: $BODY"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "::error::Collect failed with status $HTTP_STATUS"
+            exit 1
+          fi
 
   step2-generate:
     runs-on: ubuntu-latest
     needs: step1-collect
+    timeout-minutes: 10
     steps:
       - name: generate
         run: |
-          curl -s -X POST https://tcgvibe.com/api/agent-master \
+          echo "=== Generate開始 ==="
+          RESPONSE=$(curl -sS --max-time 300 -w "\nHTTP_STATUS:%{http_code}" -X POST https://tcgvibe.com/api/agent-master \
             -H "Content-Type: application/json" \
-            -d '{"action":"generate"}'
+            -d '{"action":"generate"}')
+          HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
+          echo "Status: $HTTP_STATUS"
+          echo "Response: $BODY"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "::error::Generate failed with status $HTTP_STATUS"
+            exit 1
+          fi
+          # 記事生成結果を確認
+          if echo "$BODY" | grep -q '"tournament":null'; then
+            echo "::warning::大会記事の生成に失敗しました"
+          fi
+          if echo "$BODY" | grep -q '"collector":null'; then
+            echo "::warning::コレクター記事の生成に失敗しました"
+          fi

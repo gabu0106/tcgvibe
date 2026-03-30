@@ -79,7 +79,7 @@ async function getTopCards() {
   } catch { return []; }
 }
 
-async function callClaude(system, userContent, maxTokens = 1500) {
+async function callClaude(system, userContent, maxTokens = 4096) {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -92,17 +92,31 @@ async function callClaude(system, userContent, maxTokens = 1500) {
         messages: [{ role: 'user', content: userContent }],
       }),
     });
-    const data = await res.json();
 
+    if (!res.ok) {
+      const errText = await res.text();
+      console.log('Claude APIエラー:', res.status, errText);
+      return '';
+    }
+
+    const data = await res.json();
+    console.log('Claude応答 stop_reason:', data.stop_reason, 'blocks:', data.content?.map(b => b.type));
+
+    // server-side web_searchの結果を含むテキストブロックを取得
+    const textBlock = data.content?.find(b => b.type === 'text');
+    if (textBlock?.text) return textBlock.text;
+
+    // 旧形式のtool_use対応（フォールバック）
     if (data.content?.some(b => b.type === 'tool_use')) {
       const toolUse = data.content.find(b => b.type === 'tool_use');
+      console.log('tool_use検出、2回目のリクエスト送信');
       const res2 = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model: MODEL, max_tokens: maxTokens,
           tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-          system: 'JSONのみ返してください。',
+          system,
           messages: [
             { role: 'user', content: userContent },
             { role: 'assistant', content: data.content },
@@ -111,9 +125,12 @@ async function callClaude(system, userContent, maxTokens = 1500) {
         }),
       });
       const d2 = await res2.json();
+      console.log('2回目応答 stop_reason:', d2.stop_reason);
       return d2.content?.find(b => b.type === 'text')?.text || '';
     }
-    return data.content?.find(b => b.type === 'text')?.text || '';
+
+    console.log('Claude応答にテキストブロックなし');
+    return '';
   } catch (e) {
     console.log('Claude失敗:', e.message);
     return '';
@@ -203,12 +220,14 @@ async function runGenerate() {
 
   // 大会記事
   try {
+    console.log('大会記事生成開始 topCards:', topCardsStr.length, '文字 crawlerData:', crawlerStr.length, '文字');
     const text = await callClaude(
       `TCGVIBEの記事執筆エージェントです。過去の学習：${memory || 'なし'}
-以下のJSONのみ返してください：
-{"title":"大会・環境系タイトル（具体的なカード名含む）","tag":"環境解説","game":"pokeca","summary":"100文字","content":"800文字以上の本文","new_insight":"学んだこと"}`,
-      `【高額カードTOP10】\n${topCardsStr}\n\n【最新情報】\n${crawlerStr}\n\n今日(${new Date().toLocaleDateString('ja-JP')})の大会・環境記事を生成してください。`
+以下のJSON形式のみ返してください（マークダウンのコードブロックは使わないこと）：
+{"title":"大会・環境系タイトル（具体的なカード名含む）","tag":"環境解説","game":"pokeca","summary":"100文字の要約","content":"800文字以上の本文","new_insight":"学んだこと"}`,
+      `【高額カードTOP10】\n${topCardsStr || 'データなし'}\n\n【最新情報】\n${crawlerStr || 'データなし'}\n\n今日(${new Date().toLocaleDateString('ja-JP')})の大会・環境記事を生成してください。web_searchで最新の大会結果や環境情報を検索してから記事を書いてください。`
     );
+    console.log('大会記事Claude応答:', text.length, '文字', text.substring(0, 100));
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const article = JSON.parse(match[0]);
@@ -219,20 +238,27 @@ async function runGenerate() {
           summary: article.summary || '', game: article.game || 'pokeca', author: 'TCGVIBE AI',
           status: 'pending', approved: false, x_posted: false,
         });
+        console.log('大会記事保存結果:', JSON.stringify(saved)?.substring(0, 200));
         results.tournament = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id, game: article.game || 'pokeca' };
         console.log('大会記事生成:', article.title);
+      } else {
+        console.log('大会記事タイトル不正:', article.title);
       }
+    } else {
+      console.log('大会記事JSONマッチ失敗 応答:', text.substring(0, 300));
     }
-  } catch (e) { console.log('大会記事失敗:', e.message); }
+  } catch (e) { console.log('大会記事失敗:', e.message, e.stack); }
 
   // コレクター記事
   try {
+    console.log('コレクター記事生成開始');
     const text = await callClaude(
       `TCGVIBEの記事執筆エージェントです。過去の学習：${memory || 'なし'}
-以下のJSONのみ返してください：
-{"title":"コレクター向けタイトル（具体的なカード名含む）","tag":"価格情報","game":"pokeca","summary":"100文字","content":"800文字以上の本文","new_insight":"学んだこと"}`,
-      `【高額カードTOP10】\n${topCardsStr}\n\n【最新情報】\n${crawlerStr}\n\n今日(${new Date().toLocaleDateString('ja-JP')})のコレクター向け記事を生成してください。`
+以下のJSON形式のみ返してください（マークダウンのコードブロックは使わないこと）：
+{"title":"コレクター向けタイトル（具体的なカード名含む）","tag":"価格情報","game":"pokeca","summary":"100文字の要約","content":"800文字以上の本文","new_insight":"学んだこと"}`,
+      `【高額カードTOP10】\n${topCardsStr || 'データなし'}\n\n【最新情報】\n${crawlerStr || 'データなし'}\n\n今日(${new Date().toLocaleDateString('ja-JP')})のコレクター向け記事を生成してください。web_searchで最新のカード価格情報を検索してから記事を書いてください。`
     );
+    console.log('コレクター記事Claude応答:', text.length, '文字', text.substring(0, 100));
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const article = JSON.parse(match[0]);
@@ -243,11 +269,16 @@ async function runGenerate() {
           summary: article.summary || '', game: article.game || 'pokeca', author: 'TCGVIBE AI',
           status: 'pending', approved: false, x_posted: false,
         });
+        console.log('コレクター記事保存結果:', JSON.stringify(saved)?.substring(0, 200));
         results.collector = { title: article.title, id: Array.isArray(saved) ? saved[0]?.id : saved?.id, game: article.game || 'pokeca' };
         console.log('コレクター記事生成:', article.title);
+      } else {
+        console.log('コレクター記事タイトル不正:', article.title);
       }
+    } else {
+      console.log('コレクター記事JSONマッチ失敗 応答:', text.substring(0, 300));
     }
-  } catch (e) { console.log('コレクター記事失敗:', e.message); }
+  } catch (e) { console.log('コレクター記事失敗:', e.message, e.stack); }
 
   // ランキング
   try {
