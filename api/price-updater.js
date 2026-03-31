@@ -223,7 +223,9 @@ async function updatePsa10Prices(cardLimit = 15) {
           source: 'ebay',
         });
         updated++;
-        diagnostics.push(`${card.card_name}: PSA10 ¥${ebay.avg.toLocaleString()} (${ebay.count}件)`);
+        diagnostics.push(`${card.card_name}(${toEnglish(card.card_name)}): PSA10 ¥${ebay.avg.toLocaleString()} (${ebay.count}件)`);
+      } else {
+        diagnostics.push(`${card.card_name}(${toEnglish(card.card_name)}): PSA10該当なし`);
       }
     } catch (e) { diagnostics.push(`${card.card_name} 失敗: ${e.message}`); }
   }
