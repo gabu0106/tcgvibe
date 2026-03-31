@@ -168,10 +168,7 @@ async function fetchSets() {
 function getPackImage(set) {
   if (set.logo_url) return set.logo_url;
   if (set.symbol_url) return set.symbol_url;
-  // TCGdexのシンボル画像をフォールバック
-  if (set.set_id && currentGame === 'pokeca') {
-    // TCGdex symbol URL pattern: /univ/{series}/{set_id}/symbol
-    // seriesはset_idの接頭辞から推定
+  if (currentGame === 'pokeca' && set.set_id) {
     const id = set.set_id;
     let series = 'SV';
     if (id.startsWith('SV') || id.startsWith('sv')) series = 'SV';
@@ -181,6 +178,7 @@ function getPackImage(set) {
     else if (id.startsWith('BW') || id.startsWith('bw')) series = 'BW';
     return `${TCGDEX_IMG}/univ/${series.toLowerCase()}/${id}/symbol.png`;
   }
+  // ワンピース: セット内最初のカード画像をパック画像代わりに使用
   return null;
 }
 

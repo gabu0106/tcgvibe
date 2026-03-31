@@ -170,8 +170,8 @@ export default async function handler(req, res) {
     if (action === 'sets') {
       let url = `${SUPABASE_URL}/rest/v1/card_sets?select=set_id,set_name,set_name_en,game,release_date,total_cards,logo_url,symbol_url&order=release_date.desc.nullslast`;
       if (game) url += `&game=eq.${game}`;
-      // ポケカは日本語名(set_name)があるセットのみ返す
-      if (game === 'pokeca') url += `&set_name=not.is.null`;
+      // 日本語名(set_name)があるセットのみ返す
+      url += `&set_name=not.is.null`;
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
       });
