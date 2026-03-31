@@ -166,10 +166,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ prices: matched, total: matched.length, matched: matchedCount });
     }
 
-    // セット一覧を取得
+    // セット一覧を取得（日本語名があるセットを優先）
     if (action === 'sets') {
-      let url = `${SUPABASE_URL}/rest/v1/card_sets?select=set_id,set_name,set_name_en,game,release_date,total_cards,logo_url,symbol_url&order=release_date.desc`;
+      let url = `${SUPABASE_URL}/rest/v1/card_sets?select=set_id,set_name,set_name_en,game,release_date,total_cards,logo_url,symbol_url&order=release_date.desc.nullslast`;
       if (game) url += `&game=eq.${game}`;
+      // ポケカは日本語名(set_name)があるセットのみ返す
+      if (game === 'pokeca') url += `&set_name=not.is.null`;
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
       });
@@ -177,12 +179,14 @@ export default async function handler(req, res) {
       return res.status(200).json({ sets: Array.isArray(data) ? data : [] });
     }
 
-    // カード画像一覧（メイン）
-    let url = `${SUPABASE_URL}/rest/v1/card_images?select=*&order=id.asc`;
+    // カード画像一覧（メイン）— 日本語データ（card_nameあり）を優先表示
+    let url = `${SUPABASE_URL}/rest/v1/card_images?select=*&order=id.desc`;
     if (game) url += `&game=eq.${game}`;
     if (set_id) url += `&set_id=eq.${set_id}`;
     if (rarity) url += `&rarity=eq.${rarity}`;
     if (search) url += `&or=(card_name.ilike.*${encodeURIComponent(search)}*,card_name_en.ilike.*${encodeURIComponent(search)}*)`;
+    // 日本語データを優先: card_nameがnullでないものだけ表示（英語のみのデータを除外）
+    if (!set_id && !search) url += `&card_name=not.is.null`;
     url += `&limit=${parseInt(limit) || 100}`;
     if (offset) url += `&offset=${parseInt(offset)}`;
 
