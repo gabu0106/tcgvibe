@@ -185,8 +185,8 @@ export default async function handler(req, res) {
     if (set_id) url += `&set_id=eq.${set_id}`;
     if (rarity) url += `&rarity=eq.${rarity}`;
     if (search) url += `&or=(card_name.ilike.*${encodeURIComponent(search)}*,card_name_en.ilike.*${encodeURIComponent(search)}*)`;
-    // 日本語データを優先: card_nameがnullでないものだけ表示（英語のみのデータを除外）
-    if (!set_id && !search) url += `&card_name=not.is.null`;
+    // 日本語データを優先: card_nameがnullでない＋画像ありのものだけ表示
+    if (!set_id && !search) url += `&card_name=not.is.null&image_small=not.is.null`;
     url += `&limit=${parseInt(limit) || 100}`;
     if (offset) url += `&offset=${parseInt(offset)}`;
 
