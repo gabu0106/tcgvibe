@@ -387,6 +387,17 @@ export default async function handler(req, res) {
   diagnostics.length = 0;
 
   try {
+    if (action === 'describe') {
+      const ph = await supabasePost('price_history', {});
+      const pp = await supabasePost('psa_prices', {});
+      const phCols = ph && Array.isArray(ph) && ph[0] ? Object.keys(ph[0]) : null;
+      const ppCols = pp && Array.isArray(pp) && pp[0] ? Object.keys(pp[0]) : null;
+      // cleanup
+      if (ph?.[0]?.id) await supabaseDelete('price_history', `id=eq.${ph[0].id}`);
+      if (pp?.[0]?.id) await supabaseDelete('psa_prices', `id=eq.${pp[0].id}`);
+      return res.status(200).json({ price_history: phCols || diagnostics, psa_prices: ppCols || diagnostics, ph_sample: ph?.[0], pp_sample: pp?.[0] });
+    }
+
     // 平均買取価格を取得
     if (action === 'avg_prices') {
       const results = await calcAverageBuyPrices();
