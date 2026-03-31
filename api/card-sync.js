@@ -104,7 +104,7 @@ async function syncPokemonSets() {
       name_ja: null,
       series: s.series || null,
       total_cards: s.total || s.printedTotal || 0,
-      release_date: s.releaseDate || null,
+      release_date: s.releaseDate ? s.releaseDate.replace(/\//g, '-') : null,
       logo_url: s.images?.logo || null,
       symbol_url: s.images?.symbol || null,
       updated_at: new Date().toISOString(),
