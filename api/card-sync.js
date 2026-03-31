@@ -41,31 +41,22 @@ async function supabasePost(table, data) {
   }
 }
 
-async function supabaseUpsert(table, data) {
+async function supabaseDelete(table, query) {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'apikey': SUPABASE_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation,resolution=merge-duplicates',
-      },
-      body: JSON.stringify(data),
+    await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
     });
-    if (!res.ok) {
-      const err = await res.text();
-      diagnostics.push(`supabaseUpsert ${table} ${res.status}: ${err.substring(0, 150)}`);
-      return null;
-    }
-    return await res.json();
-  } catch (e) {
-    diagnostics.push(`supabaseUpsert ${table} 例外: ${e.message}`);
-    return null;
-  }
+  } catch {}
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/*
+  テーブル構造:
+  card_sets:   id, set_id, set_name, set_name_en, game, release_date, total_cards, symbol_url, logo_url, created_at
+  card_images: id, card_id, card_name, card_name_en, number, rarity, set_name, set_id, image_small, image_large, game, created_at
+*/
 
 // ===== Pokemon TCG API =====
 
@@ -94,22 +85,21 @@ async function syncPokemonSets() {
   const sets = data.data || [];
   diagnostics.push(`Pokemon TCG: ${sets.length}セット取得`);
 
+  // 既存のポケカセットを削除して全入れ替え（set_idにUNIQUE制約なしのため）
+  await supabaseDelete('card_sets', 'game=eq.pokeca');
+
   let saved = 0;
-  // バッチでupsert（50件ずつ）
   for (let i = 0; i < sets.length; i += 50) {
     const batch = sets.slice(i, i + 50).map(s => ({
-      external_id: s.id,
+      set_id: s.id,
+      set_name_en: s.name,
       game: 'pokeca',
-      name: s.name,
-      name_ja: null,
-      series: s.series || null,
       total_cards: s.total || s.printedTotal || 0,
       release_date: s.releaseDate ? s.releaseDate.replace(/\//g, '-') : null,
       logo_url: s.images?.logo || null,
       symbol_url: s.images?.symbol || null,
-      updated_at: new Date().toISOString(),
     }));
-    const result = await supabaseUpsert('card_sets', batch);
+    const result = await supabasePost('card_sets', batch);
     if (result) saved += batch.length;
     await sleep(200);
   }
@@ -124,6 +114,9 @@ async function syncPokemonCards(setId, setName) {
   let totalSaved = 0;
   let totalCards = 0;
 
+  // このセットの既存カードを削除
+  await supabaseDelete('card_images', `game=eq.pokeca&set_id=eq.${setId}`);
+
   while (true) {
     const data = await pokemonTcgFetch(`cards?q=set.id:${setId}&pageSize=250&page=${page}`);
     const cards = data.data || [];
@@ -131,29 +124,25 @@ async function syncPokemonCards(setId, setName) {
 
     if (cards.length === 0) break;
 
-    // バッチでupsert（50件ずつ）
     for (let i = 0; i < cards.length; i += 50) {
       const batch = cards.slice(i, i + 50).map(c => ({
-        external_id: c.id,
+        card_id: c.id,
+        card_name_en: c.name,
         game: 'pokeca',
         set_id: setId,
-        name: c.name,
-        name_ja: null,
+        set_name: setName,
         number: c.number || null,
         rarity: c.rarity || null,
-        types: c.types ? JSON.stringify(c.types) : null,
         image_small: c.images?.small || null,
         image_large: c.images?.large || null,
-        artist: c.artist || null,
-        updated_at: new Date().toISOString(),
       }));
-      const result = await supabaseUpsert('card_images', batch);
+      const result = await supabasePost('card_images', batch);
       if (result) totalSaved += batch.length;
     }
 
     if (cards.length < 250) break;
     page++;
-    await sleep(1000); // レートリミット対策
+    await sleep(1000);
   }
 
   return { set: setName, total: totalCards, saved: totalSaved };
@@ -161,7 +150,6 @@ async function syncPokemonCards(setId, setName) {
 
 // 全セットのカード画像を同期（最新セットから順に、最大setLimit個）
 async function syncAllPokemonCards(setLimit = 10) {
-  // 最新のセットから同期
   const data = await pokemonTcgFetch('sets?orderBy=-releaseDate&pageSize=' + setLimit);
   const sets = data.data || [];
   diagnostics.push(`Pokemon TCG: 最新${sets.length}セットのカード同期開始`);
@@ -176,7 +164,7 @@ async function syncAllPokemonCards(setLimit = 10) {
       diagnostics.push(`${s.name} 失敗: ${e.message}`);
       results.push({ set: s.name, error: e.message });
     }
-    await sleep(2000); // セット間の待機
+    await sleep(2000);
   }
 
   return results;
@@ -228,11 +216,10 @@ async function searchEbayCards(query, limit = 50) {
   return data.itemSummaries || [];
 }
 
-// ワンピースカードのパック情報をeBayから取得
+// ワンピースカードのパック情報
 async function syncOnePieceSets() {
   console.log('ワンピースカード セット同期開始');
 
-  // 既知のワンピースカードブースターパック（公式情報ベース）
   const knownSets = [
     { id: 'op01', name: 'ROMANCE DAWN', release: '2022-07-22' },
     { id: 'op02', name: 'PARAMOUNT WAR', release: '2022-11-04' },
@@ -259,20 +246,18 @@ async function syncOnePieceSets() {
     { id: 'st13', name: '3 Brothers Bond Starter Deck', release: '2024-01-27' },
   ];
 
+  // 既存のワンピースセットを削除して入れ替え
+  await supabaseDelete('card_sets', 'game=eq.onepiece');
+
   const batch = knownSets.map(s => ({
-    external_id: `onepiece-${s.id}`,
+    set_id: `onepiece-${s.id}`,
+    set_name_en: s.name,
     game: 'onepiece',
-    name: s.name,
-    name_ja: null,
-    series: s.id.startsWith('st') ? 'Starter Deck' : 'Booster Pack',
     total_cards: 0,
     release_date: s.release,
-    logo_url: null,
-    symbol_url: null,
-    updated_at: new Date().toISOString(),
   }));
 
-  const result = await supabaseUpsert('card_sets', batch);
+  const result = await supabasePost('card_sets', batch);
   const saved = result ? batch.length : 0;
   diagnostics.push(`ワンピース: ${saved}セット保存`);
   console.log(`ワンピース セット保存: ${saved}`);
@@ -283,7 +268,6 @@ async function syncOnePieceSets() {
 async function syncOnePieceCards(setLimit = 5) {
   console.log('ワンピースカード カード同期開始');
 
-  // 最新セットから検索
   const sets = await supabaseGet('card_sets', 'game=eq.onepiece&order=release_date.desc&limit=' + setLimit);
   if (!Array.isArray(sets) || sets.length === 0) {
     diagnostics.push('ワンピース: セットデータなし、先にセット同期を実行');
@@ -293,43 +277,41 @@ async function syncOnePieceCards(setLimit = 5) {
   const results = [];
   for (const set of sets) {
     try {
-      const setCode = set.external_id.replace('onepiece-', '');
-      const query = `one piece card game ${setCode} ${set.name}`;
+      const setCode = (set.set_id || '').replace('onepiece-', '');
+      const query = `one piece card game ${setCode} ${set.set_name_en}`;
       const items = await searchEbayCards(query, 50);
-      diagnostics.push(`eBay検索 "${set.name}": ${items.length}件`);
+      diagnostics.push(`eBay検索 "${set.set_name_en}": ${items.length}件`);
+
+      // この検索分の既存データを削除
+      await supabaseDelete('card_images', `game=eq.onepiece&set_id=eq.${set.set_id}`);
 
       let saved = 0;
-      // eBay結果からカード情報を抽出してupsert
       const cards = items
         .filter(item => item.image?.imageUrl)
         .map((item, idx) => ({
-          external_id: `onepiece-${setCode}-ebay-${idx}`,
+          card_id: `${set.set_id}-ebay-${idx}`,
+          card_name_en: extractCardName(item.title),
           game: 'onepiece',
-          set_id: set.external_id,
-          name: extractCardName(item.title),
-          name_ja: null,
-          number: null,
+          set_id: set.set_id,
+          set_name: set.set_name_en,
           rarity: extractRarity(item.title),
-          types: null,
           image_small: item.image.imageUrl,
           image_large: item.image.imageUrl,
-          artist: null,
-          updated_at: new Date().toISOString(),
         }));
 
       if (cards.length > 0) {
         for (let i = 0; i < cards.length; i += 50) {
           const batch = cards.slice(i, i + 50);
-          const result = await supabaseUpsert('card_images', batch);
+          const result = await supabasePost('card_images', batch);
           if (result) saved += batch.length;
         }
       }
 
-      results.push({ set: set.name, total: items.length, saved });
+      results.push({ set: set.set_name_en, total: items.length, saved });
       await sleep(1000);
     } catch (e) {
-      diagnostics.push(`${set.name} 失敗: ${e.message}`);
-      results.push({ set: set.name, error: e.message });
+      diagnostics.push(`${set.set_name_en} 失敗: ${e.message}`);
+      results.push({ set: set.set_name_en, error: e.message });
     }
   }
 
@@ -338,7 +320,6 @@ async function syncOnePieceCards(setLimit = 5) {
 
 // eBayタイトルからカード名を抽出
 function extractCardName(title) {
-  // "One Piece Card Game OP01-001 Luffy SR" → "Luffy"
   const cleaned = title
     .replace(/one piece card game/i, '')
     .replace(/\b(OP|ST)\d{2}-\d{3}\b/gi, '')
@@ -346,7 +327,6 @@ function extractCardName(title) {
     .replace(/\b(Booster|Box|Pack|Sealed|Japanese|English|TCG)\b/gi, '')
     .replace(/[^\w\s.'-]/g, '')
     .trim();
-  // 最初の意味のある部分を返す
   return cleaned.split(/\s{2,}/)[0]?.trim() || title.substring(0, 80);
 }
 
@@ -372,29 +352,25 @@ export default async function handler(req, res) {
   if (req.method === 'GET') return res.status(200).json({ status: 'Card sync API ready' });
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { action, game, set_limit } = req.body || {};
+  const { action, set_limit } = req.body || {};
   diagnostics.length = 0;
 
   try {
-    // ポケモンカード: セット同期
     if (action === 'sync_pokemon_sets') {
       const result = await syncPokemonSets();
       return res.status(200).json({ status: 'done', ...result, diagnostics });
     }
 
-    // ポケモンカード: カード画像同期（最新N個のセット）
     if (action === 'sync_pokemon_cards') {
       const results = await syncAllPokemonCards(parseInt(set_limit) || 10);
       return res.status(200).json({ status: 'done', sets_synced: results.length, results, diagnostics });
     }
 
-    // ワンピースカード: セット同期
     if (action === 'sync_onepiece_sets') {
       const result = await syncOnePieceSets();
       return res.status(200).json({ status: 'done', ...result, diagnostics });
     }
 
-    // ワンピースカード: カード画像同期
     if (action === 'sync_onepiece_cards') {
       if (!EBAY_APP_ID || !EBAY_CERT_ID) {
         return res.status(500).json({ error: 'eBay API credentials not configured' });
@@ -403,7 +379,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: 'done', sets_synced: results.length, results, diagnostics });
     }
 
-    // 全同期（ポケモン + ワンピース）
     if (action === 'sync_all') {
       const pokeSets = await syncPokemonSets();
       await sleep(2000);
@@ -425,35 +400,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // テーブル構造確認
-    if (action === 'describe') {
-      // idなしで最小INSERTを試行→成功したらカラム名取得→テスト行削除
-      const testSet = await supabasePost('card_sets', {});
-      const testImg = await supabasePost('card_images', {});
-      // 成功していたらカラム名を取得して行を削除
-      const setsCols = testSet && Array.isArray(testSet) && testSet[0] ? Object.keys(testSet[0]) : null;
-      const imgsCols = testImg && Array.isArray(testImg) && testImg[0] ? Object.keys(testImg[0]) : null;
-      // テスト行を削除
-      if (testSet?.[0]?.id) {
-        try { await fetch(`${SUPABASE_URL}/rest/v1/card_sets?id=eq.${testSet[0].id}`, {
-          method: 'DELETE', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY }
-        }); } catch {}
-      }
-      if (testImg?.[0]?.id) {
-        try { await fetch(`${SUPABASE_URL}/rest/v1/card_images?id=eq.${testImg[0].id}`, {
-          method: 'DELETE', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY }
-        }); } catch {}
-      }
-      return res.status(200).json({
-        card_sets_columns: setsCols,
-        card_sets_sample: testSet?.[0] || null,
-        card_images_columns: imgsCols,
-        card_images_sample: testImg?.[0] || null,
-        diagnostics,
-      });
-    }
-
-    // ステータス取得
     if (action === 'status') {
       const [pokeSets, opSets, pokeCards, opCards] = await Promise.all([
         supabaseGet('card_sets', 'game=eq.pokeca&select=id&limit=1000'),
