@@ -10,7 +10,6 @@
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
-  /* NAV */
   .nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,250,248,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;height:60px;}
   .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;letter-spacing:0.08em;text-decoration:none;color:var(--text);}
   .nav-logo span{color:var(--gold);}
@@ -18,42 +17,46 @@
   .nav-links a{font-size:0.78rem;letter-spacing:0.06em;color:var(--muted);text-decoration:none;transition:color 0.2s;}
   .nav-links a:hover,.nav-links a.active{color:var(--gold);}
 
-  /* CONTAINER */
   .container{max-width:1200px;margin:0 auto;padding:80px 2rem 3rem;}
-
-  /* HEADER */
-  .page-header{margin-bottom:2rem;}
+  .page-header{margin-bottom:1.5rem;}
   .page-title{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:300;margin-bottom:0.5rem;}
   .page-desc{color:var(--muted);font-size:0.85rem;}
 
-  /* FILTER BAR */
   .filter-bar{position:sticky;top:60px;z-index:50;background:rgba(250,250,248,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0.75rem 0;margin-bottom:1.5rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;}
   .filter-group{display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;}
   .filter-label{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-right:0.25rem;}
   .filter-btn{background:none;border:1px solid var(--border2);padding:0.3rem 0.75rem;font-family:inherit;font-size:0.72rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:all 0.2s;white-space:nowrap;}
   .filter-btn:hover{border-color:var(--gold2);color:var(--text);}
   .filter-btn.active{background:var(--gold-light);border-color:var(--gold2);color:var(--gold);}
-  .search-input{border:1px solid var(--border2);padding:0.3rem 0.75rem;font-family:inherit;font-size:0.78rem;color:var(--text);border-radius:999px;outline:none;width:200px;transition:border-color 0.2s;background:var(--surface);}
+  .search-input{border:1px solid var(--border2);padding:0.3rem 0.75rem;font-family:inherit;font-size:0.78rem;color:var(--text);border-radius:999px;outline:none;width:220px;transition:border-color 0.2s;background:var(--surface);}
   .search-input:focus{border-color:var(--gold2);}
   .filter-select{border:1px solid var(--border2);padding:0.3rem 0.75rem;font-family:inherit;font-size:0.72rem;color:var(--text);border-radius:999px;outline:none;background:var(--surface);cursor:pointer;max-width:220px;}
-  .filter-select:focus{border-color:var(--gold2);}
 
-  /* STATS */
-  .stats-bar{display:flex;gap:1.5rem;margin-bottom:1.5rem;font-size:0.78rem;color:var(--muted);}
-  .stats-bar strong{color:var(--text);}
+  /* PACK SECTION */
+  .pack-section{margin-bottom:2.5rem;}
+  .pack-header{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:2px;margin-bottom:1rem;cursor:pointer;transition:background 0.15s;}
+  .pack-header:hover{background:var(--bg2);}
+  .pack-logo{width:48px;height:48px;object-fit:contain;flex-shrink:0;border-radius:2px;}
+  .pack-logo-placeholder{width:48px;height:48px;flex-shrink:0;background:var(--gold-light);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+  .pack-info{flex:1;min-width:0;}
+  .pack-name{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;}
+  .pack-meta{font-size:0.72rem;color:var(--muted);margin-top:0.15rem;display:flex;gap:1rem;}
+  .pack-toggle{font-size:0.7rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;flex-shrink:0;transition:color 0.2s;}
+  .pack-header:hover .pack-toggle{color:var(--gold);}
+  .pack-cards{display:none;}
+  .pack-cards.open{display:block;}
 
   /* CARD GRID */
-  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;}
-  .card-item{background:var(--surface);border:1px solid var(--border);border-radius:2px;overflow:hidden;cursor:pointer;transition:all 0.2s;position:relative;}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.75rem;}
+  .card-item{background:var(--surface);border:1px solid var(--border);border-radius:2px;overflow:hidden;cursor:pointer;transition:all 0.2s;}
   .card-item:hover{border-color:var(--gold2);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.06);}
   .card-img-wrap{position:relative;padding-top:140%;background:var(--bg2);overflow:hidden;}
   .card-img-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:transform 0.3s;}
   .card-item:hover .card-img-wrap img{transform:scale(1.05);}
-  .card-img-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.75rem;}
-  .card-meta{padding:0.6rem 0.75rem;}
-  .card-meta-name{font-size:0.75rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .card-meta-sub{font-size:0.62rem;color:var(--muted);margin-top:0.15rem;display:flex;gap:0.4rem;align-items:center;}
-  .rarity-badge{display:inline-block;padding:0.1rem 0.4rem;font-size:0.58rem;font-weight:600;letter-spacing:0.08em;border-radius:2px;background:var(--gold-light);color:var(--gold);}
+  .card-meta{padding:0.5rem 0.6rem;}
+  .card-meta-name{font-size:0.7rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .card-meta-sub{font-size:0.58rem;color:var(--muted);margin-top:0.1rem;display:flex;gap:0.3rem;align-items:center;}
+  .rarity-badge{display:inline-block;padding:0.08rem 0.35rem;font-size:0.55rem;font-weight:600;letter-spacing:0.06em;border-radius:2px;background:var(--gold-light);color:var(--gold);}
 
   /* LIGHTBOX */
   .lightbox{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:2rem;}
@@ -64,21 +67,21 @@
   .lightbox-info{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.95);padding:0.75rem 1.5rem;border-radius:2px;font-size:0.82rem;text-align:center;max-width:90vw;}
   .lightbox-info strong{display:block;margin-bottom:0.25rem;}
 
-  /* LOAD MORE */
   .load-more{display:flex;justify-content:center;margin:2rem 0;}
   .load-btn{background:var(--text);color:var(--bg);border:none;padding:0.6rem 2rem;font-family:inherit;font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:background 0.2s;}
   .load-btn:hover{background:var(--gold);}
   .load-btn:disabled{background:var(--muted);cursor:default;}
-
-  /* LOADING */
   .loading{text-align:center;padding:3rem;color:var(--muted);font-size:0.85rem;}
+  .stats-bar{display:flex;gap:1.5rem;margin-bottom:1rem;font-size:0.78rem;color:var(--muted);}
+  .stats-bar strong{color:var(--text);}
 
   @media(max-width:768px){
     .container{padding:70px 1rem 2rem;}
-    .card-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:0.6rem;}
+    .card-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem;}
     .filter-bar{flex-direction:column;align-items:stretch;}
     .search-input{width:100%;}
-    .filter-select{max-width:100%;}
+    .pack-header{flex-wrap:wrap;}
+    .pack-name{font-size:1.1rem;}
   }
 </style>
 </head>
@@ -95,41 +98,35 @@
 <div class="container">
   <div class="page-header">
     <h1 class="page-title">Card Gallery</h1>
-    <p class="page-desc">All card images from our database, organized by set and rarity</p>
+    <p class="page-desc">パック別にカード画像を一覧表示（発売日の新しい順）</p>
   </div>
 
-  <div class="filter-bar" id="filterBar">
+  <div class="filter-bar">
     <div class="filter-group">
       <span class="filter-label">Game</span>
-      <button class="filter-btn active" onclick="setGame('pokeca',this)">Pokemon</button>
-      <button class="filter-btn" onclick="setGame('onepiece',this)">One Piece</button>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label">Set</span>
-      <select class="filter-select" id="setFilter" onchange="applyFilters()">
-        <option value="">All Sets</option>
-      </select>
+      <button class="filter-btn active" onclick="setGame('pokeca',this)">ポケモンカード</button>
+      <button class="filter-btn" onclick="setGame('onepiece',this)">ワンピース</button>
     </div>
     <div class="filter-group">
       <span class="filter-label">Rarity</span>
       <select class="filter-select" id="rarityFilter" onchange="applyFilters()">
-        <option value="">All</option>
+        <option value="">すべて</option>
       </select>
     </div>
-    <input class="search-input" type="text" id="searchInput" placeholder="Search card name..." oninput="debounceSearch()">
+    <input class="search-input" type="text" id="searchInput" placeholder="カード名で検索..." oninput="debounceSearch()">
   </div>
 
-  <div class="stats-bar" id="statsBar">
-    <span>Showing <strong id="shownCount">0</strong> cards</span>
-    <span>Set: <strong id="currentSetName">All</strong></span>
+  <div class="stats-bar">
+    <span>パック数: <strong id="statsSetCount">-</strong></span>
+    <span>表示中: <strong id="statsCardCount">0</strong> 枚</span>
   </div>
 
-  <div class="card-grid" id="cardGrid">
-    <div class="loading">Loading cards...</div>
+  <div id="mainContent">
+    <div class="loading">読み込み中...</div>
   </div>
 
   <div class="load-more" id="loadMore" style="display:none">
-    <button class="load-btn" id="loadBtn" onclick="loadMore()">Load More</button>
+    <button class="load-btn" id="loadBtn" onclick="loadMoreSets()">さらにパックを表示</button>
   </div>
 </div>
 
@@ -144,154 +141,195 @@
 </div>
 
 <script>
+const TCGDEX_IMG = 'https://assets.tcgdex.net';
 let currentGame = 'pokeca';
-let currentSetId = '';
 let currentRarity = '';
 let currentSearch = '';
-let cards = [];
 let allSets = [];
-let allRarities = [];
-let currentOffset = 0;
-const PAGE_SIZE = 100;
+let setsShown = 0;
+const SETS_PER_PAGE = 10;
+let allCards = []; // flat list for lightbox
 let searchTimer = null;
+
+async function init() {
+  await fetchSets();
+  renderSetsPage();
+}
 
 async function fetchSets() {
   try {
     const res = await fetch(`/api/card-images?action=sets&game=${currentGame}`);
     const data = await res.json();
-    allSets = data.sets || [];
-    const sel = document.getElementById('setFilter');
-    sel.innerHTML = '<option value="">All Sets</option>' +
-      allSets.map(s => `<option value="${s.set_id}">${s.set_name || s.set_name_en || s.set_id}${s.release_date ? ' (' + s.release_date + ')' : ''}</option>`).join('');
+    allSets = (data.sets || []).filter(s => s.set_name || s.set_name_en);
+    document.getElementById('statsSetCount').textContent = allSets.length;
   } catch(e) { console.error(e); }
 }
 
-async function fetchCards(append = false) {
-  const grid = document.getElementById('cardGrid');
-  if (!append) {
-    grid.innerHTML = '<div class="loading">Loading cards...</div>';
-    currentOffset = 0;
+function getPackImage(set) {
+  if (set.logo_url) return set.logo_url;
+  if (set.symbol_url) return set.symbol_url;
+  // TCGdexのシンボル画像をフォールバック
+  if (set.set_id && currentGame === 'pokeca') {
+    // TCGdex symbol URL pattern: /univ/{series}/{set_id}/symbol
+    // seriesはset_idの接頭辞から推定
+    const id = set.set_id;
+    let series = 'SV';
+    if (id.startsWith('SV') || id.startsWith('sv')) series = 'SV';
+    else if (id.startsWith('S') && !id.startsWith('SV')) series = 'S';
+    else if (id.startsWith('SM') || id.startsWith('sm')) series = 'SM';
+    else if (id.startsWith('XY') || id.startsWith('xy')) series = 'XY';
+    else if (id.startsWith('BW') || id.startsWith('bw')) series = 'BW';
+    return `${TCGDEX_IMG}/univ/${series.toLowerCase()}/${id}/symbol.png`;
   }
+  return null;
+}
 
-  let url = `/api/card-images?game=${currentGame}&limit=${PAGE_SIZE}&offset=${currentOffset}`;
-  if (currentSetId) url += `&set_id=${encodeURIComponent(currentSetId)}`;
+async function fetchCardsForSet(setId) {
+  // 画像あり+日本語名ありのカードを番号順で取得
+  let url = `/api/card-images?game=${currentGame}&set_id=${encodeURIComponent(setId)}&limit=500`;
   if (currentRarity) url += `&rarity=${encodeURIComponent(currentRarity)}`;
   if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
-
   try {
     const res = await fetch(url);
     const data = await res.json();
-    const newCards = data.cards || [];
-
-    if (append) {
-      cards = cards.concat(newCards);
-    } else {
-      cards = newCards;
-      // 最初のロードでレアリティ一覧を更新
-      updateRarityFilter(cards);
-    }
-
-    renderCards(append);
-
-    // Load More ボタンの表示制御
-    const loadMore = document.getElementById('loadMore');
-    if (newCards.length >= PAGE_SIZE) {
-      loadMore.style.display = 'flex';
-      currentOffset += PAGE_SIZE;
-    } else {
-      loadMore.style.display = 'none';
-    }
-  } catch(e) {
-    grid.innerHTML = '<div class="loading">Error loading cards</div>';
-  }
+    let cards = (data.cards || []).filter(c => c.image_small);
+    // 番号順でソート
+    cards.sort((a, b) => {
+      const na = parseInt(a.number) || 9999;
+      const nb = parseInt(b.number) || 9999;
+      return na - nb;
+    });
+    return cards;
+  } catch { return []; }
 }
 
-function renderCards(append = false) {
-  const grid = document.getElementById('cardGrid');
-  const html = cards.map((c, i) => `
-    <div class="card-item" onclick="openLightbox(${i})">
-      <div class="card-img-wrap">
-        ${c.image_small
-          ? `<img src="${c.image_small}" alt="${c.card_name_en || c.card_name || ''}" loading="lazy">`
-          : '<div class="card-img-placeholder">No Image</div>'}
+async function renderSetsPage(reset = true) {
+  const container = document.getElementById('mainContent');
+  if (reset) {
+    container.innerHTML = '';
+    setsShown = 0;
+    allCards = [];
+  }
+
+  const setsToShow = allSets.slice(setsShown, setsShown + SETS_PER_PAGE);
+  if (setsToShow.length === 0 && setsShown === 0) {
+    container.innerHTML = '<div class="loading">パックが見つかりません</div>';
+    document.getElementById('loadMore').style.display = 'none';
+    return;
+  }
+
+  // 各セットのカードを並列取得
+  const results = await Promise.all(setsToShow.map(async s => {
+    const cards = await fetchCardsForSet(s.set_id);
+    return { set: s, cards };
+  }));
+
+  let totalCards = allCards.length;
+  for (const { set, cards } of results) {
+    if (cards.length === 0) continue; // 画像なしパックは非表示
+
+    const section = document.createElement('div');
+    section.className = 'pack-section';
+
+    const packImg = getPackImage(set);
+    const imgHtml = packImg
+      ? `<img class="pack-logo" src="${packImg}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" loading="lazy"><div class="pack-logo-placeholder" style="display:none">🃏</div>`
+      : '<div class="pack-logo-placeholder">🃏</div>';
+
+    const setName = set.set_name || set.set_name_en || set.set_id;
+    const baseIdx = totalCards;
+
+    section.innerHTML = `
+      <div class="pack-header" onclick="togglePack(this)">
+        ${imgHtml}
+        <div class="pack-info">
+          <div class="pack-name">${setName}</div>
+          <div class="pack-meta">
+            ${set.release_date ? `<span>${set.release_date}</span>` : ''}
+            <span>${cards.length} 枚</span>
+            ${set.set_id ? `<span>${set.set_id}</span>` : ''}
+          </div>
+        </div>
+        <span class="pack-toggle">▼ 表示</span>
       </div>
-      <div class="card-meta">
-        <div class="card-meta-name">${c.card_name || c.card_name_en || c.card_id || ''}</div>
-        <div class="card-meta-sub">
-          ${c.rarity ? `<span class="rarity-badge">${c.rarity}</span>` : ''}
-          <span>${c.number || ''}</span>
+      <div class="pack-cards">
+        <div class="card-grid">
+          ${cards.map((c, i) => {
+            const idx = baseIdx + i;
+            return `<div class="card-item" onclick="openLightbox(${idx})">
+              <div class="card-img-wrap">
+                <img src="${c.image_small}" alt="${c.card_name || c.card_name_en || ''}" loading="lazy">
+              </div>
+              <div class="card-meta">
+                <div class="card-meta-name">${c.card_name || c.card_name_en || c.card_id || ''}</div>
+                <div class="card-meta-sub">
+                  ${c.rarity ? `<span class="rarity-badge">${c.rarity}</span>` : ''}
+                  <span>#${c.number || '-'}</span>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
 
-  if (append) {
-    // 既存のグリッドに追加
-    grid.innerHTML = html;
-  } else {
-    grid.innerHTML = html || '<div class="loading">No cards found</div>';
+    container.appendChild(section);
+    allCards.push(...cards);
+    totalCards += cards.length;
   }
 
-  document.getElementById('shownCount').textContent = cards.length;
-  const setName = currentSetId
-    ? (allSets.find(s => s.set_id === currentSetId)?.set_name_en || currentSetId)
-    : 'All';
-  document.getElementById('currentSetName').textContent = setName;
+  setsShown += setsToShow.length;
+  document.getElementById('statsCardCount').textContent = allCards.length;
+
+  // Load More
+  const loadMore = document.getElementById('loadMore');
+  loadMore.style.display = setsShown < allSets.length ? 'flex' : 'none';
 }
 
-function updateRarityFilter(cardsData) {
-  const rarities = [...new Set(cardsData.map(c => c.rarity).filter(Boolean))].sort();
-  // 全カードのレアリティも取得するために既存を保持
-  for (const r of rarities) {
-    if (!allRarities.includes(r)) allRarities.push(r);
-  }
-  allRarities.sort();
-  const sel = document.getElementById('rarityFilter');
-  const current = sel.value;
-  sel.innerHTML = '<option value="">All</option>' +
-    allRarities.map(r => `<option value="${r}"${r === current ? ' selected' : ''}>${r}</option>`).join('');
+function togglePack(header) {
+  const cards = header.nextElementSibling;
+  const toggle = header.querySelector('.pack-toggle');
+  const isOpen = cards.classList.contains('open');
+  cards.classList.toggle('open');
+  toggle.textContent = isOpen ? '▼ 表示' : '▲ 閉じる';
+}
+
+async function loadMoreSets() {
+  const btn = document.getElementById('loadBtn');
+  btn.disabled = true;
+  btn.textContent = '読み込み中...';
+  await renderSetsPage(false);
+  btn.disabled = false;
+  btn.textContent = 'さらにパックを表示';
 }
 
 function setGame(game, btn) {
   currentGame = game;
-  currentSetId = '';
   currentRarity = '';
-  allRarities = [];
-  document.getElementById('setFilter').value = '';
-  document.getElementById('rarityFilter').innerHTML = '<option value="">All</option>';
+  currentSearch = '';
+  document.getElementById('rarityFilter').innerHTML = '<option value="">すべて</option>';
+  document.getElementById('searchInput').value = '';
   document.querySelectorAll('.filter-group:first-child .filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  fetchSets();
-  fetchCards();
+  init();
 }
 
 function applyFilters() {
-  currentSetId = document.getElementById('setFilter').value;
   currentRarity = document.getElementById('rarityFilter').value;
-  fetchCards();
+  renderSetsPage(true);
 }
 
 function debounceSearch() {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
     currentSearch = document.getElementById('searchInput').value.trim();
-    fetchCards();
-  }, 400);
-}
-
-function loadMore() {
-  const btn = document.getElementById('loadBtn');
-  btn.disabled = true;
-  btn.textContent = 'Loading...';
-  fetchCards(true).then(() => {
-    btn.disabled = false;
-    btn.textContent = 'Load More';
-  });
+    renderSetsPage(true);
+  }, 500);
 }
 
 // Lightbox
 function openLightbox(idx) {
-  const c = cards[idx];
+  const c = allCards[idx];
   if (!c) return;
   const imgUrl = c.image_large || c.image_small;
   if (!imgUrl) return;
@@ -312,8 +350,7 @@ function closeLightbox(e) {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
 // Init
-fetchSets();
-fetchCards();
+init();
 </script>
 </body>
 </html>
