@@ -221,7 +221,7 @@ function cardImg(url) {
 async function init() {
   document.getElementById('packGrid').innerHTML = '<div class="loading">読み込み中...</div>';
   setsShown = 0;
-  await Promise.all([fetchSets(), loadRanking(), loadPriceMap()]);
+  await Promise.all([fetchSets(), loadRanking(), loadPriceMap(), loadPsa10Map(), loadSurges()]);
   renderPacks(true);
 }
 
@@ -252,6 +252,38 @@ async function loadPriceMap() {
 
 function getPrice(cardName) {
   return priceMap[cardName] || priceMap[(cardName||'').replace(/[（(].*[）)]/g,'').trim()] || null;
+}
+
+// ===== PSA10 MAP =====
+let psa10Map = {};
+async function loadPsa10Map() {
+  try {
+    const res = await fetch('/api/price-updater', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_psa10' }) });
+    const data = await res.json();
+    psa10Map = {};
+    for (const p of (data.prices || [])) {
+      if (p.card_name && p.estimated_price) psa10Map[p.card_name] = p;
+    }
+  } catch {}
+}
+function getPsa10(cardName) {
+  return psa10Map[cardName] || psa10Map[(cardName||'').replace(/[（(].*[）)]/g,'').trim()] || null;
+}
+
+// ===== SURGES =====
+let surgeMap = {};
+async function loadSurges() {
+  try {
+    const res = await fetch('/api/price-updater', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_surges' }) });
+    const data = await res.json();
+    surgeMap = {};
+    for (const s of (data.surges || [])) {
+      if (s.card_name) surgeMap[s.card_name] = s;
+    }
+  } catch {}
+}
+function getSurge(cardName) {
+  return surgeMap[cardName] || null;
 }
 
 // ===== RANKING =====
@@ -373,19 +405,25 @@ function sortAndRenderModalCards() {
 
   body.innerHTML = `<div class="card-grid">${cards.map((c,i) => {
     const p = getPrice(c.card_name || c.card_name_en);
+    const psa = getPsa10(c.card_name || c.card_name_en);
+    const surge = getSurge(c.card_name || c.card_name_en);
     return `<div class="card-item" onclick="openLightbox(${i})" data-idx="${i}">
+      ${surge ? `<div style="position:absolute;top:4px;right:4px;background:#e74c3c;color:#fff;font-size:0.5rem;font-weight:700;padding:0.12rem 0.35rem;border-radius:3px;z-index:2">+${surge.change_percent}%</div>` : ''}
       <div class="card-img-wrap"><img src="${cardImg(c.image_small)}" alt="${c.card_name||c.card_name_en||''}" loading="lazy"></div>
       <div class="card-meta">
         <div class="card-meta-name">${c.card_name||c.card_name_en||c.card_id||''}</div>
         <div class="card-meta-sub">${c.rarity?`<span class="rarity-badge">${c.rarity}</span>`:''}<span>#${(c.number||'-').replace(/^.*-/,'')}</span></div>
         ${p ? `<div class="card-price">${p.buy_price}</div>` : ''}
+        ${psa ? `<div style="font-size:0.52rem;color:var(--gold);font-weight:600;margin-top:0.05rem">PSA10: ¥${psa.estimated_price.toLocaleString()}</div>` : ''}
       </div>
-      ${p ? `<div class="card-tooltip">
+      ${p || psa ? `<div class="card-tooltip">
         <div class="tooltip-name">${c.card_name||c.card_name_en||''}</div>
-        <div class="tooltip-row"><span>買取価格</span><span class="tooltip-val price">${p.buy_price}</span></div>
-        ${p.sell_price ? `<div class="tooltip-row"><span>販売価格</span><span class="tooltip-val">${p.sell_price}</span></div>` : ''}
-        <div class="tooltip-row"><span>レアリティ</span><span class="tooltip-val">${p.rarity||c.rarity||'-'}</span></div>
-        <div class="tooltip-row"><span>ショップ</span><span class="tooltip-val">${p.shop||'-'}</span></div>
+        ${p ? `<div class="tooltip-row"><span>買取価格</span><span class="tooltip-val price">${p.buy_price}</span></div>` : ''}
+        ${p?.sell_price ? `<div class="tooltip-row"><span>販売価格</span><span class="tooltip-val">${p.sell_price}</span></div>` : ''}
+        ${psa ? `<div class="tooltip-row"><span>PSA10相場</span><span class="tooltip-val price">¥${psa.estimated_price.toLocaleString()}</span></div>` : ''}
+        ${psa ? `<div class="tooltip-row"><span>eBay出品数</span><span class="tooltip-val">${psa.ebay_count||'-'}件</span></div>` : ''}
+        <div class="tooltip-row"><span>レアリティ</span><span class="tooltip-val">${(p?.rarity||c.rarity||'-')}</span></div>
+        ${surge ? `<div class="tooltip-row"><span>前日比</span><span class="tooltip-val" style="color:#e74c3c">+${surge.change_percent}%</span></div>` : ''}
       </div>` : ''}
     </div>`;
   }).join('')}</div>`;
@@ -442,7 +480,11 @@ function openLightbox(idx) {
   document.getElementById('lightboxImg').src = cardImg(u);
   document.getElementById('lightboxName').textContent = c.card_name || c.card_name_en || '';
   const p = getPrice(c.card_name||c.card_name_en);
-  document.getElementById('lightboxMeta').textContent = [c.rarity, c.set_name, c.number?'#'+(c.number||'').replace(/^.*-/,''):'', p?p.buy_price:''].filter(Boolean).join(' / ');
+  const psa = getPsa10(c.card_name||c.card_name_en);
+  const parts = [c.rarity, c.set_name, c.number?'#'+(c.number||'').replace(/^.*-/,''):''];
+  if (p) parts.push(p.buy_price);
+  if (psa) parts.push('PSA10: ¥' + psa.estimated_price.toLocaleString());
+  document.getElementById('lightboxMeta').textContent = parts.filter(Boolean).join(' / ');
   document.getElementById('lightbox').classList.add('open');
 }
 function openLightboxDirect(img,name,price) {

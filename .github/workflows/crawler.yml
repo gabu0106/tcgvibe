@@ -52,9 +52,28 @@ jobs:
             echo "::warning::コレクター記事の生成に失敗しました"
           fi
 
-  step3-learn:
+  step3-prices:
     runs-on: ubuntu-latest
     needs: step2-generate
+    timeout-minutes: 10
+    steps:
+      - name: daily-price-update
+        run: |
+          echo "=== 価格更新+高騰検知 ==="
+          RESPONSE=$(curl -sS --max-time 300 -w "\nHTTP_STATUS:%{http_code}" -X POST https://tcgvibe.com/api/price-updater \
+            -H "Content-Type: application/json" \
+            -d '{"action":"daily_update","card_limit":15}')
+          HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
+          echo "Status: $HTTP_STATUS"
+          echo "Response: $BODY"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "::warning::価格更新に失敗しました"
+          fi
+
+  step4-learn:
+    runs-on: ubuntu-latest
+    needs: step3-prices
     timeout-minutes: 5
     steps:
       - name: learning-cycle
