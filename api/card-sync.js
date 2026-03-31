@@ -297,9 +297,7 @@ async function syncOnePieceCards() {
   const allCardEntries = Object.entries(cardsIndex);
   diagnostics.push(`punk-records: ${allCardEntries.length}カード取得`);
 
-  // パラレル版(_p1, _p2)は除外して通常版のみ保存
-  const normalCards = allCardEntries.filter(([id]) => !/_p\d/.test(id));
-  diagnostics.push(`通常版: ${normalCards.length}枚（パラレル除外）`);
+  diagnostics.push(`全${allCardEntries.length}枚（パラレル含む）`);
 
   // 既存のワンピースカードを削除
   await supabaseDelete('card_images', 'game=eq.onepiece');
@@ -308,8 +306,8 @@ async function syncOnePieceCards() {
   const packsData = await fetchPunkRecords('packs.json');
 
   let totalSaved = 0;
-  for (let i = 0; i < normalCards.length; i += 50) {
-    const batch = normalCards.slice(i, i + 50).map(([cardId, c]) => {
+  for (let i = 0; i < allCardEntries.length; i += 50) {
+    const batch = allCardEntries.slice(i, i + 50).map(([cardId, c]) => {
       const packName = packsData[c.pack_id]?.raw_title || '';
       return {
         card_id: cardId,
@@ -327,8 +325,8 @@ async function syncOnePieceCards() {
     if (result) totalSaved += batch.length;
   }
 
-  diagnostics.push(`ワンピース: ${totalSaved}/${normalCards.length}枚保存`);
-  return { total: normalCards.length, saved: totalSaved };
+  diagnostics.push(`ワンピース: ${totalSaved}/${allCardEntries.length}枚保存`);
+  return { total: allCardEntries.length, saved: totalSaved };
 }
 
 // ===== メインハンドラ =====
