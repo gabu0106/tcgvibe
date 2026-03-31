@@ -154,7 +154,14 @@ export default async function handler(req, res) {
       });
 
       const matchedCount = matched.filter(m => m.image_url).length;
-      return res.status(200).json({ prices: matched, total: matched.length, matched: matchedCount });
+      const jaCount = Object.keys(byNameJa).length;
+      const enCount = Object.keys(byNameEn).length;
+      const idCount = Object.keys(byCardId).length;
+      const snCount = Object.keys(bySetNum).length;
+      const imgTotal = Array.isArray(images) ? images.length : 0;
+      const sampleJa = Object.keys(byNameJa).slice(0, 5);
+      const samplePrices = (Array.isArray(prices) ? prices : []).slice(0, 3).map(p => p.card_name);
+      return res.status(200).json({ prices: matched, total: matched.length, matched: matchedCount, debug: { imgTotal, jaCount, enCount, idCount, snCount, sampleJa, samplePrices } });
     }
 
     // セット一覧を取得
