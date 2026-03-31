@@ -428,8 +428,8 @@ export default async function handler(req, res) {
     // テーブル構造確認
     if (action === 'describe') {
       // idなしで最小INSERTを試行→成功したらカラム名取得→テスト行削除
-      const testSet = await supabasePost('card_sets', { name: '__test__' });
-      const testImg = await supabasePost('card_images', { name: '__test__' });
+      const testSet = await supabasePost('card_sets', {});
+      const testImg = await supabasePost('card_images', {});
       // 成功していたらカラム名を取得して行を削除
       const setsCols = testSet && Array.isArray(testSet) && testSet[0] ? Object.keys(testSet[0]) : null;
       const imgsCols = testImg && Array.isArray(testImg) && testImg[0] ? Object.keys(testImg[0]) : null;
