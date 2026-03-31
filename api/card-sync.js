@@ -345,10 +345,15 @@ async function syncOnePieceCards() {
 // ===== メインハンドラ =====
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method === 'GET') return res.status(200).json({ status: 'Card sync API ready (TCGdex + eBay)' });
+  if (req.method === 'GET') return res.status(200).json({ status: 'Card sync API ready' });
   if (req.method !== 'POST') return res.status(405).end();
+
+  // 内部APIキー認証
+  const key = req.headers['x-api-key'] || req.body?.api_key;
+  if (!key || key !== process.env.INTERNAL_API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   const { action, set_limit, offset, with_rarity } = req.body || {};
   diagnostics.length = 0;

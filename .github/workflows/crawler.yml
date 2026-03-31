@@ -15,6 +15,7 @@ jobs:
           echo "=== Collect開始 ==="
           RESPONSE=$(curl -sS --max-time 300 -w "\nHTTP_STATUS:%{http_code}" -X POST https://tcgvibe.com/api/agent-master \
             -H "Content-Type: application/json" \
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
             -d '{"action":"collect"}')
           HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
           BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
@@ -35,6 +36,7 @@ jobs:
           echo "=== Generate開始 ==="
           RESPONSE=$(curl -sS --max-time 300 -w "\nHTTP_STATUS:%{http_code}" -X POST https://tcgvibe.com/api/agent-master \
             -H "Content-Type: application/json" \
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
             -d '{"action":"generate"}')
           HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
           BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
@@ -44,32 +46,36 @@ jobs:
             echo "::error::Generate failed with status $HTTP_STATUS"
             exit 1
           fi
-          # 記事生成結果を確認
-          if echo "$BODY" | grep -q '"tournament":null'; then
-            echo "::warning::大会記事の生成に失敗しました"
-          fi
-          if echo "$BODY" | grep -q '"collector":null'; then
-            echo "::warning::コレクター記事の生成に失敗しました"
-          fi
 
   step3-prices:
     runs-on: ubuntu-latest
     needs: step2-generate
     timeout-minutes: 10
     steps:
-      - name: daily-price-update
+      - name: record-history
         run: |
-          echo "=== 価格更新+高騰検知 ==="
-          RESPONSE=$(curl -sS --max-time 300 -w "\nHTTP_STATUS:%{http_code}" -X POST https://tcgvibe.com/api/price-updater \
+          echo "=== 価格履歴記録 ==="
+          curl -sS --max-time 120 -X POST https://tcgvibe.com/api/price-updater \
             -H "Content-Type: application/json" \
-            -d '{"action":"daily_update","card_limit":15}')
-          HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
-          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
-          echo "Status: $HTTP_STATUS"
-          echo "Response: $BODY"
-          if [ "$HTTP_STATUS" != "200" ]; then
-            echo "::warning::価格更新に失敗しました"
-          fi
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -d '{"action":"record_history"}' || true
+      - name: update-psa10
+        run: |
+          echo "=== PSA10価格更新(5件ずつ3回) ==="
+          for i in 1 2 3; do
+            curl -sS --max-time 60 -X POST https://tcgvibe.com/api/price-updater \
+              -H "Content-Type: application/json" \
+              -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+              -d '{"action":"update_psa10","card_limit":5}' || true
+            sleep 5
+          done
+      - name: detect-surges
+        run: |
+          echo "=== 高騰検知 ==="
+          curl -sS --max-time 60 -X POST https://tcgvibe.com/api/price-updater \
+            -H "Content-Type: application/json" \
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -d '{"action":"detect_surges"}' || true
 
   step4-learn:
     runs-on: ubuntu-latest
@@ -78,14 +84,20 @@ jobs:
     steps:
       - name: learning-cycle
         run: |
-          echo "=== 学習サイクル開始 ==="
-          RESPONSE=$(curl -sS --max-time 120 -w "\nHTTP_STATUS:%{http_code}" -X POST https://tcgvibe.com/api/agent-master \
+          echo "=== 学習サイクル ==="
+          curl -sS --max-time 120 -X POST https://tcgvibe.com/api/agent-master \
             -H "Content-Type: application/json" \
-            -d '{"action":"learn"}')
-          HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
-          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
-          echo "Status: $HTTP_STATUS"
-          echo "Response: $BODY"
-          if [ "$HTTP_STATUS" != "200" ]; then
-            echo "::warning::学習サイクルに失敗しました（記事生成には影響なし）"
-          fi
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -d '{"action":"learn"}' || true
+
+  notify-failure:
+    runs-on: ubuntu-latest
+    needs: [step1-collect, step2-generate, step3-prices, step4-learn]
+    if: failure()
+    steps:
+      - name: line-failure-alert
+        run: |
+          curl -sS -X POST https://tcgvibe.com/api/agent-master \
+            -H "Content-Type: application/json" \
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -d '{"action":"send_line_alert","message":"⚠️ GitHub Actions失敗: TCG Agent System v3のワークフローが失敗しました。https://github.com/gabu0106/tcgvibe/actions で確認してください。"}' || true

@@ -2,7 +2,10 @@
 // ブラウザからの直接参照がhotlink protectionでブロックされる場合の対策
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  if (['https://tcgvibe.com','https://www.tcgvibe.com'].includes(origin) || origin.includes('localhost')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const { url } = req.query;

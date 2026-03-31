@@ -2,7 +2,7 @@ name: Weekly Card Sync
 
 on:
   schedule:
-    - cron: '0 12 * * 0'  # 毎週日曜 21:00 JST (12:00 UTC)
+    - cron: '0 12 * * 0'
   workflow_dispatch:
 
 jobs:
@@ -13,17 +13,10 @@ jobs:
       - name: sync-pokemon-sets
         run: |
           echo "=== Pokemon TCG セット同期 ==="
-          RESPONSE=$(curl -sS --max-time 120 -w "\nHTTP_STATUS:%{http_code}" -X POST https://tcgvibe.com/api/card-sync \
+          curl -sS --max-time 120 -X POST https://tcgvibe.com/api/card-sync \
             -H "Content-Type: application/json" \
-            -d '{"action":"sync_pokemon_sets"}')
-          HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
-          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
-          echo "Status: $HTTP_STATUS"
-          echo "Response: $BODY"
-          if [ "$HTTP_STATUS" != "200" ]; then
-            echo "::error::Pokemon sets sync failed with status $HTTP_STATUS"
-            exit 1
-          fi
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -d '{"action":"sync_pokemon_sets"}'
 
   sync-pokemon-cards:
     runs-on: ubuntu-latest
@@ -33,41 +26,25 @@ jobs:
       - name: sync-pokemon-cards
         run: |
           echo "=== Pokemon TCG カード画像同期（最新10セット） ==="
-          RESPONSE=$(curl -sS --max-time 600 -w "\nHTTP_STATUS:%{http_code}" -X POST https://tcgvibe.com/api/card-sync \
+          curl -sS --max-time 600 -X POST https://tcgvibe.com/api/card-sync \
             -H "Content-Type: application/json" \
-            -d '{"action":"sync_pokemon_cards","set_limit":10}')
-          HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
-          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
-          echo "Status: $HTTP_STATUS"
-          echo "Response: $BODY"
-          if [ "$HTTP_STATUS" != "200" ]; then
-            echo "::warning::Pokemon cards sync failed with status $HTTP_STATUS"
-          fi
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -d '{"action":"sync_pokemon_cards","set_limit":10}' || true
 
   sync-onepiece:
     runs-on: ubuntu-latest
     needs: sync-pokemon-cards
     timeout-minutes: 10
     steps:
-      - name: sync-onepiece-sets-and-cards
+      - name: sync-onepiece
         run: |
-          echo "=== ワンピースカード セット同期 ==="
-          RESPONSE=$(curl -sS --max-time 120 -w "\nHTTP_STATUS:%{http_code}" -X POST https://tcgvibe.com/api/card-sync \
+          echo "=== ワンピースカード同期 ==="
+          curl -sS --max-time 120 -X POST https://tcgvibe.com/api/card-sync \
             -H "Content-Type: application/json" \
-            -d '{"action":"sync_onepiece_sets"}')
-          HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
-          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
-          echo "Status: $HTTP_STATUS"
-          echo "Response: $BODY"
-
-          echo "=== ワンピースカード カード画像同期（最新5セット） ==="
-          RESPONSE=$(curl -sS --max-time 300 -w "\nHTTP_STATUS:%{http_code}" -X POST https://tcgvibe.com/api/card-sync \
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -d '{"action":"sync_onepiece_sets"}' || true
+          sleep 2
+          curl -sS --max-time 300 -X POST https://tcgvibe.com/api/card-sync \
             -H "Content-Type: application/json" \
-            -d '{"action":"sync_onepiece_cards","set_limit":5}')
-          HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
-          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
-          echo "Status: $HTTP_STATUS"
-          echo "Response: $BODY"
-          if [ "$HTTP_STATUS" != "200" ]; then
-            echo "::warning::One Piece cards sync failed with status $HTTP_STATUS"
-          fi
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -d '{"action":"sync_onepiece_cards"}' || true

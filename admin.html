@@ -204,7 +204,7 @@
         <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
           <button class="btn" onclick="showPage('compose',document.querySelector('[onclick*=compose]'))">✍️ 新しい記事を生成</button>
           <button class="btn btn-outline" onclick="window.open('/','_blank')">🌐 サイトを確認</button>
-          <button class="btn btn-outline" onclick="window.open('/?key=tcgvibe0106','_blank')">🔑 管理者モードで確認</button>
+          <button class="btn btn-outline" onclick="window.open('/','_blank')">🔑 サイトを確認</button>
         </div>
       </div>
     </div>
@@ -379,6 +379,7 @@ async function login() {
     const data = await res.json();
     if (data.valid) {
       ADMIN_KEY = val;
+      sessionStorage.setItem('tcgvibe_admin', 'true');
       document.getElementById('loginPage').classList.add('hide');
       document.getElementById('app').classList.add('show');
       loadAll();

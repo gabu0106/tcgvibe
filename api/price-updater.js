@@ -319,13 +319,26 @@ async function sendSurgeAlerts(surges) {
 // ===== メインハンドラ =====
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  if (['https://tcgvibe.com','https://www.tcgvibe.com'].includes(origin) || origin.includes('localhost')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method === 'GET') return res.status(200).json({ status: 'Price updater ready' });
   if (req.method !== 'POST') return res.status(405).end();
 
   const { action, card_limit, threshold } = req.body || {};
   diagnostics.length = 0;
+
+  // 書き込み系アクションは内部APIキー必須、読み取りはフロントから許可
+  const writeActions = ['update_psa10', 'record_history', 'detect_surges', 'daily_update', 'avg_prices'];
+  if (writeActions.includes(action)) {
+    const key = req.headers['x-api-key'] || req.body?.api_key;
+    if (!key || key !== process.env.INTERNAL_API_KEY) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
 
   try {
     if (action === 'avg_prices') {

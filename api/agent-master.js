@@ -585,10 +585,32 @@ async function runGenerate() {
 }
 
 export default async function handler(req, res) {
+  // CORS制限
+  const origin = req.headers.origin || '';
+  if (['https://tcgvibe.com','https://www.tcgvibe.com'].includes(origin) || origin.includes('localhost')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method === 'GET') return res.status(200).json({ status: 'Master agent ready' });
   if (req.method !== 'POST') return res.status(405).end();
 
   const { action, article_id, reject_reason } = req.body || {};
+
+  // 内部APIキー認証（collect/generate/learn等のバッチ処理）
+  const internalActions = ['collect', 'generate', 'learn'];
+  if (internalActions.includes(action) || !action) {
+    const key = req.headers['x-api-key'] || req.body?.api_key;
+    if (!key || key !== process.env.INTERNAL_API_KEY) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
+  if (action === 'send_line_alert') {
+    const msg = req.body?.message;
+    if (msg) await sendLine(msg);
+    return res.status(200).json({ status: 'sent' });
+  }
 
   if (action === 'list_pending') {
     try {

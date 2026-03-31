@@ -3,7 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TCGVIBE.AI — TCGプロの知見をAIで届ける</title>
+<title>TCGVIBE.AI — TCGプロの知見をAIで届ける | ポケカ・ワンピースカード買取価格比較</title>
+<meta name="description" content="TCGVIBE.AIはポケモンカード・ワンピースカードの買取価格比較、PSA10相場、高騰カード情報をAIで分析・配信するTCG総合情報サイトです。">
+<meta name="keywords" content="ポケモンカード,ワンピースカード,買取価格,PSA10,相場,高騰,TCG,トレーディングカード">
+<meta property="og:title" content="TCGVIBE.AI — TCGプロの知見をAIで届ける">
+<meta property="og:description" content="ポケモンカード・ワンピースカードの買取価格比較、PSA10相場、高騰カード情報をAIで分析">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tcgvibe.com/">
+<meta property="og:site_name" content="TCGVIBE.AI">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TCGVIBE.AI — TCG総合情報サイト">
+<meta name="twitter:description" content="ポケカ・ワンピースカードの買取価格比較、PSA10相場、AI記事配信">
+<link rel="canonical" href="https://tcgvibe.com/">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"TCGVIBE.AI","url":"https://tcgvibe.com/","description":"TCGプロの知見をAIで届けるTCG総合情報サイト","potentialAction":{"@type":"SearchAction","target":"https://tcgvibe.com/card-list.html?q={search_term_string}","query-input":"required name=search_term_string"}}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -308,12 +322,9 @@
 </footer>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-if (params.get('key')) {
-  fetch('/api/admin?action=verify&key=' + encodeURIComponent(params.get('key')))
-    .then(r => r.json())
-    .then(d => { if (d.valid) document.getElementById('navAiBtn').classList.add('show'); })
-    .catch(() => {});
+// 管理者モード: admin.htmlでログイン後にsessionStorageで認証
+if (sessionStorage.getItem('tcgvibe_admin') === 'true') {
+  document.getElementById('navAiBtn').classList.add('show');
 }
 
 const obs = new IntersectionObserver(entries => {
