@@ -166,6 +166,48 @@ export default async function handler(req, res) {
       return res.status(200).json({ prices: matched, total: matched.length, matched: matchedCount });
     }
 
+    // 高額カードランキング（card_pricesの高い順 + 画像付き）
+    if (action === 'ranking') {
+      const g = game || 'pokeca';
+      const rankLimit = parseInt(limit) || 20;
+      // card_pricesを価格順で取得
+      let priceUrl = `${SUPABASE_URL}/rest/v1/card_prices?select=id,card_name,buy_price,sell_price,rarity,shop,pack_name,model_number&game=eq.${g}&order=id.asc&limit=5000`;
+      const priceRes = await fetch(priceUrl, { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY } });
+      const prices = await priceRes.json();
+      if (!Array.isArray(prices)) return res.status(200).json({ ranking: [] });
+
+      // 価格でソート（数値変換）
+      const sorted = prices
+        .map(p => ({ ...p, price_num: parseInt((p.buy_price || '0').replace(/[^0-9]/g, '')) }))
+        .filter(p => p.price_num > 0)
+        .sort((a, b) => b.price_num - a.price_num);
+      // 重複カード名を除去して上位を取得
+      const seen = new Set();
+      const top = [];
+      for (const p of sorted) {
+        if (!seen.has(p.card_name)) { seen.add(p.card_name); top.push(p); }
+        if (top.length >= rankLimit) break;
+      }
+
+      // 画像をマッチング（ページネーションで全取得）
+      const images = [];
+      let imgOff = 0;
+      while (true) {
+        const imgUrl = `${SUPABASE_URL}/rest/v1/card_images?select=card_name,image_small&game=eq.${g}&card_name=not.is.null&image_small=not.is.null&limit=1000&offset=${imgOff}`;
+        const r = await fetch(imgUrl, { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY } });
+        const pg = await r.json();
+        if (!Array.isArray(pg) || pg.length === 0) break;
+        images.push(...pg);
+        if (pg.length < 1000) break;
+        imgOff += 1000;
+      }
+      const imgMap = {};
+      for (const img of images) { if (img.card_name && img.image_small && !imgMap[img.card_name]) imgMap[img.card_name] = img.image_small; }
+
+      const ranking = top.map((p, i) => ({ ...p, rank: i + 1, image_url: imgMap[p.card_name] || null }));
+      return res.status(200).json({ ranking });
+    }
+
     // セット一覧を取得（日本語名があるセットを優先）
     if (action === 'sets') {
       let url = `${SUPABASE_URL}/rest/v1/card_sets?select=set_id,set_name,set_name_en,game,release_date,total_cards,logo_url,symbol_url&order=release_date.desc.nullslast`;
