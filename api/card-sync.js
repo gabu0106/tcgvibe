@@ -266,20 +266,21 @@ async function syncOnePieceSets() {
 
   await supabaseDelete('card_sets', 'game=eq.onepiece');
 
-  // cards_by_id.jsonから各パックの先頭カードIDを取得してロゴ画像に使用
-  let cardsIndex = {};
-  try { cardsIndex = await fetchPunkRecords('index/cards_by_id.json'); } catch {}
-  const packFirstCard = {};
-  for (const [cardId, c] of Object.entries(cardsIndex)) {
-    if (/_p\d/.test(cardId)) continue;
-    if (!packFirstCard[c.pack_id] || cardId < packFirstCard[c.pack_id]) {
-      packFirstCard[c.pack_id] = cardId;
-    }
-  }
+  // 公式サイトのパックボックス画像URLを構築
+  // パターン: /renewal/images/products/{boosters|decks}/{code}/img_item01.webp
+  const OP_PRODUCT_IMG = 'https://www.onepiece-cardgame.com/renewal/images/products';
 
   const setRows = packs.map(p => {
-    const firstCard = packFirstCard[p.id];
-    const logoUrl = firstCard ? `${OP_IMAGE_BASE}/${firstCard}.png` : null;
+    const codeMatch = p.raw_title.match(/【([A-Z]+-(\d+[A-Za-z]?))】/);
+    let logoUrl = null;
+    if (codeMatch) {
+      const fullCode = codeMatch[1]; // e.g. "OP-01", "ST-16", "EB-03"
+      const prefix = fullCode.split('-')[0].toLowerCase(); // "op", "st", "eb"
+      const num = fullCode.split('-')[1]; // "01", "16", "03"
+      const code = prefix + num; // "op01", "st16", "eb03"
+      const category = prefix === 'st' ? 'decks' : 'boosters';
+      logoUrl = `${OP_PRODUCT_IMG}/${category}/${code}/img_item01.webp`;
+    }
     return {
       set_id: `op-${p.id}`,
       set_name: p.raw_title,
