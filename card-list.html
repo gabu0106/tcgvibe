@@ -162,7 +162,7 @@ async function fetchSets() {
     allSets = data.sets || [];
     const sel = document.getElementById('setFilter');
     sel.innerHTML = '<option value="">All Sets</option>' +
-      allSets.map(s => `<option value="${s.set_id}">${s.set_name_en || s.set_name || s.set_id}${s.release_date ? ' (' + s.release_date + ')' : ''}</option>`).join('');
+      allSets.map(s => `<option value="${s.set_id}">${s.set_name || s.set_name_en || s.set_id}${s.release_date ? ' (' + s.release_date + ')' : ''}</option>`).join('');
   } catch(e) { console.error(e); }
 }
 
@@ -216,7 +216,7 @@ function renderCards(append = false) {
           : '<div class="card-img-placeholder">No Image</div>'}
       </div>
       <div class="card-meta">
-        <div class="card-meta-name">${c.card_name_en || c.card_name || c.card_id || ''}</div>
+        <div class="card-meta-name">${c.card_name || c.card_name_en || c.card_id || ''}</div>
         <div class="card-meta-sub">
           ${c.rarity ? `<span class="rarity-badge">${c.rarity}</span>` : ''}
           <span>${c.number || ''}</span>
@@ -296,7 +296,7 @@ function openLightbox(idx) {
   const imgUrl = c.image_large || c.image_small;
   if (!imgUrl) return;
   document.getElementById('lightboxImg').src = imgUrl;
-  document.getElementById('lightboxName').textContent = c.card_name_en || c.card_name || '';
+  document.getElementById('lightboxName').textContent = c.card_name || c.card_name_en || '';
   const meta = [c.rarity, c.set_name, c.number ? `#${c.number}` : ''].filter(Boolean).join(' / ');
   document.getElementById('lightboxMeta').textContent = meta;
   document.getElementById('lightbox').classList.add('open');

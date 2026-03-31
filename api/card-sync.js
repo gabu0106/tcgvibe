@@ -2,7 +2,6 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 const EBAY_APP_ID = process.env.EBAY_APP_ID;
 const EBAY_CERT_ID = process.env.EBAY_CERT_ID;
-const POKEMON_TCG_API_KEY = process.env.POKEMON_TCG_API_KEY || '';
 
 const diagnostics = [];
 
@@ -56,116 +55,162 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
   テーブル構造:
   card_sets:   id, set_id, set_name, set_name_en, game, release_date, total_cards, symbol_url, logo_url, created_at
   card_images: id, card_id, card_name, card_name_en, number, rarity, set_name, set_id, image_small, image_large, game, created_at
+
+  データソース:
+  - ポケモンカード: TCGdex API (https://api.tcgdex.net/v2/ja/) — 日本語名・日本語パック名・画像
+  - ワンピースカード: eBay Browse API — 英語名・画像
 */
 
-// ===== Pokemon TCG API =====
+// ===== TCGdex API (日本語ポケモンカード) =====
 
-async function pokemonTcgFetch(endpoint) {
-  const headers = { 'Accept': 'application/json' };
-  if (POKEMON_TCG_API_KEY) headers['X-Api-Key'] = POKEMON_TCG_API_KEY;
-
-  const res = await fetch(`https://api.pokemontcg.io/v2/${endpoint}`, { headers });
+async function tcgdexFetch(endpoint) {
+  const res = await fetch(`https://api.tcgdex.net/v2/ja/${endpoint}`);
   if (!res.ok) {
     if (res.status === 429) {
-      diagnostics.push('Pokemon TCG API レートリミット、30秒待機');
-      await sleep(30000);
-      const retry = await fetch(`https://api.pokemontcg.io/v2/${endpoint}`, { headers });
-      if (!retry.ok) throw new Error(`Pokemon TCG API ${retry.status}`);
+      diagnostics.push('TCGdex レートリミット、10秒待機');
+      await sleep(10000);
+      const retry = await fetch(`https://api.tcgdex.net/v2/ja/${endpoint}`);
+      if (!retry.ok) throw new Error(`TCGdex ${retry.status}`);
       return await retry.json();
     }
-    throw new Error(`Pokemon TCG API ${res.status}: ${(await res.text()).substring(0, 200)}`);
+    throw new Error(`TCGdex ${res.status}: ${(await res.text()).substring(0, 200)}`);
   }
   return await res.json();
 }
 
-// 全パック（セット）を取得して card_sets に保存
+// 全セットを取得して card_sets に保存（日本語名）
 async function syncPokemonSets() {
-  console.log('Pokemon TCG セット同期開始');
-  const data = await pokemonTcgFetch('sets?orderBy=releaseDate&pageSize=250');
-  const sets = data.data || [];
-  diagnostics.push(`Pokemon TCG: ${sets.length}セット取得`);
+  console.log('TCGdex セット同期開始（日本語）');
+  const sets = await tcgdexFetch('sets');
+  if (!Array.isArray(sets)) throw new Error('TCGdex sets応答が配列でない');
+  diagnostics.push(`TCGdex: ${sets.length}セット取得`);
 
-  // 既存のポケカセットを削除して全入れ替え（set_idにUNIQUE制約なしのため）
+  // 既存のポケカセットを削除して全入れ替え
   await supabaseDelete('card_sets', 'game=eq.pokeca');
 
   let saved = 0;
   for (let i = 0; i < sets.length; i += 50) {
     const batch = sets.slice(i, i + 50).map(s => ({
       set_id: s.id,
-      set_name_en: s.name,
+      set_name: s.name,
       game: 'pokeca',
-      total_cards: s.total || s.printedTotal || 0,
-      release_date: s.releaseDate ? s.releaseDate.replace(/\//g, '-') : null,
-      logo_url: s.images?.logo || null,
-      symbol_url: s.images?.symbol || null,
+      total_cards: s.cardCount?.total || s.cardCount?.official || 0,
+      symbol_url: s.symbol || null,
+      logo_url: s.logo || null,
     }));
     const result = await supabasePost('card_sets', batch);
     if (result) saved += batch.length;
-    await sleep(200);
+    await sleep(100);
   }
 
-  console.log(`Pokemon TCG セット保存: ${saved}/${sets.length}`);
+  console.log(`TCGdex セット保存: ${saved}/${sets.length}`);
   return { total: sets.length, saved };
 }
 
-// 指定セットのカード画像を取得して card_images に保存
-async function syncPokemonCards(setId, setName) {
-  let page = 1;
-  let totalSaved = 0;
-  let totalCards = 0;
+// 指定セットの全カードを取得して card_images に保存（日本語）
+async function syncPokemonCards(setId) {
+  const setData = await tcgdexFetch(`sets/${setId}`);
+  const cards = setData.cards || [];
+  const setName = setData.name || setId;
 
   // このセットの既存カードを削除
   await supabaseDelete('card_images', `game=eq.pokeca&set_id=eq.${setId}`);
 
-  while (true) {
-    const data = await pokemonTcgFetch(`cards?q=set.id:${setId}&pageSize=250&page=${page}`);
-    const cards = data.data || [];
-    totalCards = data.totalCount || totalCards;
+  let totalSaved = 0;
+  for (let i = 0; i < cards.length; i += 50) {
+    const batch = cards.slice(i, i + 50).map(c => ({
+      card_id: c.id,
+      card_name: c.name,
+      game: 'pokeca',
+      set_id: setId,
+      set_name: setName,
+      number: c.localId || null,
+      image_small: c.image ? `${c.image}/low.webp` : null,
+      image_large: c.image ? `${c.image}/high.webp` : null,
+    }));
+    const result = await supabasePost('card_images', batch);
+    if (result) totalSaved += batch.length;
+  }
 
-    if (cards.length === 0) break;
+  return { set: setName, set_id: setId, total: cards.length, saved: totalSaved };
+}
 
-    for (let i = 0; i < cards.length; i += 50) {
-      const batch = cards.slice(i, i + 50).map(c => ({
+// カード詳細を取得してレアリティを付与（バッチ）
+async function syncPokemonCardsWithRarity(setId) {
+  const setData = await tcgdexFetch(`sets/${setId}`);
+  const cardSummaries = setData.cards || [];
+  const setName = setData.name || setId;
+
+  // このセットの既存カードを削除
+  await supabaseDelete('card_images', `game=eq.pokeca&set_id=eq.${setId}`);
+
+  // 各カードの詳細を取得してレアリティを含める
+  const cardDetails = [];
+  for (const c of cardSummaries) {
+    try {
+      const detail = await tcgdexFetch(`cards/${c.id}`);
+      cardDetails.push({
         card_id: c.id,
-        card_name_en: c.name,
+        card_name: detail.name || c.name,
         game: 'pokeca',
         set_id: setId,
         set_name: setName,
-        number: c.number || null,
-        rarity: c.rarity || null,
-        image_small: c.images?.small || null,
-        image_large: c.images?.large || null,
-      }));
-      const result = await supabasePost('card_images', batch);
-      if (result) totalSaved += batch.length;
+        number: detail.localId || c.localId || null,
+        rarity: detail.rarity || null,
+        image_small: c.image ? `${c.image}/low.webp` : null,
+        image_large: c.image ? `${c.image}/high.webp` : null,
+      });
+      // TCGdex にやさしく
+      if (cardDetails.length % 20 === 0) await sleep(500);
+    } catch (e) {
+      // 詳細取得失敗時はサマリーだけで保存
+      cardDetails.push({
+        card_id: c.id,
+        card_name: c.name,
+        game: 'pokeca',
+        set_id: setId,
+        set_name: setName,
+        number: c.localId || null,
+        image_small: c.image ? `${c.image}/low.webp` : null,
+        image_large: c.image ? `${c.image}/high.webp` : null,
+      });
     }
-
-    if (cards.length < 250) break;
-    page++;
-    await sleep(1000);
   }
 
-  return { set: setName, total: totalCards, saved: totalSaved };
+  // バッチINSERT
+  let totalSaved = 0;
+  for (let i = 0; i < cardDetails.length; i += 50) {
+    const batch = cardDetails.slice(i, i + 50);
+    const result = await supabasePost('card_images', batch);
+    if (result) totalSaved += batch.length;
+  }
+
+  return { set: setName, set_id: setId, total: cardSummaries.length, saved: totalSaved };
 }
 
-// 全セットのカード画像を同期（offset番目から順にsetLimit個）
-async function syncAllPokemonCards(setLimit = 10, offset = 0) {
-  const data = await pokemonTcgFetch('sets?orderBy=-releaseDate&pageSize=250');
-  const allSets = data.data || [];
-  const sets = allSets.slice(offset, offset + setLimit);
-  diagnostics.push(`Pokemon TCG: 全${allSets.length}セット中 ${offset}〜${offset + sets.length} のカード同期開始`);
+// 全セットのカードを同期（offset番目からsetLimit個）
+async function syncAllPokemonCards(setLimit = 5, offset = 0, withRarity = false) {
+  const allSets = await tcgdexFetch('sets');
+  if (!Array.isArray(allSets)) throw new Error('TCGdex sets応答が配列でない');
+
+  // 新しいセット（後ろ）から順に処理
+  const reversed = [...allSets].reverse();
+  const sets = reversed.slice(offset, offset + setLimit);
+  diagnostics.push(`TCGdex: 全${allSets.length}セット中 ${offset}〜${offset + sets.length} のカード同期開始`);
 
   const results = [];
   for (const s of sets) {
     try {
-      const result = await syncPokemonCards(s.id, s.name);
+      const result = withRarity
+        ? await syncPokemonCardsWithRarity(s.id)
+        : await syncPokemonCards(s.id);
       results.push(result);
-      diagnostics.push(`${s.name}: ${result.saved}/${result.total}枚`);
+      diagnostics.push(`${result.set}: ${result.saved}/${result.total}枚`);
     } catch (e) {
-      diagnostics.push(`${s.name} 失敗: ${e.message}`);
-      results.push({ set: s.name, error: e.message });
+      diagnostics.push(`${s.name || s.id} 失敗: ${e.message}`);
+      results.push({ set: s.name || s.id, error: e.message });
     }
-    await sleep(2000);
+    await sleep(1000);
   }
 
   return results;
@@ -217,10 +262,8 @@ async function searchEbayCards(query, limit = 50) {
   return data.itemSummaries || [];
 }
 
-// ワンピースカードのパック情報
 async function syncOnePieceSets() {
   console.log('ワンピースカード セット同期開始');
-
   const knownSets = [
     { id: 'op01', name: 'ROMANCE DAWN', release: '2022-07-22' },
     { id: 'op02', name: 'PARAMOUNT WAR', release: '2022-11-04' },
@@ -246,10 +289,7 @@ async function syncOnePieceSets() {
     { id: 'st12', name: 'Zoro & Sanji Starter Deck', release: '2023-11-25' },
     { id: 'st13', name: '3 Brothers Bond Starter Deck', release: '2024-01-27' },
   ];
-
-  // 既存のワンピースセットを削除して入れ替え
   await supabaseDelete('card_sets', 'game=eq.onepiece');
-
   const batch = knownSets.map(s => ({
     set_id: `onepiece-${s.id}`,
     set_name_en: s.name,
@@ -257,24 +297,19 @@ async function syncOnePieceSets() {
     total_cards: 0,
     release_date: s.release,
   }));
-
   const result = await supabasePost('card_sets', batch);
   const saved = result ? batch.length : 0;
   diagnostics.push(`ワンピース: ${saved}セット保存`);
-  console.log(`ワンピース セット保存: ${saved}`);
   return { total: knownSets.length, saved };
 }
 
-// eBayからワンピースカード画像・情報を取得
 async function syncOnePieceCards(setLimit = 5) {
   console.log('ワンピースカード カード同期開始');
-
   const sets = await supabaseGet('card_sets', 'game=eq.onepiece&order=release_date.desc&limit=' + setLimit);
   if (!Array.isArray(sets) || sets.length === 0) {
-    diagnostics.push('ワンピース: セットデータなし、先にセット同期を実行');
+    diagnostics.push('ワンピース: セットデータなし');
     return [];
   }
-
   const results = [];
   for (const set of sets) {
     try {
@@ -282,10 +317,7 @@ async function syncOnePieceCards(setLimit = 5) {
       const query = `one piece card game ${setCode} ${set.set_name_en}`;
       const items = await searchEbayCards(query, 50);
       diagnostics.push(`eBay検索 "${set.set_name_en}": ${items.length}件`);
-
-      // この検索分の既存データを削除
       await supabaseDelete('card_images', `game=eq.onepiece&set_id=eq.${set.set_id}`);
-
       let saved = 0;
       const cards = items
         .filter(item => item.image?.imageUrl)
@@ -299,7 +331,6 @@ async function syncOnePieceCards(setLimit = 5) {
           image_small: item.image.imageUrl,
           image_large: item.image.imageUrl,
         }));
-
       if (cards.length > 0) {
         for (let i = 0; i < cards.length; i += 50) {
           const batch = cards.slice(i, i + 50);
@@ -307,7 +338,6 @@ async function syncOnePieceCards(setLimit = 5) {
           if (result) saved += batch.length;
         }
       }
-
       results.push({ set: set.set_name_en, total: items.length, saved });
       await sleep(1000);
     } catch (e) {
@@ -315,11 +345,9 @@ async function syncOnePieceCards(setLimit = 5) {
       results.push({ set: set.set_name_en, error: e.message });
     }
   }
-
   return results;
 }
 
-// eBayタイトルからカード名を抽出
 function extractCardName(title) {
   const cleaned = title
     .replace(/one piece card game/i, '')
@@ -331,7 +359,6 @@ function extractCardName(title) {
   return cleaned.split(/\s{2,}/)[0]?.trim() || title.substring(0, 80);
 }
 
-// eBayタイトルからレアリティを抽出
 function extractRarity(title) {
   const upper = title.toUpperCase();
   if (upper.includes('SEC') || upper.includes('SECRET')) return 'SEC';
@@ -350,10 +377,10 @@ function extractRarity(title) {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method === 'GET') return res.status(200).json({ status: 'Card sync API ready' });
+  if (req.method === 'GET') return res.status(200).json({ status: 'Card sync API ready (TCGdex + eBay)' });
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { action, set_limit, offset } = req.body || {};
+  const { action, set_limit, offset, with_rarity } = req.body || {};
   diagnostics.length = 0;
 
   try {
@@ -363,7 +390,11 @@ export default async function handler(req, res) {
     }
 
     if (action === 'sync_pokemon_cards') {
-      const results = await syncAllPokemonCards(parseInt(set_limit) || 10, parseInt(offset) || 0);
+      const results = await syncAllPokemonCards(
+        parseInt(set_limit) || 5,
+        parseInt(offset) || 0,
+        !!with_rarity
+      );
       return res.status(200).json({ status: 'done', sets_synced: results.length, offset: parseInt(offset) || 0, results, diagnostics });
     }
 
@@ -383,7 +414,7 @@ export default async function handler(req, res) {
     if (action === 'sync_all') {
       const pokeSets = await syncPokemonSets();
       await sleep(2000);
-      const pokeCards = await syncAllPokemonCards(parseInt(set_limit) || 5);
+      const pokeCards = await syncAllPokemonCards(parseInt(set_limit) || 5, 0, false);
       await sleep(2000);
       const opSets = await syncOnePieceSets();
       let opCards = [];
