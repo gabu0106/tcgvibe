@@ -148,11 +148,12 @@ async function syncPokemonCards(setId, setName) {
   return { set: setName, total: totalCards, saved: totalSaved };
 }
 
-// 全セットのカード画像を同期（最新セットから順に、最大setLimit個）
-async function syncAllPokemonCards(setLimit = 10) {
-  const data = await pokemonTcgFetch('sets?orderBy=-releaseDate&pageSize=' + setLimit);
-  const sets = data.data || [];
-  diagnostics.push(`Pokemon TCG: 最新${sets.length}セットのカード同期開始`);
+// 全セットのカード画像を同期（offset番目から順にsetLimit個）
+async function syncAllPokemonCards(setLimit = 10, offset = 0) {
+  const data = await pokemonTcgFetch('sets?orderBy=-releaseDate&pageSize=250');
+  const allSets = data.data || [];
+  const sets = allSets.slice(offset, offset + setLimit);
+  diagnostics.push(`Pokemon TCG: 全${allSets.length}セット中 ${offset}〜${offset + sets.length} のカード同期開始`);
 
   const results = [];
   for (const s of sets) {
@@ -352,7 +353,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') return res.status(200).json({ status: 'Card sync API ready' });
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { action, set_limit } = req.body || {};
+  const { action, set_limit, offset } = req.body || {};
   diagnostics.length = 0;
 
   try {
@@ -362,8 +363,8 @@ export default async function handler(req, res) {
     }
 
     if (action === 'sync_pokemon_cards') {
-      const results = await syncAllPokemonCards(parseInt(set_limit) || 10);
-      return res.status(200).json({ status: 'done', sets_synced: results.length, results, diagnostics });
+      const results = await syncAllPokemonCards(parseInt(set_limit) || 10, parseInt(offset) || 0);
+      return res.status(200).json({ status: 'done', sets_synced: results.length, offset: parseInt(offset) || 0, results, diagnostics });
     }
 
     if (action === 'sync_onepiece_sets') {
