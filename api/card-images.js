@@ -60,48 +60,70 @@ export default async function handler(req, res) {
         }
       }
 
+      // 日本語pack_name → 英語set_idの正規化候補を生成
+      function normalizePackName(pack) {
+        const p = pack.toLowerCase().trim();
+        const variants = [p];
+        // sm4+ → sm4  /  sm4A → sm4  /  sm4S → sm4
+        variants.push(p.replace(/[+]$/, ''));
+        variants.push(p.replace(/[a-z]$/, ''));
+        // S10D → s10  /  S10P → s10  /  S10a → s10
+        variants.push(p.replace(/[a-z]$/i, ''));
+        // s1H → s1  /  s1W → s1  /  s1a → s1
+        // sv → sv  (keep as is)
+        // 151C → sv2a (special mapping) - skip, too specific
+        // smP2 → smp
+        if (p.startsWith('smp')) variants.push('smp');
+        // BW1白 → bw1 (remove japanese suffix)
+        variants.push(p.replace(/[^\x00-\x7F]+/g, ''));
+        // M1L/M1S → me1, M2 → me2, M2a → me2pt5, M3 → me3
+        if (/^m\d/.test(p)) {
+          const mNum = p.match(/^m(\d+)/)?.[1];
+          if (mNum) {
+            variants.push(`me${mNum}`);
+            if (p.includes('a')) variants.push(`me${mNum}pt5`);
+          }
+        }
+        // sv3.5 → sv3pt5
+        variants.push(p.replace(/\.5/g, 'pt5').replace(/\./g, 'pt'));
+        // sm3.5 → sm35
+        variants.push(p.replace(/\./g, ''));
+        // s→sv mapping: s1 → sv1 etc (newer sets)
+        if (/^s\d/.test(p) && !p.startsWith('sv') && !p.startsWith('sm')) {
+          variants.push('sv' + p.substring(1).replace(/[a-z]$/i, ''));
+        }
+        return [...new Set(variants)];
+      }
+
       // 価格データに画像URLを付与（複数戦略でマッチ）
       const matched = (Array.isArray(prices) ? prices : []).map(p => {
         let image = null;
 
-        // 戦略1: pack_name + model_number → set_id:number マッチ
-        // card_pricesのpack_name(例:"sm4+")とmodel_number(例:"119/114")から
-        // set_id + number を構成してマッチ
+        // 戦略1: pack_name + model_number → card_id/set_id:number マッチ
         if (p.pack_name && p.model_number) {
-          const num = p.model_number.split('/')[0]; // "119/114" → "119"
-          const setId = p.pack_name.toLowerCase();
-          // card_idでマッチ（"sm4p-119"形式）
-          const cardIdVariants = [
-            `${setId}-${num}`,
-            `${setId.replace(/\+/g, 'p')}-${num}`,  // sm4+ → sm4p
-            `${setId.replace(/\./g, 'pt')}-${num}`,  // sv3.5 → sv3pt5
-          ];
-          for (const cid of cardIdVariants) {
+          const num = p.model_number.split('/')[0];
+          const setVariants = normalizePackName(p.pack_name);
+
+          for (const setId of setVariants) {
+            // card_idでマッチ（"sm4-119"形式）
+            const cid = `${setId}-${num}`;
             if (byCardId[cid]) { image = byCardId[cid]; break; }
-          }
-          // set_id:number でもマッチ
-          if (!image) {
-            const setNumVariants = [
-              `${setId}:${num}`,
-              `${setId.replace(/\+/g, 'p')}:${num}`,
-              `${setId.replace(/\./g, 'pt')}:${num}`,
-            ];
-            for (const sn of setNumVariants) {
-              if (bySetNum[sn]) { image = bySetNum[sn]; break; }
-            }
+            // set_id:numberでマッチ
+            const sn = `${setId}:${num}`;
+            if (bySetNum[sn]) { image = bySetNum[sn]; break; }
           }
         }
 
-        // 戦略2: カード名(英語)での部分一致
-        if (!image) {
-          const name = (p.card_name || '').toLowerCase().trim();
-          image = byName[name] || null;
-          if (!image) {
-            for (const [key, url] of Object.entries(byName)) {
-              if (key.includes(name) || name.includes(key)) {
-                image = url;
-                break;
-              }
+        // 戦略2: model_number(番号部分)で全set_idを横断検索
+        if (!image && p.model_number) {
+          const num = p.model_number.split('/')[0];
+          const packBase = (p.pack_name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          // set_idの前方一致でbestを探す
+          for (const [key, url] of Object.entries(bySetNum)) {
+            const [sid, snum] = key.split(':');
+            if (snum === num && sid.startsWith(packBase.substring(0, 2))) {
+              image = url;
+              break;
             }
           }
         }
