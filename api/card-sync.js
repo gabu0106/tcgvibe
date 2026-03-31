@@ -425,22 +425,14 @@ export default async function handler(req, res) {
       });
     }
 
-    // テーブル構造確認
+    // テーブル構造確認: 最小データをINSERTしてカラムエラーを確認
     if (action === 'describe') {
-      const [sets, images] = await Promise.all([
-        supabaseGet('card_sets', 'limit=0'),
-        supabaseGet('card_images', 'limit=0'),
-      ]);
-      // 1行だけ取得してカラム名を確認
-      const [setsRow, imagesRow] = await Promise.all([
-        supabaseGet('card_sets', 'limit=1'),
-        supabaseGet('card_images', 'limit=1'),
-      ]);
+      const testSet = await supabasePost('card_sets', { id: -999 });
+      const testImg = await supabasePost('card_images', { id: -999 });
       return res.status(200).json({
-        card_sets_columns: setsRow && setsRow.length > 0 ? Object.keys(setsRow[0]) : (setsRow?.message || 'empty'),
-        card_images_columns: imagesRow && imagesRow.length > 0 ? Object.keys(imagesRow[0]) : (imagesRow?.message || 'empty'),
-        card_sets_sample: setsRow?.[0] || null,
-        card_images_sample: imagesRow?.[0] || null,
+        card_sets_test: testSet,
+        card_images_test: testImg,
+        diagnostics,
       });
     }
 
