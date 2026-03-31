@@ -120,7 +120,7 @@ async function fetchPsa10Price(cardName, game = 'pokeca') {
   const token = await getEbayToken();
   const gameQuery = game === 'pokeca' ? 'pokemon card' : 'one piece card';
   const enName = toEnglish(cardName);
-  const query = `${gameQuery} ${enName} PSA 10`;
+  const query = `${gameQuery} ${enName} PSA 10 japanese`;
   const params = new URLSearchParams({
     q: query, limit: '20', category_ids: '183454', sort: 'price',
     filter: 'deliveryCountry:US,conditions:{NEW}',
@@ -130,8 +130,12 @@ async function fetchPsa10Price(cardName, game = 'pokeca') {
   });
   if (!res.ok) return null;
   const data = await res.json();
+  // PSA10フィルタ: "PSA 10", "PSA10", "PSA GEM MT 10" 等にマッチ
   const prices = (data.itemSummaries || [])
-    .filter(item => { const t = (item.title || '').toUpperCase(); return t.includes('PSA') && t.includes('10'); })
+    .filter(item => {
+      const t = (item.title || '').toUpperCase();
+      return /PSA\s*10|PSA\s*GEM\s*(MT|MINT)\s*10|GEM\s*MINT\s*10/.test(t);
+    })
     .map(item => parseFloat(item.price?.value || 0))
     .filter(p => p > 0)
     .map(p => Math.round(p * 150)); // USD→JPY
