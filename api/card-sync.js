@@ -84,17 +84,31 @@ async function syncPokemonSets() {
   const rawSets = await tcgdexFetch('sets');
   if (!Array.isArray(rawSets)) throw new Error('TCGdex sets応答が配列でない');
 
-  // TCGdexに重複IDが存在するため、最後のものだけ保持
+  // TCGdexに重複IDが存在するため除去し、releaseDate降順でソート
   const seenIds = new Set();
   const sets = [];
-  for (const s of [...rawSets].reverse()) {
+  for (const s of rawSets) {
     if (!seenIds.has(s.id)) { seenIds.add(s.id); sets.push(s); }
   }
-  sets.reverse();
   diagnostics.push(`TCGdex: ${rawSets.length}セット取得 (重複除去後: ${sets.length})`);
 
   // 既存のポケカセットを削除して全入れ替え
   await supabaseDelete('card_sets', 'game=eq.pokeca');
+
+  // 各セットの詳細からreleaseDateを取得（並列で高速化）
+  diagnostics.push('TCGdex: releaseDateを取得中...');
+  const setDetails = {};
+  for (let i = 0; i < sets.length; i += 10) {
+    const chunk = sets.slice(i, i + 10);
+    const details = await Promise.all(chunk.map(async s => {
+      try {
+        const d = await tcgdexFetch(`sets/${s.id}`);
+        return { id: s.id, releaseDate: d.releaseDate || null };
+      } catch { return { id: s.id, releaseDate: null }; }
+    }));
+    for (const d of details) setDetails[d.id] = d.releaseDate;
+    await sleep(300);
+  }
 
   let saved = 0;
   for (let i = 0; i < sets.length; i += 50) {
@@ -103,6 +117,7 @@ async function syncPokemonSets() {
       set_name: s.name,
       game: 'pokeca',
       total_cards: s.cardCount?.total || s.cardCount?.official || 0,
+      release_date: setDetails[s.id] || null,
       symbol_url: s.symbol || null,
       logo_url: s.logo || null,
     }));
@@ -198,12 +213,20 @@ async function syncPokemonCardsWithRarity(setId) {
 
 // 全セットのカードを同期（offset番目からsetLimit個）
 async function syncAllPokemonCards(setLimit = 5, offset = 0, withRarity = false) {
-  const allSets = await tcgdexFetch('sets');
-  if (!Array.isArray(allSets)) throw new Error('TCGdex sets応答が配列でない');
+  const rawSets = await tcgdexFetch('sets');
+  if (!Array.isArray(rawSets)) throw new Error('TCGdex sets応答が配列でない');
 
-  // 新しいセット（後ろ）から順に処理
-  const reversed = [...allSets].reverse();
-  const sets = reversed.slice(offset, offset + setLimit);
+  // 各セットの詳細からreleaseDateを取得してソート（キャッシュ済みセット情報を使う）
+  // セットIDリストだけ取得し、DB上のcard_setsからrelease_dateでソート
+  const dbSets = await supabaseGet('card_sets', 'game=eq.pokeca&select=set_id&order=release_date.desc.nullslast&limit=500');
+  const orderedIds = Array.isArray(dbSets) ? dbSets.map(s => s.set_id) : rawSets.map(s => s.id);
+  // DBにないセットは末尾に追加
+  const allIds = [...new Set([...orderedIds, ...rawSets.map(s => s.id)])];
+  const setMap = {};
+  for (const s of rawSets) setMap[s.id] = s;
+  const allSets = allIds.map(id => setMap[id]).filter(Boolean);
+
+  const sets = allSets.slice(offset, offset + setLimit);
   diagnostics.push(`TCGdex: 全${allSets.length}セット中 ${offset}〜${offset + sets.length} のカード同期開始`);
 
   const results = [];
