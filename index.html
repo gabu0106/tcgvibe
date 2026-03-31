@@ -407,14 +407,24 @@ let currentSearchQuery = '';
 
 async function loadPrices() {
   try {
-    const res = await fetch('/api/prices');
+    const res = await fetch('/api/card-images?action=match_prices&game=pokeca');
     const data = await res.json();
     allPrices = data.prices || [];
     filteredPrices = allPrices;
     document.getElementById('pricesCount').textContent = `${allPrices.length.toLocaleString()}件`;
     renderPrices();
   } catch(e) {
-    document.getElementById('pricesTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">データを読み込めませんでした</td></tr>';
+    // フォールバック: 画像マッチングなしで価格のみ取得
+    try {
+      const res = await fetch('/api/prices');
+      const data = await res.json();
+      allPrices = data.prices || [];
+      filteredPrices = allPrices;
+      document.getElementById('pricesCount').textContent = `${allPrices.length.toLocaleString()}件`;
+      renderPrices();
+    } catch(e2) {
+      document.getElementById('pricesTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">データを読み込めませんでした</td></tr>';
+    }
   }
 }
 
@@ -459,8 +469,11 @@ function renderPrices() {
     const ebayCell = ebayCache
       ? `<span class="ebay-price" title="eBayで見る">$${ebayCache.avg} avg</span>`
       : `<span class="ebay-loading" data-card="${encodeURIComponent(p.card_name)}" onclick="fetchEbayPrice(this, '${p.card_name.replace(/'/g, "\\'")}')">取得</span>`;
+    const imgHtml = p.image_url
+      ? `<img src="${p.image_url}" alt="" style="width:32px;height:44px;object-fit:contain;border-radius:2px;vertical-align:middle;margin-right:0.5rem">`
+      : '';
     return `<tr>
-      <td>${p.card_name || ''}</td>
+      <td style="white-space:nowrap">${imgHtml}${p.card_name || ''}</td>
       <td style="color:var(--muted);font-size:0.8rem">${p.pack_name || ''}</td>
       <td><span class="rarity-badge">${p.rarity || ''}</span></td>
       <td style="color:var(--muted);font-size:0.8rem">${p.model_number || ''}</td>

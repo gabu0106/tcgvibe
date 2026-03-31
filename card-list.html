@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Gallery - TCGVIBE.AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#fafaf8;--bg2:#f5f3ee;--surface:#fff;--border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.12);--text:#1a1814;--muted:#7a7570;--gold:#b8952a;--gold2:#d4af5a;--gold-light:#f5edda;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* NAV */
+  .nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,250,248,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;height:60px;}
+  .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;letter-spacing:0.08em;text-decoration:none;color:var(--text);}
+  .nav-logo span{color:var(--gold);}
+  .nav-links{margin-left:auto;display:flex;gap:1.5rem;align-items:center;}
+  .nav-links a{font-size:0.78rem;letter-spacing:0.06em;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+  .nav-links a:hover,.nav-links a.active{color:var(--gold);}
+
+  /* CONTAINER */
+  .container{max-width:1200px;margin:0 auto;padding:80px 2rem 3rem;}
+
+  /* HEADER */
+  .page-header{margin-bottom:2rem;}
+  .page-title{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:300;margin-bottom:0.5rem;}
+  .page-desc{color:var(--muted);font-size:0.85rem;}
+
+  /* FILTER BAR */
+  .filter-bar{position:sticky;top:60px;z-index:50;background:rgba(250,250,248,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0.75rem 0;margin-bottom:1.5rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;}
+  .filter-group{display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;}
+  .filter-label{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-right:0.25rem;}
+  .filter-btn{background:none;border:1px solid var(--border2);padding:0.3rem 0.75rem;font-family:inherit;font-size:0.72rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:all 0.2s;white-space:nowrap;}
+  .filter-btn:hover{border-color:var(--gold2);color:var(--text);}
+  .filter-btn.active{background:var(--gold-light);border-color:var(--gold2);color:var(--gold);}
+  .search-input{border:1px solid var(--border2);padding:0.3rem 0.75rem;font-family:inherit;font-size:0.78rem;color:var(--text);border-radius:999px;outline:none;width:200px;transition:border-color 0.2s;background:var(--surface);}
+  .search-input:focus{border-color:var(--gold2);}
+  .filter-select{border:1px solid var(--border2);padding:0.3rem 0.75rem;font-family:inherit;font-size:0.72rem;color:var(--text);border-radius:999px;outline:none;background:var(--surface);cursor:pointer;max-width:220px;}
+  .filter-select:focus{border-color:var(--gold2);}
+
+  /* STATS */
+  .stats-bar{display:flex;gap:1.5rem;margin-bottom:1.5rem;font-size:0.78rem;color:var(--muted);}
+  .stats-bar strong{color:var(--text);}
+
+  /* CARD GRID */
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;}
+  .card-item{background:var(--surface);border:1px solid var(--border);border-radius:2px;overflow:hidden;cursor:pointer;transition:all 0.2s;position:relative;}
+  .card-item:hover{border-color:var(--gold2);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.06);}
+  .card-img-wrap{position:relative;padding-top:140%;background:var(--bg2);overflow:hidden;}
+  .card-img-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:transform 0.3s;}
+  .card-item:hover .card-img-wrap img{transform:scale(1.05);}
+  .card-img-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.75rem;}
+  .card-meta{padding:0.6rem 0.75rem;}
+  .card-meta-name{font-size:0.75rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .card-meta-sub{font-size:0.62rem;color:var(--muted);margin-top:0.15rem;display:flex;gap:0.4rem;align-items:center;}
+  .rarity-badge{display:inline-block;padding:0.1rem 0.4rem;font-size:0.58rem;font-weight:600;letter-spacing:0.08em;border-radius:2px;background:var(--gold-light);color:var(--gold);}
+
+  /* LIGHTBOX */
+  .lightbox{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:2rem;}
+  .lightbox.open{display:flex;}
+  .lightbox img{max-width:90vw;max-height:85vh;border-radius:4px;box-shadow:0 8px 40px rgba(0,0,0,0.3);}
+  .lightbox-close{position:absolute;top:1.5rem;right:2rem;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;opacity:0.7;transition:opacity 0.2s;}
+  .lightbox-close:hover{opacity:1;}
+  .lightbox-info{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.95);padding:0.75rem 1.5rem;border-radius:2px;font-size:0.82rem;text-align:center;max-width:90vw;}
+  .lightbox-info strong{display:block;margin-bottom:0.25rem;}
+
+  /* LOAD MORE */
+  .load-more{display:flex;justify-content:center;margin:2rem 0;}
+  .load-btn{background:var(--text);color:var(--bg);border:none;padding:0.6rem 2rem;font-family:inherit;font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:background 0.2s;}
+  .load-btn:hover{background:var(--gold);}
+  .load-btn:disabled{background:var(--muted);cursor:default;}
+
+  /* LOADING */
+  .loading{text-align:center;padding:3rem;color:var(--muted);font-size:0.85rem;}
+
+  @media(max-width:768px){
+    .container{padding:70px 1rem 2rem;}
+    .card-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:0.6rem;}
+    .filter-bar{flex-direction:column;align-items:stretch;}
+    .search-input{width:100%;}
+    .filter-select{max-width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="/">TCGVIBE<span>.AI</span></a>
+  <div class="nav-links">
+    <a href="/">TOP</a>
+    <a href="/card-list.html" class="active">GALLERY</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Card Gallery</h1>
+    <p class="page-desc">All card images from our database, organized by set and rarity</p>
+  </div>
+
+  <div class="filter-bar" id="filterBar">
+    <div class="filter-group">
+      <span class="filter-label">Game</span>
+      <button class="filter-btn active" onclick="setGame('pokeca',this)">Pokemon</button>
+      <button class="filter-btn" onclick="setGame('onepiece',this)">One Piece</button>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Set</span>
+      <select class="filter-select" id="setFilter" onchange="applyFilters()">
+        <option value="">All Sets</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Rarity</span>
+      <select class="filter-select" id="rarityFilter" onchange="applyFilters()">
+        <option value="">All</option>
+      </select>
+    </div>
+    <input class="search-input" type="text" id="searchInput" placeholder="Search card name..." oninput="debounceSearch()">
+  </div>
+
+  <div class="stats-bar" id="statsBar">
+    <span>Showing <strong id="shownCount">0</strong> cards</span>
+    <span>Set: <strong id="currentSetName">All</strong></span>
+  </div>
+
+  <div class="card-grid" id="cardGrid">
+    <div class="loading">Loading cards...</div>
+  </div>
+
+  <div class="load-more" id="loadMore" style="display:none">
+    <button class="load-btn" id="loadBtn" onclick="loadMore()">Load More</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+  <img id="lightboxImg" src="" alt="">
+  <div class="lightbox-info">
+    <strong id="lightboxName"></strong>
+    <span id="lightboxMeta"></span>
+  </div>
+</div>
+
+<script>
+let currentGame = 'pokeca';
+let currentSetId = '';
+let currentRarity = '';
+let currentSearch = '';
+let cards = [];
+let allSets = [];
+let allRarities = [];
+let currentOffset = 0;
+const PAGE_SIZE = 100;
+let searchTimer = null;
+
+async function fetchSets() {
+  try {
+    const res = await fetch(`/api/card-images?action=sets&game=${currentGame}`);
+    const data = await res.json();
+    allSets = data.sets || [];
+    const sel = document.getElementById('setFilter');
+    sel.innerHTML = '<option value="">All Sets</option>' +
+      allSets.map(s => `<option value="${s.set_id}">${s.set_name_en || s.set_name || s.set_id}${s.release_date ? ' (' + s.release_date + ')' : ''}</option>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function fetchCards(append = false) {
+  const grid = document.getElementById('cardGrid');
+  if (!append) {
+    grid.innerHTML = '<div class="loading">Loading cards...</div>';
+    currentOffset = 0;
+  }
+
+  let url = `/api/card-images?game=${currentGame}&limit=${PAGE_SIZE}&offset=${currentOffset}`;
+  if (currentSetId) url += `&set_id=${encodeURIComponent(currentSetId)}`;
+  if (currentRarity) url += `&rarity=${encodeURIComponent(currentRarity)}`;
+  if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const newCards = data.cards || [];
+
+    if (append) {
+      cards = cards.concat(newCards);
+    } else {
+      cards = newCards;
+      // 最初のロードでレアリティ一覧を更新
+      updateRarityFilter(cards);
+    }
+
+    renderCards(append);
+
+    // Load More ボタンの表示制御
+    const loadMore = document.getElementById('loadMore');
+    if (newCards.length >= PAGE_SIZE) {
+      loadMore.style.display = 'flex';
+      currentOffset += PAGE_SIZE;
+    } else {
+      loadMore.style.display = 'none';
+    }
+  } catch(e) {
+    grid.innerHTML = '<div class="loading">Error loading cards</div>';
+  }
+}
+
+function renderCards(append = false) {
+  const grid = document.getElementById('cardGrid');
+  const html = cards.map((c, i) => `
+    <div class="card-item" onclick="openLightbox(${i})">
+      <div class="card-img-wrap">
+        ${c.image_small
+          ? `<img src="${c.image_small}" alt="${c.card_name_en || c.card_name || ''}" loading="lazy">`
+          : '<div class="card-img-placeholder">No Image</div>'}
+      </div>
+      <div class="card-meta">
+        <div class="card-meta-name">${c.card_name_en || c.card_name || c.card_id || ''}</div>
+        <div class="card-meta-sub">
+          ${c.rarity ? `<span class="rarity-badge">${c.rarity}</span>` : ''}
+          <span>${c.number || ''}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  if (append) {
+    // 既存のグリッドに追加
+    grid.innerHTML = html;
+  } else {
+    grid.innerHTML = html || '<div class="loading">No cards found</div>';
+  }
+
+  document.getElementById('shownCount').textContent = cards.length;
+  const setName = currentSetId
+    ? (allSets.find(s => s.set_id === currentSetId)?.set_name_en || currentSetId)
+    : 'All';
+  document.getElementById('currentSetName').textContent = setName;
+}
+
+function updateRarityFilter(cardsData) {
+  const rarities = [...new Set(cardsData.map(c => c.rarity).filter(Boolean))].sort();
+  // 全カードのレアリティも取得するために既存を保持
+  for (const r of rarities) {
+    if (!allRarities.includes(r)) allRarities.push(r);
+  }
+  allRarities.sort();
+  const sel = document.getElementById('rarityFilter');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All</option>' +
+    allRarities.map(r => `<option value="${r}"${r === current ? ' selected' : ''}>${r}</option>`).join('');
+}
+
+function setGame(game, btn) {
+  currentGame = game;
+  currentSetId = '';
+  currentRarity = '';
+  allRarities = [];
+  document.getElementById('setFilter').value = '';
+  document.getElementById('rarityFilter').innerHTML = '<option value="">All</option>';
+  document.querySelectorAll('.filter-group:first-child .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  fetchSets();
+  fetchCards();
+}
+
+function applyFilters() {
+  currentSetId = document.getElementById('setFilter').value;
+  currentRarity = document.getElementById('rarityFilter').value;
+  fetchCards();
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    currentSearch = document.getElementById('searchInput').value.trim();
+    fetchCards();
+  }, 400);
+}
+
+function loadMore() {
+  const btn = document.getElementById('loadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+  fetchCards(true).then(() => {
+    btn.disabled = false;
+    btn.textContent = 'Load More';
+  });
+}
+
+// Lightbox
+function openLightbox(idx) {
+  const c = cards[idx];
+  if (!c) return;
+  const imgUrl = c.image_large || c.image_small;
+  if (!imgUrl) return;
+  document.getElementById('lightboxImg').src = imgUrl;
+  document.getElementById('lightboxName').textContent = c.card_name_en || c.card_name || '';
+  const meta = [c.rarity, c.set_name, c.number ? `#${c.number}` : ''].filter(Boolean).join(' / ');
+  document.getElementById('lightboxMeta').textContent = meta;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox(e) {
+  if (e && e.target !== e.currentTarget && !e.target.classList.contains('lightbox-close')) return;
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// Init
+fetchSets();
+fetchCards();
+</script>
+</body>
+</html>
