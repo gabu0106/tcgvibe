@@ -38,7 +38,8 @@ export default async function handler(req, res) {
       const prices = await priceRes.json();
 
       // card_imagesを取得（同ゲーム、number付き、日本語名含む）
-      let imgUrl = `${SUPABASE_URL}/rest/v1/card_images?select=card_id,card_name,card_name_en,image_small,set_id,number&game=eq.${g}&limit=50000`;
+      // 日本語データ（card_nameあり）を優先取得し、英語データも取得
+      let imgUrl = `${SUPABASE_URL}/rest/v1/card_images?select=card_id,card_name,card_name_en,image_small,set_id,number&game=eq.${g}&order=id.desc&limit=50000`;
       const imgRes = await fetch(imgUrl, {
         headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
       });
