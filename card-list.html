@@ -151,6 +151,15 @@ const SETS_PER_PAGE = 10;
 let allCards = []; // flat list for lightbox
 let searchTimer = null;
 
+// ワンピース公式画像はhotlink protectionの可能性があるためプロキシ経由
+function cardImg(url) {
+  if (!url) return '';
+  if (url.includes('onepiece-cardgame.com')) {
+    return '/api/card-proxy?url=' + encodeURIComponent(url);
+  }
+  return url;
+}
+
 async function init() {
   await fetchSets();
   renderSetsPage();
@@ -191,10 +200,10 @@ async function fetchCardsForSet(setId) {
     const res = await fetch(url);
     const data = await res.json();
     let cards = (data.cards || []).filter(c => c.image_small);
-    // 番号順でソート
+    // 番号順でソート（OP01-017 → 17, 003 → 3）
     cards.sort((a, b) => {
-      const na = parseInt(a.number) || 9999;
-      const nb = parseInt(b.number) || 9999;
+      const na = parseInt((a.number || '').replace(/^.*-/, '')) || 9999;
+      const nb = parseInt((b.number || '').replace(/^.*-/, '')) || 9999;
       return na - nb;
     });
     return cards;
@@ -256,7 +265,7 @@ async function renderSetsPage(reset = true) {
             const idx = baseIdx + i;
             return `<div class="card-item" onclick="openLightbox(${idx})">
               <div class="card-img-wrap">
-                <img src="${c.image_small}" alt="${c.card_name || c.card_name_en || ''}" loading="lazy">
+                <img src="${cardImg(c.image_small)}" alt="${c.card_name || c.card_name_en || ''}" loading="lazy">
               </div>
               <div class="card-meta">
                 <div class="card-meta-name">${c.card_name || c.card_name_en || c.card_id || ''}</div>
@@ -331,7 +340,7 @@ function openLightbox(idx) {
   if (!c) return;
   const imgUrl = c.image_large || c.image_small;
   if (!imgUrl) return;
-  document.getElementById('lightboxImg').src = imgUrl;
+  document.getElementById('lightboxImg').src = cardImg(imgUrl);
   document.getElementById('lightboxName').textContent = c.card_name || c.card_name_en || '';
   const meta = [c.rarity, c.set_name, c.number ? `#${c.number}` : ''].filter(Boolean).join(' / ');
   document.getElementById('lightboxMeta').textContent = meta;
