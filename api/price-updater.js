@@ -94,6 +94,16 @@ const JA_TO_EN = {
   'サーナイトex':'Gardevoir ex','ミライドンex':'Miraidon ex','コライドンex':'Koraidon ex',
   'エーフィVMAX':'Espeon VMAX','グレイシアVSTAR':'Glaceon VSTAR',
   'ロケット団のミュウツーex':'Team Rocket Mewtwo ex',
+  'ブラッキーVMAX(SA)':'Umbreon VMAX Alt Art','ブラッキーEX':'Umbreon EX',
+  'レシラム(15周年)':'Reshiram 15th Anniversary','ゼクロム(15周年)':'Zekrom 15th Anniversary',
+  'ラティアス＆ラティオスGX(SA)':'Latias Latios GX Alt Art',
+  'ゲンガー＆ミミッキュGX(SA)':'Gengar Mimikyu GX Alt Art',
+  'ピカチュウEX':'Pikachu EX','ゲンガーEX':'Gengar EX','アイリス':'Iris',
+  'ルギア':'Lugia','ルギアVSTAR':'Lugia VSTAR','レックウザ':'Rayquaza',
+  'リザードン(アンリミ)':'Charizard Base Set','ルチア':'Lucia SR',
+  'エリカの招待':'Erika Invitation','エリカのおもてなし':'Erika Hospitality',
+  'かんこうきゃく':'Tourist','ミモザ':'Miriam','ボタン':'Penny',
+  'オモダカ':'Brassius','キバナ':'Raihan','メロン':'Melony',
 };
 
 function toEnglish(jaName) {
