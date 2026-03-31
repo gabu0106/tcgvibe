@@ -94,6 +94,13 @@
   .modal-footer{padding:1.25rem 1.75rem;border-top:1px solid var(--border);display:flex;gap:0.75rem;justify-content:flex-end;}
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
 
+  .pending-card{background:var(--surface);border:1px solid var(--border);border-radius:2px;margin-bottom:1rem;overflow:hidden;}
+  .pending-card-header{display:flex;align-items:center;gap:0.75rem;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);}
+  .pending-card-header .article-emoji{font-size:1.5rem;}
+  .pending-card-header .article-info{flex:1;min-width:0;}
+  .pending-card-body{padding:1.25rem 1.5rem;font-size:0.85rem;line-height:1.8;white-space:pre-wrap;max-height:300px;overflow-y:auto;color:var(--text);background:var(--bg2);}
+  .pending-card-footer{display:flex;gap:0.75rem;padding:1rem 1.5rem;flex-wrap:wrap;align-items:center;}
+  .pending-card-footer .status-msg{margin:0;}
   @media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:1.5rem;}.stat-grid{grid-template-columns:1fr 1fr;}.two-col{grid-template-columns:1fr;}}
 </style>
 </head>
@@ -167,6 +174,7 @@
     <nav class="sidebar-nav">
       <div class="nav-section">メイン</div>
       <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>ダッシュボード</div>
+      <div class="nav-item" onclick="showPage('pending',this)"><span class="nav-icon">📋</span>承認待ち<span id="pending-badge" style="background:var(--gold);color:#fff;font-size:0.6rem;padding:0.1rem 0.45rem;border-radius:999px;margin-left:auto;display:none">0</span></div>
       <div class="nav-item" onclick="showPage('articles',this)"><span class="nav-icon">📝</span>記事管理</div>
       <div class="nav-item" onclick="showPage('compose',this)"><span class="nav-icon">✍️</span>記事を生成する</div>
       <div class="nav-section">サイト設定</div>
@@ -187,8 +195,8 @@
       <div class="stat-grid">
         <div class="stat-card"><span class="stat-num" id="dash-articles">-</span><span class="stat-label">記事数</span></div>
         <div class="stat-card"><span class="stat-num" id="dash-games">-</span><span class="stat-label">対応ゲーム</span></div>
+        <div class="stat-card"><span class="stat-num" id="dash-pending" style="color:var(--gold)">-</span><span class="stat-label">承認待ち</span></div>
         <div class="stat-card"><span class="stat-num" id="dash-status">-</span><span class="stat-label">サイト状態</span></div>
-        <div class="stat-card"><span class="stat-num" id="dash-prices">-</span><span class="stat-label">価格データ</span></div>
       </div>
       <div class="card">
         <div class="card-title">クイックアクション</div>
@@ -198,6 +206,16 @@
           <button class="btn btn-outline" onclick="window.open('/?key=tcgvibe0106','_blank')">🔑 管理者モードで確認</button>
         </div>
       </div>
+    </div>
+
+    <!-- PENDING APPROVAL -->
+    <div class="page" id="page-pending">
+      <h1 class="page-title">承認待ち記事</h1>
+      <p class="page-desc">自動生成された記事を確認し、承認するとサイトに公開されます</p>
+      <div style="margin-bottom:1.25rem">
+        <button class="btn btn-outline" onclick="loadPendingArticles()">🔄 更新</button>
+      </div>
+      <div id="pendingList">読み込み中...</div>
     </div>
 
     <!-- ARTICLES -->
@@ -354,12 +372,14 @@ function showPage(id, el) {
   document.getElementById('page-' + id).classList.add('active');
   if (el) el.classList.add('active');
   if (id === 'articles') renderArticles();
+  if (id === 'pending') loadPendingArticles();
 }
 
 // LOAD
 async function loadAll() {
   await loadSettings();
   await loadArticles();
+  await loadPendingArticles();
 }
 
 async function loadSettings() {
@@ -604,6 +624,110 @@ async function savePrompt() {
   if (!value) return;
   const ok = await saveSetting('ai_prompt', value);
   showMsg('prompt-msg', ok ? 'success' : 'error', ok ? '✓ 保存しました' : 'エラー');
+}
+
+// PENDING APPROVAL
+let pendingArticles = [];
+
+async function loadPendingArticles() {
+  try {
+    const res = await fetch('/api/agent-master', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'list_pending' }),
+    });
+    const data = await res.json();
+    pendingArticles = data.articles || [];
+    updatePendingBadge();
+    renderPendingArticles();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('pendingList').innerHTML = '<p style="color:var(--danger);font-size:0.85rem">読み込みに失敗しました</p>';
+  }
+}
+
+function updatePendingBadge() {
+  const badge = document.getElementById('pending-badge');
+  const dashPending = document.getElementById('dash-pending');
+  if (dashPending) dashPending.textContent = pendingArticles.length;
+  if (pendingArticles.length > 0) {
+    badge.textContent = pendingArticles.length;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderPendingArticles() {
+  const el = document.getElementById('pendingList');
+  if (!pendingArticles.length) {
+    el.innerHTML = '<div class="card"><p style="color:var(--muted);font-size:0.85rem;padding:0.5rem 0">承認待ちの記事はありません</p></div>';
+    return;
+  }
+  el.innerHTML = pendingArticles.map((a, i) => `
+    <div class="pending-card" id="pending-${a.id}">
+      <div class="pending-card-header">
+        <div class="article-emoji">${a.emoji || '🃏'}</div>
+        <div class="article-info">
+          <div class="article-info-title">${a.title || '（タイトルなし）'}</div>
+          <div class="article-info-meta">${a.tag || ''} · ${a.game || ''} · ${a.created_at ? new Date(a.created_at).toLocaleDateString('ja-JP') : ''}</div>
+        </div>
+      </div>
+      <div class="pending-card-body">${escapeHtml(a.content || '')}</div>
+      <div class="pending-card-footer">
+        <button class="btn btn-success" onclick="approveArticle(${a.id})">✓ 承認して公開</button>
+        <button class="btn btn-danger" onclick="rejectArticle(${a.id})">✗ 却下</button>
+        <div class="status-msg" id="pending-status-${a.id}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function approveArticle(id) {
+  if (!confirm('この記事を承認してサイトに公開しますか？')) return;
+  try {
+    const res = await fetch('/api/agent-master', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve', article_id: id }),
+    });
+    const data = await res.json();
+    if (data.status === 'approved') {
+      showMsg(`pending-status-${id}`, 'success', '✓ 承認しました！サイトに公開されました');
+      setTimeout(() => {
+        const card = document.getElementById(`pending-${id}`);
+        if (card) card.style.display = 'none';
+        pendingArticles = pendingArticles.filter(a => a.id !== id);
+        updatePendingBadge();
+        loadArticles();
+      }, 1500);
+    } else {
+      throw new Error(data.error || '承認に失敗しました');
+    }
+  } catch(e) {
+    showMsg(`pending-status-${id}`, 'error', 'エラー: ' + e.message);
+  }
+}
+
+async function rejectArticle(id) {
+  if (!confirm('この記事を却下しますか？')) return;
+  try {
+    await fetch('/api/agent-master', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reject', article_id: id }),
+    });
+    const card = document.getElementById(`pending-${id}`);
+    if (card) card.style.display = 'none';
+    pendingArticles = pendingArticles.filter(a => a.id !== id);
+    updatePendingBadge();
+  } catch(e) {
+    showMsg(`pending-status-${id}`, 'error', 'エラー: ' + e.message);
+  }
 }
 
 // HELPERS

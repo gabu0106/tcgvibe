@@ -407,6 +407,20 @@ export default async function handler(req, res) {
 
   const { action, article_id } = req.body || {};
 
+  if (action === 'list_pending') {
+    try {
+      const pending = await supabaseGet('auto_articles', 'status=eq.pending&approved=eq.false&order=id.desc&limit=50');
+      return res.status(200).json({ articles: Array.isArray(pending) ? pending : [] });
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  if (action === 'reject' && article_id) {
+    try {
+      await supabasePatch('auto_articles', `id=eq.${article_id}`, { status: 'rejected' });
+      return res.status(200).json({ status: 'rejected', article_id });
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
   if (action === 'approve' && article_id) {
     try {
       await supabasePatch('auto_articles', `id=eq.${article_id}`, { approved: true, status: 'approved' });
