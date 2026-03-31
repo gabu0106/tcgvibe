@@ -81,9 +81,17 @@ async function tcgdexFetch(endpoint) {
 // 全セットを取得して card_sets に保存（日本語名）
 async function syncPokemonSets() {
   console.log('TCGdex セット同期開始（日本語）');
-  const sets = await tcgdexFetch('sets');
-  if (!Array.isArray(sets)) throw new Error('TCGdex sets応答が配列でない');
-  diagnostics.push(`TCGdex: ${sets.length}セット取得`);
+  const rawSets = await tcgdexFetch('sets');
+  if (!Array.isArray(rawSets)) throw new Error('TCGdex sets応答が配列でない');
+
+  // TCGdexに重複IDが存在するため、最後のものだけ保持
+  const seenIds = new Set();
+  const sets = [];
+  for (const s of [...rawSets].reverse()) {
+    if (!seenIds.has(s.id)) { seenIds.add(s.id); sets.push(s); }
+  }
+  sets.reverse();
+  diagnostics.push(`TCGdex: ${rawSets.length}セット取得 (重複除去後: ${sets.length})`);
 
   // 既存のポケカセットを削除して全入れ替え
   await supabaseDelete('card_sets', 'game=eq.pokeca');
