@@ -182,6 +182,7 @@
       <div class="nav-item" onclick="showPage('games',this)"><span class="nav-icon">🃏</span>対応ゲーム</div>
       <div class="nav-item" onclick="showPage('prices',this)"><span class="nav-icon">📈</span>価格テーブル</div>
       <div class="nav-section">AI設定</div>
+      <div class="nav-item" onclick="showPage('learning',this)"><span class="nav-icon">🧠</span>学習状況</div>
       <div class="nav-item" onclick="showPage('aiPrompt',this)"><span class="nav-icon">🤖</span>AIプロンプト</div>
     </nav>
   </div>
@@ -324,6 +325,31 @@
       </div>
     </div>
 
+    <!-- LEARNING -->
+    <div class="page" id="page-learning">
+      <h1 class="page-title">AI学習状況</h1>
+      <p class="page-desc">承認・却下の実績から記事品質を自動改善します（2週間サイクル）</p>
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card"><span class="stat-num" id="learn-approved" style="color:var(--success)">-</span><span class="stat-label">承認数（14日間）</span></div>
+        <div class="stat-card"><span class="stat-num" id="learn-rejected" style="color:var(--danger)">-</span><span class="stat-label">却下数（14日間）</span></div>
+        <div class="stat-card"><span class="stat-num" id="learn-rate" style="color:var(--gold)">-</span><span class="stat-label">承認率</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">手動学習サイクル実行</div>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">承認・却下パターンを分析し、記事生成AIのメモリを更新します。サイト品質スコアも実績ベースで再計算されます。</p>
+        <button class="btn" id="learn-btn" onclick="runLearning()">🧠 学習サイクルを実行</button>
+        <div class="status-msg" id="learn-status"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">学習メモリ（記事執筆AI）</div>
+        <pre id="learn-writer-memory" style="font-size:0.8rem;line-height:1.6;white-space:pre-wrap;color:var(--text);background:var(--bg2);padding:1rem;border-radius:2px;max-height:300px;overflow-y:auto">読み込み中...</pre>
+      </div>
+      <div class="card">
+        <div class="card-title">学習レポート</div>
+        <pre id="learn-report" style="font-size:0.8rem;line-height:1.6;white-space:pre-wrap;color:var(--text);background:var(--bg2);padding:1rem;border-radius:2px;max-height:300px;overflow-y:auto">読み込み中...</pre>
+      </div>
+    </div>
+
     <!-- AI PROMPT -->
     <div class="page" id="page-aiPrompt">
       <h1 class="page-title">AIプロンプト編集</h1>
@@ -373,6 +399,7 @@ function showPage(id, el) {
   if (el) el.classList.add('active');
   if (id === 'articles') renderArticles();
   if (id === 'pending') loadPendingArticles();
+  if (id === 'learning') loadLearningStats();
 }
 
 // LOAD
@@ -677,6 +704,7 @@ function renderPendingArticles() {
       <div class="pending-card-footer">
         <button class="btn btn-success" onclick="approveArticle(${a.id})">✓ 承認して公開</button>
         <button class="btn btn-danger" onclick="rejectArticle(${a.id})">✗ 却下</button>
+        <input type="text" id="reject-reason-${a.id}" placeholder="却下理由（AIが学習に使います）" style="flex:1;min-width:200px;margin:0;font-size:0.8rem;padding:0.5rem 0.75rem">
         <div class="status-msg" id="pending-status-${a.id}"></div>
       </div>
     </div>
@@ -714,20 +742,71 @@ async function approveArticle(id) {
 }
 
 async function rejectArticle(id) {
-  if (!confirm('この記事を却下しますか？')) return;
+  const reasonEl = document.getElementById(`reject-reason-${id}`);
+  const reason = reasonEl ? reasonEl.value.trim() : '';
+  if (!confirm('この記事を却下しますか？' + (reason ? `\n理由: ${reason}` : '\n（理由なし - 理由を入力するとAIが学習します）'))) return;
   try {
     await fetch('/api/agent-master', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reject', article_id: id }),
+      body: JSON.stringify({ action: 'reject', article_id: id, reject_reason: reason || undefined }),
     });
-    const card = document.getElementById(`pending-${id}`);
-    if (card) card.style.display = 'none';
-    pendingArticles = pendingArticles.filter(a => a.id !== id);
-    updatePendingBadge();
+    showMsg(`pending-status-${id}`, 'error', '却下しました' + (reason ? '（理由をAIが学習します）' : ''));
+    setTimeout(() => {
+      const card = document.getElementById(`pending-${id}`);
+      if (card) card.style.display = 'none';
+      pendingArticles = pendingArticles.filter(a => a.id !== id);
+      updatePendingBadge();
+    }, 1000);
   } catch(e) {
     showMsg(`pending-status-${id}`, 'error', 'エラー: ' + e.message);
   }
+}
+
+// LEARNING
+async function loadLearningStats() {
+  try {
+    const res = await fetch('/api/agent-master', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'learning_stats' }),
+    });
+    const data = await res.json();
+    document.getElementById('learn-approved').textContent = data.approved_count || 0;
+    document.getElementById('learn-rejected').textContent = data.rejected_count || 0;
+    document.getElementById('learn-rate').textContent = (data.approval_rate || 0) + '%';
+    document.getElementById('learn-writer-memory').textContent = data.writer_memory || '（メモリなし）';
+    document.getElementById('learn-report').textContent = data.learning_memory || '（学習レポートなし - 学習サイクルを実行してください）';
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function runLearning() {
+  const btn = document.getElementById('learn-btn');
+  btn.disabled = true;
+  btn.textContent = '分析中...';
+  showMsg('learn-status', '', '');
+  try {
+    const res = await fetch('/api/agent-master', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'learn' }),
+    });
+    const data = await res.json();
+    if (data.learning?.status === 'completed') {
+      showMsg('learn-status', 'success', `✓ 学習完了！品質スコア: ${data.learning.quality_score} / 改善ルール: ${(data.learning.improvement_rules || []).length}件 / サイト更新: ${data.sites?.sites_updated || 0}件`);
+      await loadLearningStats();
+    } else if (data.learning?.status === 'no_data') {
+      showMsg('learn-status', 'error', '承認・却下データがありません。記事を承認/却下してから実行してください。');
+    } else {
+      showMsg('learn-status', 'error', 'エラー: ' + (data.error || '不明'));
+    }
+  } catch(e) {
+    showMsg('learn-status', 'error', 'エラー: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = '🧠 学習サイクルを実行';
 }
 
 // HELPERS

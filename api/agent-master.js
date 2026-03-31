@@ -182,17 +182,192 @@ async function callClaude(system, userContent, maxTokens = 4096, useSearch = tru
   }
 }
 
+// ===== 学習システム =====
+
+// 承認・却下された記事の統計を取得
+async function getApprovalStats(days = 14) {
+  const since = new Date(Date.now() - days * 86400000).toISOString();
+  const [approved, rejected] = await Promise.all([
+    supabaseGet('auto_articles', `status=eq.approved&created_at=gte.${since}&order=created_at.desc&limit=50`),
+    supabaseGet('auto_articles', `status=eq.rejected&created_at=gte.${since}&order=created_at.desc&limit=50`),
+  ]);
+  return {
+    approved: Array.isArray(approved) ? approved : [],
+    rejected: Array.isArray(rejected) ? rejected : [],
+  };
+}
+
+// 承認された記事からパターンを抽出してプロンプトに埋め込むための文字列を生成
+async function buildLearningContext() {
+  const stats = await getApprovalStats(14);
+  const parts = [];
+
+  if (stats.approved.length > 0) {
+    const titles = stats.approved.slice(0, 5).map(a => `「${a.title}」(${a.tag})`).join('、');
+    const avgLen = Math.round(stats.approved.reduce((s, a) => s + (a.content?.length || 0), 0) / stats.approved.length);
+    const tags = {};
+    stats.approved.forEach(a => { tags[a.tag] = (tags[a.tag] || 0) + 1; });
+    const topTag = Object.entries(tags).sort((a, b) => b[1] - a[1])[0];
+    parts.push(`【承認実績(${stats.approved.length}件)】好評タイトル例: ${titles}。平均文字数: ${avgLen}文字。最も承認率が高いタグ: ${topTag ? topTag[0] : '不明'}`);
+  }
+
+  if (stats.rejected.length > 0) {
+    const reasons = stats.rejected
+      .filter(a => a.reject_reason)
+      .slice(0, 5)
+      .map(a => a.reject_reason);
+    const rejTitles = stats.rejected.slice(0, 3).map(a => `「${a.title}」`).join('、');
+    parts.push(`【却下された記事(${stats.rejected.length}件)】例: ${rejTitles}。${reasons.length ? '理由: ' + reasons.join('、') : '具体的な改善ポイント: タイトルの具体性、情報の正確性、文字数不足に注意'}`);
+  }
+
+  const approveRate = stats.approved.length + stats.rejected.length > 0
+    ? Math.round(stats.approved.length / (stats.approved.length + stats.rejected.length) * 100)
+    : 0;
+  if (approveRate > 0) {
+    parts.push(`【承認率: ${approveRate}%】${approveRate >= 70 ? '良好。現在のスタイルを維持。' : '改善必要。承認された記事のパターンに寄せること。'}`);
+  }
+
+  return parts.join('\n');
+}
+
+// 学習サイクル: 承認・却下パターンを分析してメモリに蓄積
+async function runLearningCycle() {
+  console.log('学習サイクル開始');
+  const stats = await getApprovalStats(14);
+
+  if (stats.approved.length === 0 && stats.rejected.length === 0) {
+    console.log('学習対象データなし');
+    return { status: 'no_data' };
+  }
+
+  // Claudeに承認/却下パターンを分析させる
+  const approvedSamples = stats.approved.slice(0, 5).map(a => ({
+    title: a.title, tag: a.tag, content_length: a.content?.length || 0,
+    content_preview: (a.content || '').substring(0, 200),
+  }));
+  const rejectedSamples = stats.rejected.slice(0, 5).map(a => ({
+    title: a.title, tag: a.tag, content_length: a.content?.length || 0,
+    content_preview: (a.content || '').substring(0, 200),
+    reject_reason: a.reject_reason || '理由なし',
+  }));
+
+  const analysisText = await callClaude(
+    `あなたはTCGVIBE記事品質分析エージェントです。承認された記事と却下された記事を比較して、品質改善の具体的なルールを抽出してください。
+以下のJSON形式のみ返してください：
+{
+  "approved_patterns": ["承認された記事の共通パターン1", "パターン2"],
+  "rejected_patterns": ["却下された記事の共通問題1", "問題2"],
+  "improvement_rules": ["具体的改善ルール1", "ルール2", "ルール3"],
+  "title_guidelines": "良いタイトルの特徴",
+  "content_guidelines": "良い本文の特徴",
+  "quality_score": 0-100の現在の品質スコア
+}`,
+    `【承認された記事(${stats.approved.length}件)】\n${JSON.stringify(approvedSamples, null, 1)}\n\n【却下された記事(${stats.rejected.length}件)】\n${JSON.stringify(rejectedSamples, null, 1)}\n\n上記を分析して品質改善ルールを抽出してください。`,
+    4096,
+    false
+  );
+
+  const match = extractJSON(analysisText);
+  if (!match) {
+    console.log('学習分析パース失敗');
+    return { status: 'parse_error' };
+  }
+
+  const analysis = JSON.parse(match);
+
+  // 学習結果をメモリに保存（高重要度）
+  const learningContent = [
+    `[学習レポート ${new Date().toLocaleDateString('ja-JP')}]`,
+    `承認率: ${Math.round(stats.approved.length / (stats.approved.length + stats.rejected.length) * 100)}%`,
+    `承認パターン: ${(analysis.approved_patterns || []).join('、')}`,
+    `却下理由: ${(analysis.rejected_patterns || []).join('、')}`,
+    `改善ルール: ${(analysis.improvement_rules || []).join('、')}`,
+    `タイトル指針: ${analysis.title_guidelines || ''}`,
+    `本文指針: ${analysis.content_guidelines || ''}`,
+  ].join('\n');
+
+  // 古い学習レポートを低重要度に下げるため、新しいものを高重要度で保存
+  await saveMemory('writer', learningContent, 9);
+  await saveMemory('learning', learningContent, 9);
+
+  console.log('学習サイクル完了 品質スコア:', analysis.quality_score);
+  return {
+    status: 'completed',
+    approved_count: stats.approved.length,
+    rejected_count: stats.rejected.length,
+    quality_score: analysis.quality_score,
+    improvement_rules: analysis.improvement_rules,
+  };
+}
+
+// discovered_sitesの品質スコアを記事承認実績ベースで更新
+async function updateSiteQualityScores() {
+  console.log('サイト品質スコア更新開始');
+
+  // 過去14日の承認された記事が参照したcrawler_dataを分析
+  const since = new Date(Date.now() - 14 * 86400000).toISOString();
+  const [approved, rejected, recentCrawls, sites] = await Promise.all([
+    supabaseGet('auto_articles', `status=eq.approved&created_at=gte.${since}&select=created_at`),
+    supabaseGet('auto_articles', `status=eq.rejected&created_at=gte.${since}&select=created_at`),
+    supabaseGet('crawler_data', `crawled_at=gte.${since}&select=site_name,crawled_at`),
+    supabaseGet('discovered_sites', 'select=*&limit=100'),
+  ]);
+
+  if (!Array.isArray(sites) || sites.length === 0) return { status: 'no_sites' };
+
+  // 各サイトの情報提供日と記事承認日を照合してスコアを計算
+  const approvedDates = new Set((Array.isArray(approved) ? approved : []).map(a => a.created_at?.split('T')[0]));
+  const rejectedDates = new Set((Array.isArray(rejected) ? rejected : []).map(a => a.created_at?.split('T')[0]));
+
+  const siteContributions = {};
+  if (Array.isArray(recentCrawls)) {
+    for (const crawl of recentCrawls) {
+      const date = crawl.crawled_at?.split('T')[0];
+      const name = crawl.site_name;
+      if (!name || name === 'daily_ranking') continue;
+      if (!siteContributions[name]) siteContributions[name] = { approved: 0, rejected: 0, total: 0 };
+      siteContributions[name].total++;
+      if (approvedDates.has(date)) siteContributions[name].approved++;
+      if (rejectedDates.has(date)) siteContributions[name].rejected++;
+    }
+  }
+
+  // スコア更新
+  let updated = 0;
+  for (const site of sites) {
+    const contrib = siteContributions[site.name];
+    if (!contrib || contrib.total === 0) continue;
+
+    const approvalRate = contrib.approved / contrib.total;
+    // 承認率が高いサイトはスコアアップ、低いサイトはダウン
+    let newScore = site.quality_score || 5;
+    if (approvalRate >= 0.7) newScore = Math.min(10, newScore + 1);
+    else if (approvalRate <= 0.3 && contrib.rejected > 0) newScore = Math.max(1, newScore - 1);
+
+    if (newScore !== (site.quality_score || 5)) {
+      await supabasePatch('discovered_sites', `id=eq.${site.id}`, { quality_score: newScore });
+      updated++;
+    }
+  }
+
+  console.log(`サイト品質更新: ${updated}件`);
+  return { status: 'completed', sites_evaluated: sites.length, sites_updated: updated };
+}
+
+// ===== メインエージェント関数 =====
+
 async function runCollect() {
   console.log('情報収集開始');
   const memory = await loadMemory('collector');
   const knownSites = await supabaseGet('discovered_sites', 'order=quality_score.desc&limit=10');
-  const knownStr = Array.isArray(knownSites) ? knownSites.map(s => `${s.name}(${s.url})`).join('\n') : '';
+  const knownStr = Array.isArray(knownSites) ? knownSites.map(s => `${s.name}(${s.url}) Q:${s.quality_score}`).join('\n') : '';
 
   const text = await callClaude(
     `あなたはTCGVIBE情報収集エージェントです。
 過去の学習：${memory || 'なし'}
 既知の優良サイト：${knownStr || 'なし'}
 web_searchで自由にTCG情報を収集してください。
+品質スコアが高いサイトを優先的に参照してください。
 以下のJSONのみ返してください：
 {
   "collected": [
@@ -255,11 +430,18 @@ web_searchで自由にTCG情報を収集してください。
 
 async function runGenerate() {
   console.log('記事・ランキング生成開始');
-  const [topCards, memory] = await Promise.all([getTopCards(), loadMemory('writer')]);
+  const [topCards, memory, learningContext] = await Promise.all([
+    getTopCards(),
+    loadMemory('writer'),
+    buildLearningContext(),
+  ]);
   const today = new Date().toISOString().split('T')[0];
   const crawlerData = await supabaseGet('crawler_data', `crawled_at=gte.${today}&order=crawled_at.desc&limit=10`);
   const crawlerStr = Array.isArray(crawlerData) ? crawlerData.map(d => d.summary).filter(Boolean).join('\n') : '';
   const topCardsStr = topCards.slice(0, 10).map(c => `${c.card_name} ${c.buy_price}`).join('\n');
+
+  // 学習コンテキストを組み込んだシステムプロンプトの共通部分
+  const learningBlock = learningContext ? `\n\n===学習データ（承認・却下の実績分析）===\n${learningContext}\n上記の傾向を踏まえて、承認されやすい記事を生成してください。` : '';
 
   const results = { tournament: null, collector: null, ranking: null };
 
@@ -267,14 +449,13 @@ async function runGenerate() {
   try {
     console.log('大会記事生成開始 topCards:', topCardsStr.length, '文字 crawlerData:', crawlerStr.length, '文字');
     const text = await callClaude(
-      `TCGVIBEの記事執筆エージェントです。過去の学習：${memory || 'なし'}
+      `TCGVIBEの記事執筆エージェントです。過去の学習：${memory || 'なし'}${learningBlock}
 以下のJSON形式のみ返してください（マークダウンのコードブロックは使わないこと）：
 {"title":"大会・環境系タイトル（具体的なカード名含む）","tag":"環境解説","game":"pokeca","summary":"100文字の要約","content":"800文字以上の本文","new_insight":"学んだこと"}`,
       `【高額カードTOP10】\n${topCardsStr || 'データなし'}\n\n【最新情報】\n${crawlerStr || 'データなし'}\n\n今日(${new Date().toLocaleDateString('ja-JP')})の大会・環境記事を生成してください。web_searchで最新の大会結果や環境情報を検索してから記事を書いてください。`
     );
     console.log('大会記事Claude応答:', text.length, '文字', text.substring(0, 100));
     const match = extractJSON(text);
-    // extractJSON returns a string or null
     if (match) {
       const article = JSON.parse(match);
       if (article.title && !article.title.includes('タイトル')) {
@@ -303,14 +484,13 @@ async function runGenerate() {
   try {
     console.log('コレクター記事生成開始');
     const text = await callClaude(
-      `TCGVIBEの記事執筆エージェントです。過去の学習：${memory || 'なし'}
+      `TCGVIBEの記事執筆エージェントです。過去の学習：${memory || 'なし'}${learningBlock}
 以下のJSON形式のみ返してください（マークダウンのコードブロックは使わないこと）：
 {"title":"コレクター向けタイトル（具体的なカード名含む）","tag":"価格情報","game":"pokeca","summary":"100文字の要約","content":"800文字以上の本文","new_insight":"学んだこと"}`,
       `【高額カードTOP10】\n${topCardsStr || 'データなし'}\n\n【最新情報】\n${crawlerStr || 'データなし'}\n\n今日(${new Date().toLocaleDateString('ja-JP')})のコレクター向け記事を生成してください。web_searchで最新のカード価格情報を検索してから記事を書いてください。`
     );
     console.log('コレクター記事Claude応答:', text.length, '文字', text.substring(0, 100));
     const match = extractJSON(text);
-    // extractJSON returns a string or null
     if (match) {
       const article = JSON.parse(match);
       if (article.title && !article.title.includes('タイトル')) {
@@ -347,7 +527,6 @@ async function runGenerate() {
       false  // ランキングはweb_search不要
     );
     const match = extractJSON(text);
-    // extractJSON returns a string or null
     if (match) {
       const result = JSON.parse(match);
       if (result.new_insight) await saveMemory('ranking', result.new_insight, 6);
@@ -363,6 +542,10 @@ async function runGenerate() {
       console.log('ランキング生成完了');
     }
   } catch (e) { console.log('ランキング失敗:', e.message); }
+
+  // 日次学習記録を保存
+  const genRecord = `[生成記録 ${new Date().toLocaleDateString('ja-JP')}] 大会:${results.tournament ? '成功' : '失敗'} コレクター:${results.collector ? '成功' : '失敗'} ランキング:${results.ranking ? '成功' : '失敗'}`;
+  await saveMemory('daily_log', genRecord, 3);
 
   // LINE日報
   let report = `🌅 TCGVIBEデイリーレポート\n${new Date().toLocaleDateString('ja-JP')}\n\n`;
@@ -405,7 +588,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') return res.status(200).json({ status: 'Master agent ready' });
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { action, article_id } = req.body || {};
+  const { action, article_id, reject_reason } = req.body || {};
 
   if (action === 'list_pending') {
     try {
@@ -416,7 +599,13 @@ export default async function handler(req, res) {
 
   if (action === 'reject' && article_id) {
     try {
-      await supabasePatch('auto_articles', `id=eq.${article_id}`, { status: 'rejected' });
+      const patchData = { status: 'rejected' };
+      if (reject_reason) patchData.reject_reason = reject_reason;
+      await supabasePatch('auto_articles', `id=eq.${article_id}`, patchData);
+      // 却下理由を学習メモリに記録
+      if (reject_reason) {
+        await saveMemory('writer', `[却下フィードバック] ID:${article_id} 理由: ${reject_reason}`, 8);
+      }
       return res.status(200).json({ status: 'rejected', article_id });
     } catch (e) { return res.status(500).json({ error: e.message }); }
   }
@@ -436,8 +625,37 @@ export default async function handler(req, res) {
           game: a.game || 'pokeca',
           author: a.author || 'TCGVIBE AI',
         });
+        // 承認された記事のパターンを学習メモリに記録
+        await saveMemory('writer', `[承認済] タイトル:「${a.title}」 タグ:${a.tag} 文字数:${(a.content||'').length}`, 7);
       }
       return res.status(200).json({ status: 'approved', article_id });
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  if (action === 'learn') {
+    try {
+      diagnostics.length = 0;
+      const [learningResult, siteResult] = await Promise.all([
+        runLearningCycle(),
+        updateSiteQualityScores(),
+      ]);
+      return res.status(200).json({ status: 'done', learning: learningResult, sites: siteResult, diagnostics });
+    } catch (e) { return res.status(500).json({ error: e.message, diagnostics }); }
+  }
+
+  if (action === 'learning_stats') {
+    try {
+      const stats = await getApprovalStats(14);
+      const memory = await loadMemory('learning');
+      const writerMemory = await loadMemory('writer');
+      return res.status(200).json({
+        approved_count: stats.approved.length,
+        rejected_count: stats.rejected.length,
+        approval_rate: stats.approved.length + stats.rejected.length > 0
+          ? Math.round(stats.approved.length / (stats.approved.length + stats.rejected.length) * 100) : 0,
+        learning_memory: memory,
+        writer_memory: writerMemory,
+      });
     } catch (e) { return res.status(500).json({ error: e.message }); }
   }
 
