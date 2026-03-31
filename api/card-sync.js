@@ -425,6 +425,25 @@ export default async function handler(req, res) {
       });
     }
 
+    // テーブル構造確認
+    if (action === 'describe') {
+      const [sets, images] = await Promise.all([
+        supabaseGet('card_sets', 'limit=0'),
+        supabaseGet('card_images', 'limit=0'),
+      ]);
+      // 1行だけ取得してカラム名を確認
+      const [setsRow, imagesRow] = await Promise.all([
+        supabaseGet('card_sets', 'limit=1'),
+        supabaseGet('card_images', 'limit=1'),
+      ]);
+      return res.status(200).json({
+        card_sets_columns: setsRow && setsRow.length > 0 ? Object.keys(setsRow[0]) : (setsRow?.message || 'empty'),
+        card_images_columns: imagesRow && imagesRow.length > 0 ? Object.keys(imagesRow[0]) : (imagesRow?.message || 'empty'),
+        card_sets_sample: setsRow?.[0] || null,
+        card_images_sample: imagesRow?.[0] || null,
+      });
+    }
+
     // ステータス取得
     if (action === 'status') {
       const [pokeSets, opSets, pokeCards, opCards] = await Promise.all([
