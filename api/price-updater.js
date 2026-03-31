@@ -120,10 +120,9 @@ async function fetchPsa10Price(cardName, game = 'pokeca') {
   const token = await getEbayToken();
   const gameQuery = game === 'pokeca' ? 'pokemon card' : 'one piece card';
   const enName = toEnglish(cardName);
-  const query = `${gameQuery} ${enName} PSA 10 japanese`;
+  const query = `${gameQuery} ${enName} PSA 10`;
   const params = new URLSearchParams({
-    q: query, limit: '20', category_ids: '183454', sort: 'price',
-    filter: 'deliveryCountry:US,conditions:{NEW}',
+    q: query, limit: '50', category_ids: '183454', sort: 'price',
   });
   const res = await fetch(`https://api.ebay.com/buy/browse/v1/item_summary/search?${params}`, {
     headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
