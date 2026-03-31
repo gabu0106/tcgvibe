@@ -38,12 +38,21 @@ export default async function handler(req, res) {
       const prices = await priceRes.json();
 
       // card_imagesを取得（同ゲーム、number付き、日本語名含む）
-      // 日本語+英語データを全取得（card_nameまたはcard_name_en + image_small必須）
-      let imgUrl = `${SUPABASE_URL}/rest/v1/card_images?select=card_id,card_name,card_name_en,image_small,set_id,number&game=eq.${g}&image_small=not.is.null&limit=100000`;
-      const imgRes = await fetch(imgUrl, {
-        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
-      });
-      const images = await imgRes.json();
+      // card_imagesをページネーションで全件取得（Supabaseの1000件制限を回避）
+      const images = [];
+      let imgOffset = 0;
+      const IMG_PAGE = 1000;
+      while (true) {
+        const imgUrl = `${SUPABASE_URL}/rest/v1/card_images?select=card_id,card_name,card_name_en,image_small,set_id,number&game=eq.${g}&image_small=not.is.null&limit=${IMG_PAGE}&offset=${imgOffset}&order=id.asc`;
+        const imgRes = await fetch(imgUrl, {
+          headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
+        });
+        const page = await imgRes.json();
+        if (!Array.isArray(page) || page.length === 0) break;
+        images.push(...page);
+        if (page.length < IMG_PAGE) break;
+        imgOffset += IMG_PAGE;
+      }
 
       // 複数のマップを構築してマッチング精度を上げる
       const byCardId = {};   // card_id → image
@@ -154,14 +163,7 @@ export default async function handler(req, res) {
       });
 
       const matchedCount = matched.filter(m => m.image_url).length;
-      const jaCount = Object.keys(byNameJa).length;
-      const enCount = Object.keys(byNameEn).length;
-      const idCount = Object.keys(byCardId).length;
-      const snCount = Object.keys(bySetNum).length;
-      const imgTotal = Array.isArray(images) ? images.length : 0;
-      const sampleJa = Object.keys(byNameJa).slice(0, 5);
-      const samplePrices = (Array.isArray(prices) ? prices : []).slice(0, 3).map(p => p.card_name);
-      return res.status(200).json({ prices: matched, total: matched.length, matched: matchedCount, debug: { imgTotal, jaCount, enCount, idCount, snCount, sampleJa, samplePrices } });
+      return res.status(200).json({ prices: matched, total: matched.length, matched: matchedCount });
     }
 
     // セット一覧を取得
