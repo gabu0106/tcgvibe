@@ -78,10 +78,39 @@ async function getEbayToken() {
   return cachedToken;
 }
 
+// 主要日本語カード名→eBay検索用英語キーワードマッピング
+const JA_TO_EN = {
+  'リーリエ':'Lillie','アセロラ':'Acerola','ルチア':'Lucia','がんばリーリエ':'Lillie Full Art',
+  'リザードン':'Charizard','リザードンex':'Charizard ex','リザードンVSTAR':'Charizard VSTAR','リザードンVMAX':'Charizard VMAX',
+  'ピカチュウ':'Pikachu','ピカチュウex':'Pikachu ex','ピカチュウVMAX':'Pikachu VMAX','ピカチュウV':'Pikachu V',
+  'レックウザVMAX':'Rayquaza VMAX','レックウザVMAX(SA)':'Rayquaza VMAX Alt Art',
+  'ミュウツー':'Mewtwo','ミュウツーex':'Mewtwo ex','ミュウ':'Mew','ミュウex':'Mew ex',
+  'ブラッキー':'Umbreon','ブラッキーex':'Umbreon ex','ブラッキーVMAX':'Umbreon VMAX',
+  'ニンフィア':'Sylveon','ニンフィアVMAX':'Sylveon VMAX',
+  'マリィ':'Marnie','マリィのプライド':'Marnie Pride',
+  'カイ':'Irida','ナンジャモ':'Iono','セレナ':'Serena','カミツレのきらめき':'Elesa Sparkle',
+  'ギラティナVSTAR':'Giratina VSTAR','パルキアVSTAR':'Palkia VSTAR',
+  'ルギアVSTAR':'Lugia VSTAR','アルセウスVSTAR':'Arceus VSTAR',
+  'サーナイトex':'Gardevoir ex','ミライドンex':'Miraidon ex','コライドンex':'Koraidon ex',
+  'エーフィVMAX':'Espeon VMAX','グレイシアVSTAR':'Glaceon VSTAR',
+  'ロケット団のミュウツーex':'Team Rocket Mewtwo ex',
+};
+
+function toEnglish(jaName) {
+  // 完全一致
+  if (JA_TO_EN[jaName]) return JA_TO_EN[jaName];
+  // 括弧除去して再試行
+  const base = jaName.replace(/[（(].*[）)]/g, '').trim();
+  if (JA_TO_EN[base]) return JA_TO_EN[base];
+  // ローマ字読みはできないので日本語のまま返す（eBayで日本語検索も一部ヒットする）
+  return jaName;
+}
+
 async function fetchPsa10Price(cardName, game = 'pokeca') {
   const token = await getEbayToken();
   const gameQuery = game === 'pokeca' ? 'pokemon card' : 'one piece card';
-  const query = `${gameQuery} ${cardName} PSA 10`;
+  const enName = toEnglish(cardName);
+  const query = `${gameQuery} ${enName} PSA 10`;
   const params = new URLSearchParams({
     q: query, limit: '20', category_ids: '183454', sort: 'price',
     filter: 'deliveryCountry:US,conditions:{NEW}',
