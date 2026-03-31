@@ -117,7 +117,8 @@ async function syncPokemonSets() {
       total_cards: s.cardCount?.total || s.cardCount?.official || 0,
       release_date: setDetails[s.id] || null,
       symbol_url: s.symbol || null,
-      logo_url: s.logo || null,
+      // pokemontcg.ioのロゴ画像（小文字set_id）
+      logo_url: `https://images.pokemontcg.io/${s.id.toLowerCase()}/logo.png`,
     }));
     const result = await supabasePost('card_sets', batch);
     if (result) saved += batch.length;
@@ -265,15 +266,26 @@ async function syncOnePieceSets() {
 
   await supabaseDelete('card_sets', 'game=eq.onepiece');
 
-  // パック名からセットコード(OP-01等)を抽出
+  // cards_by_id.jsonから各パックの先頭カードIDを取得してロゴ画像に使用
+  let cardsIndex = {};
+  try { cardsIndex = await fetchPunkRecords('index/cards_by_id.json'); } catch {}
+  const packFirstCard = {};
+  for (const [cardId, c] of Object.entries(cardsIndex)) {
+    if (/_p\d/.test(cardId)) continue;
+    if (!packFirstCard[c.pack_id] || cardId < packFirstCard[c.pack_id]) {
+      packFirstCard[c.pack_id] = cardId;
+    }
+  }
+
   const setRows = packs.map(p => {
-    const codeMatch = p.raw_title.match(/【([A-Z]+-\d+[A-Za-z]?)】/);
-    const code = codeMatch ? codeMatch[1] : p.id;
+    const firstCard = packFirstCard[p.id];
+    const logoUrl = firstCard ? `${OP_IMAGE_BASE}/${firstCard}.png` : null;
     return {
       set_id: `op-${p.id}`,
       set_name: p.raw_title,
       game: 'onepiece',
       total_cards: 0,
+      logo_url: logoUrl,
     };
   });
 
