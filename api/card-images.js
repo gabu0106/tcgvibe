@@ -37,37 +37,75 @@ export default async function handler(req, res) {
       });
       const prices = await priceRes.json();
 
-      // card_imagesを取得（同ゲーム）
-      let imgUrl = `${SUPABASE_URL}/rest/v1/card_images?select=card_name_en,image_small,set_id&game=eq.${g}&limit=50000`;
+      // card_imagesを取得（同ゲーム、number付き）
+      let imgUrl = `${SUPABASE_URL}/rest/v1/card_images?select=card_id,card_name_en,image_small,set_id,number&game=eq.${g}&limit=50000`;
       const imgRes = await fetch(imgUrl, {
         headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
       });
       const images = await imgRes.json();
 
-      // 画像マップを構築（カード名の英語→画像URL）
-      const imageMap = {};
+      // 複数のマップを構築してマッチング精度を上げる
+      const byCardId = {};   // card_id → image (e.g. "sm4p-119" → url)
+      const bySetNum = {};   // "set_id:number" → image
+      const byName = {};     // english name → image
       if (Array.isArray(images)) {
         for (const img of images) {
-          if (img.card_name_en && img.image_small) {
+          if (!img.image_small) continue;
+          if (img.card_id) byCardId[img.card_id.toLowerCase()] = img.image_small;
+          if (img.set_id && img.number) bySetNum[`${img.set_id}:${img.number}`] = img.image_small;
+          if (img.card_name_en) {
             const key = img.card_name_en.toLowerCase();
-            if (!imageMap[key]) imageMap[key] = img.image_small;
+            if (!byName[key]) byName[key] = img.image_small;
           }
         }
       }
 
-      // 価格データに画像URLを付与
+      // 価格データに画像URLを付与（複数戦略でマッチ）
       const matched = (Array.isArray(prices) ? prices : []).map(p => {
-        const name = (p.card_name || '').toLowerCase().trim();
-        // 完全一致 → 部分一致
-        let image = imageMap[name] || null;
-        if (!image) {
-          for (const [key, url] of Object.entries(imageMap)) {
-            if (key.includes(name) || name.includes(key)) {
-              image = url;
-              break;
+        let image = null;
+
+        // 戦略1: pack_name + model_number → set_id:number マッチ
+        // card_pricesのpack_name(例:"sm4+")とmodel_number(例:"119/114")から
+        // set_id + number を構成してマッチ
+        if (p.pack_name && p.model_number) {
+          const num = p.model_number.split('/')[0]; // "119/114" → "119"
+          const setId = p.pack_name.toLowerCase();
+          // card_idでマッチ（"sm4p-119"形式）
+          const cardIdVariants = [
+            `${setId}-${num}`,
+            `${setId.replace(/\+/g, 'p')}-${num}`,  // sm4+ → sm4p
+            `${setId.replace(/\./g, 'pt')}-${num}`,  // sv3.5 → sv3pt5
+          ];
+          for (const cid of cardIdVariants) {
+            if (byCardId[cid]) { image = byCardId[cid]; break; }
+          }
+          // set_id:number でもマッチ
+          if (!image) {
+            const setNumVariants = [
+              `${setId}:${num}`,
+              `${setId.replace(/\+/g, 'p')}:${num}`,
+              `${setId.replace(/\./g, 'pt')}:${num}`,
+            ];
+            for (const sn of setNumVariants) {
+              if (bySetNum[sn]) { image = bySetNum[sn]; break; }
             }
           }
         }
+
+        // 戦略2: カード名(英語)での部分一致
+        if (!image) {
+          const name = (p.card_name || '').toLowerCase().trim();
+          image = byName[name] || null;
+          if (!image) {
+            for (const [key, url] of Object.entries(byName)) {
+              if (key.includes(name) || name.includes(key)) {
+                image = url;
+                break;
+              }
+            }
+          }
+        }
+
         return { ...p, image_url: image };
       });
 
