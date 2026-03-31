@@ -172,7 +172,7 @@ export default async function handler(req, res) {
     if (game) url += `&game=eq.${game}`;
     if (set_id) url += `&set_id=eq.${set_id}`;
     if (rarity) url += `&rarity=eq.${rarity}`;
-    if (search) url += `&card_name_en=ilike.*${encodeURIComponent(search)}*`;
+    if (search) url += `&or=(card_name.ilike.*${encodeURIComponent(search)}*,card_name_en.ilike.*${encodeURIComponent(search)}*)`;
     url += `&limit=${parseInt(limit) || 100}`;
     if (offset) url += `&offset=${parseInt(offset)}`;
 
