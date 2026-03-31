@@ -425,13 +425,30 @@ export default async function handler(req, res) {
       });
     }
 
-    // テーブル構造確認: 最小データをINSERTしてカラムエラーを確認
+    // テーブル構造確認
     if (action === 'describe') {
-      const testSet = await supabasePost('card_sets', { id: -999 });
-      const testImg = await supabasePost('card_images', { id: -999 });
+      // idなしで最小INSERTを試行→成功したらカラム名取得→テスト行削除
+      const testSet = await supabasePost('card_sets', { name: '__test__' });
+      const testImg = await supabasePost('card_images', { name: '__test__' });
+      // 成功していたらカラム名を取得して行を削除
+      const setsCols = testSet && Array.isArray(testSet) && testSet[0] ? Object.keys(testSet[0]) : null;
+      const imgsCols = testImg && Array.isArray(testImg) && testImg[0] ? Object.keys(testImg[0]) : null;
+      // テスト行を削除
+      if (testSet?.[0]?.id) {
+        try { await fetch(`${SUPABASE_URL}/rest/v1/card_sets?id=eq.${testSet[0].id}`, {
+          method: 'DELETE', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY }
+        }); } catch {}
+      }
+      if (testImg?.[0]?.id) {
+        try { await fetch(`${SUPABASE_URL}/rest/v1/card_images?id=eq.${testImg[0].id}`, {
+          method: 'DELETE', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY }
+        }); } catch {}
+      }
       return res.status(200).json({
-        card_sets_test: testSet,
-        card_images_test: testImg,
+        card_sets_columns: setsCols,
+        card_sets_sample: testSet?.[0] || null,
+        card_images_columns: imgsCols,
+        card_images_sample: testImg?.[0] || null,
         diagnostics,
       });
     }
