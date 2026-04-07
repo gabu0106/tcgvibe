@@ -1122,57 +1122,113 @@ function oriListDrop(e, idx) {
 }
 
 // --- Smart auto layout: sort by price, top-3 large upper row, rest small lower row ---
+// Render uses: cardH_px = h*0.46*mult, cardW_px = cardH_px*0.716
+// Position: px = it.x*w, py = it.y*h  (x,y are 0-1 fractions)
+// So fractional dims: fw = 0.46*mult*0.716*(h/w), fh = 0.46*mult
+function oriItemFracDims(mult, ww, hh, isBox) {
+  const fh = 0.46 * mult;
+  const fw = isBox ? fh * (hh / ww) : fh * 0.716 * (hh / ww);
+  return { fw, fh };
+}
+
 function oriAutoLayout() {
   if (!oriItems.length) { oriAutoPreview(); return; }
   const { w, h } = oriGetSize();
-  const aspect = 0.716;
 
-  // Sort by price descending (highest first)
-  const sorted = [...oriItems].sort((a,b) => b.priceNum - a.priceNum);
-  // Reorder oriItems to match sorted order
+  // Sort by price descending
+  const sorted = [...oriItems].sort((a, b) => b.priceNum - a.priceNum);
   oriItems.length = 0;
   oriItems.push(...sorted);
 
-  const mainCount = Math.min(3, oriItems.length);
-  const subCount = oriItems.length - mainCount;
+  const n = oriItems.length;
+  const mainCount = Math.min(3, n);
+  const subCount = n - mainCount;
+  const hasSubRow = subCount > 0;
 
-  // Assign sizes
-  for (let i = 0; i < oriItems.length; i++) {
-    if (i === 0) oriItems[i].size = oriItems.length === 1 ? 'xl' : 'lg';
-    else if (i < mainCount) oriItems[i].size = 'lg';
+  // Assign sizes: 1st card biggest, top-3 large, rest small
+  for (let i = 0; i < n; i++) {
+    if (n === 1) oriItems[i].size = 'xl';
+    else if (n === 2) oriItems[i].size = 'lg';
+    else if (i < mainCount) oriItems[i].size = i === 0 ? 'lg' : 'lg';
     else oriItems[i].size = 'sm';
   }
 
-  // Upper row: main cards
-  const mainArea = { top: 0.04, bottom: subCount > 0 ? 0.52 : 0.56, left: 0.04, right: 0.96 };
-  const mainH = (mainArea.bottom - mainArea.top);
-  const mainCardH = mainH * 0.95;
-  const mainCardW_frac = mainCardH * aspect * (h / w);
-  const mainGap = 0.015;
-  const mainTotalW = mainCount * mainCardW_frac + (mainCount - 1) * mainGap;
-  const mainStartX = 0.5 - mainTotalW / 2;
+  // Layout zones (fractional 0-1)
+  const mainTop = 0.03;
+  const mainBottom = hasSubRow ? 0.50 : 0.56;
+  const gap = 0.015;
 
-  for (let i = 0; i < mainCount; i++) {
-    oriItems[i].x = mainStartX + i * (mainCardW_frac + mainGap);
-    oriItems[i].y = mainArea.top + (mainH - mainCardH) / 2;
+  // Main row: fit cards within zone height, then center horizontally
+  const mainMult = ORI_SIZES[oriItems[0]?.size || 'lg'];
+  let mainDims = oriItemFracDims(mainMult, w, h, false);
+
+  // Scale down if cards exceed zone height
+  let mainScale = 1;
+  if (mainDims.fh > (mainBottom - mainTop) * 0.92) {
+    mainScale = (mainBottom - mainTop) * 0.92 / mainDims.fh;
   }
 
-  // Lower row: sub cards
-  if (subCount > 0) {
-    const subArea = { top: 0.50, bottom: 0.58, left: 0.06, right: 0.94 };
-    const subH = subArea.bottom - subArea.top;
-    const subMult = ORI_SIZES['sm'];
-    const subCardH = h * 0.46 * subMult;
-    const subCardH_frac = subCardH / h;
-    const subCardW_frac = subCardH_frac * aspect * (h / w);
-    const subGap = 0.012;
-    const subTotalW = subCount * subCardW_frac + (subCount - 1) * subGap;
-    const subStartX = 0.5 - subTotalW / 2;
+  // Compute total width of main row
+  let mainWidths = [];
+  for (let i = 0; i < mainCount; i++) {
+    const m = ORI_SIZES[oriItems[i].size] || 1.0;
+    const d = oriItemFracDims(m, w, h, oriItems[i].type === 'box');
+    mainWidths.push(d.fw * mainScale);
+  }
+  let mainTotalW = mainWidths.reduce((a, b) => a + b, 0) + gap * (mainCount - 1);
 
+  // If too wide, scale down further
+  const maxRowW = 0.92;
+  if (mainTotalW > maxRowW) {
+    const shrink = maxRowW / mainTotalW;
+    mainScale *= shrink;
+    mainWidths = mainWidths.map(w => w * shrink);
+    mainTotalW = maxRowW;
+  }
+
+  let cx = 0.5 - mainTotalW / 2;
+  for (let i = 0; i < mainCount; i++) {
+    const m = ORI_SIZES[oriItems[i].size] || 1.0;
+    const d = oriItemFracDims(m, w, h, oriItems[i].type === 'box');
+    const fh = d.fh * mainScale;
+    oriItems[i].x = cx;
+    oriItems[i].y = mainTop + ((mainBottom - mainTop) - fh) / 2;
+    cx += mainWidths[i] + gap;
+  }
+
+  // Sub row
+  if (subCount > 0) {
+    const subTop = hasSubRow ? 0.49 : 0.56;
+    const subMult = ORI_SIZES['sm'];
+    let subDims = oriItemFracDims(subMult, w, h, false);
+    let subScale = 1;
+
+    // Compute total width
+    let subWidths = [];
+    for (let i = mainCount; i < n; i++) {
+      const m = ORI_SIZES[oriItems[i].size] || 0.42;
+      const d = oriItemFracDims(m, w, h, oriItems[i].type === 'box');
+      subWidths.push(d.fw * subScale);
+    }
+    let subTotalW = subWidths.reduce((a, b) => a + b, 0) + gap * (subCount - 1);
+
+    // Scale down if too wide
+    if (subTotalW > maxRowW) {
+      const shrink = maxRowW / subTotalW;
+      subScale *= shrink;
+      subWidths = subWidths.map(w => w * shrink);
+      subTotalW = maxRowW;
+    }
+
+    let sx = 0.5 - subTotalW / 2;
     for (let i = 0; i < subCount; i++) {
       const si = mainCount + i;
-      oriItems[si].x = subStartX + i * (subCardW_frac + subGap);
-      oriItems[si].y = subArea.top;
+      const m = ORI_SIZES[oriItems[si].size] || 0.42;
+      const d = oriItemFracDims(m, w, h, oriItems[si].type === 'box');
+      const fh = d.fh * subScale;
+      oriItems[si].x = sx;
+      oriItems[si].y = subTop;
+      sx += subWidths[i] + gap;
     }
   }
 
