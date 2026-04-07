@@ -36,8 +36,9 @@ export default async function handler(req, res) {
     const { action, game, pack, search, limit } = req.query;
     const g = game || 'pokeca';
 
-    // パック一覧
+    // パック一覧（card_setsとマージして正式名・発売日を付与）
     if (action === 'packs') {
+      // card_pricesからパック集計
       const allCards = [];
       let offset = 0;
       while (true) {
@@ -53,9 +54,36 @@ export default async function handler(req, res) {
         if (!packMap[p]) packMap[p] = 0;
         packMap[p]++;
       }
-      const packs = Object.entries(packMap)
-        .map(([name, count]) => ({ pack_name: name, card_count: count }))
-        .sort((a, b) => b.card_count - a.card_count);
+
+      // card_setsからセット情報を取得（set_name, release_date, total_cards）
+      const sets = await supabaseGet(`card_sets?select=set_id,set_name,release_date,total_cards,logo_url&game=eq.${g}&limit=500`);
+      const setMap = {};
+      if (Array.isArray(sets)) {
+        for (const s of sets) {
+          if (s.set_id) setMap[s.set_id.toLowerCase()] = s;
+        }
+      }
+
+      const packs = Object.entries(packMap).map(([code, count]) => {
+        const setInfo = setMap[code.toLowerCase()] || null;
+        return {
+          pack_name: code,
+          display_name: setInfo?.set_name || code,
+          release_date: setInfo?.release_date || null,
+          total_cards: setInfo?.total_cards || null,
+          logo_url: setInfo?.logo_url || null,
+          card_count: count,
+        };
+      });
+
+      // 発売日ありを日付降順 → 発売日なしをカード数降順
+      packs.sort((a, b) => {
+        if (a.release_date && b.release_date) return b.release_date.localeCompare(a.release_date);
+        if (a.release_date) return -1;
+        if (b.release_date) return 1;
+        return b.card_count - a.card_count;
+      });
+
       return res.status(200).json({ packs });
     }
 

@@ -63,14 +63,20 @@ body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:
 .rank-card-num{font-size:0.52rem;color:var(--muted);margin-top:0.05rem;}
 .rank-card-price{font-size:0.68rem;font-weight:600;color:var(--red);margin-top:0.15rem;}
 
-/* PACK GRID */
-.pack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;}
-.pack-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all 0.3s;box-shadow:0 2px 6px var(--shadow);}
-.pack-card:hover{border-color:var(--gold2);transform:translateY(-4px);box-shadow:0 12px 36px var(--shadow2),0 0 20px var(--gold-glow);}
-.pack-card-body{padding:1rem 1.1rem;}
-.pack-card-name{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:400;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em;}
-.pack-card-meta{display:flex;gap:0.5rem;align-items:center;margin-top:0.5rem;font-size:0.62rem;color:var(--muted);}
-.badge{background:var(--gold-light);color:var(--gold);padding:0.15rem 0.5rem;border-radius:999px;font-size:0.58rem;font-weight:600;}
+/* PACK LIST */
+.pack-list{display:flex;flex-direction:column;gap:0.5rem;}
+.pack-row{display:flex;align-items:center;gap:1rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1.1rem;cursor:pointer;transition:all 0.25s;box-shadow:0 1px 4px var(--shadow);}
+.pack-row:hover{border-color:var(--gold2);transform:translateX(4px);box-shadow:0 4px 16px var(--shadow2),0 0 12px var(--gold-glow);}
+.pack-row-logo{width:48px;height:48px;border-radius:6px;object-fit:contain;flex-shrink:0;background:var(--bg2);}
+.pack-row-logo-placeholder{width:48px;height:48px;border-radius:6px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;opacity:0.3;flex-shrink:0;}
+.pack-row-info{flex:1;min-width:0;}
+.pack-row-name{font-size:0.88rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pack-row-code{font-size:0.62rem;color:var(--muted);margin-top:0.1rem;}
+.pack-row-right{display:flex;gap:0.8rem;align-items:center;flex-shrink:0;}
+.pack-row-date{font-size:0.62rem;color:var(--muted);white-space:nowrap;}
+.badge{background:var(--gold-light);color:var(--gold);padding:0.15rem 0.5rem;border-radius:999px;font-size:0.58rem;font-weight:600;white-space:nowrap;}
+.pack-row-arrow{color:var(--muted);font-size:0.8rem;opacity:0.4;transition:opacity 0.2s;}
+.pack-row:hover .pack-row-arrow{opacity:1;color:var(--gold);}
 .load-more{display:flex;justify-content:center;margin:2rem 0;}
 .load-btn{background:var(--surface);border:1px solid var(--border2);color:var(--muted);padding:0.6rem 2.5rem;font-family:inherit;font-size:0.76rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;border-radius:999px;transition:all 0.25s;}
 .load-btn:hover{border-color:var(--gold);color:var(--gold);}
@@ -129,7 +135,10 @@ body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:
   .toolbar{flex-direction:column;align-items:stretch;}
   .toolbar-right{margin-left:0;justify-content:space-between;}
   .search-input{width:100%;}
-  .pack-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.8rem;}
+  .pack-row{padding:0.6rem 0.8rem;gap:0.6rem;}
+  .pack-row-logo,.pack-row-logo-placeholder{width:36px;height:36px;}
+  .pack-row-name{font-size:0.78rem;}
+  .pack-row-date{display:none;}
   .card-grid{grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:0.6rem;}
   .modal-header{padding:1rem;flex-wrap:wrap;}
   .modal-toolbar{padding:0.6rem 1rem;}
@@ -170,7 +179,7 @@ body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:
   </div>
 
   <div id="mainContent">
-    <div class="pack-grid" id="packGrid"><div class="loading">読み込み中...</div></div>
+    <div class="pack-list" id="packList"><div class="loading">読み込み中...</div></div>
     <div class="load-more" id="loadMore" style="display:none">
       <button class="load-btn" id="loadBtn" onclick="showMorePacks()">さらにパックを表示</button>
     </div>
@@ -224,7 +233,7 @@ function rarityClass(r) {
 
 // ===== INIT =====
 async function init() {
-  document.getElementById('packGrid').innerHTML = '<div class="loading">読み込み中...</div>';
+  document.getElementById('packList').innerHTML = '<div class="loading">読み込み中...</div>';
   packsShown = 0;
   await Promise.all([fetchPacks(), loadRanking()]);
   renderPacks(true);
@@ -261,23 +270,31 @@ async function loadRanking() {
   } catch { document.getElementById('rankingScroll').innerHTML = ''; }
 }
 
-// ===== PACK GRID =====
+// ===== PACK LIST =====
 function renderPacks(reset) {
-  const grid = document.getElementById('packGrid');
-  if (reset) { grid.innerHTML = ''; packsShown = 0; }
+  const list = document.getElementById('packList');
+  if (reset) { list.innerHTML = ''; packsShown = 0; }
   const slice = allPacks.slice(packsShown, packsShown + PACKS_PER_PAGE);
-  if (slice.length === 0 && packsShown === 0) { grid.innerHTML = '<div class="loading">パックが見つかりません</div>'; document.getElementById('loadMore').style.display='none'; return; }
+  if (slice.length === 0 && packsShown === 0) { list.innerHTML = '<div class="loading">パックが見つかりません</div>'; document.getElementById('loadMore').style.display='none'; return; }
 
   for (const pack of slice) {
     const el = document.createElement('div');
-    el.className = 'pack-card';
-    el.onclick = () => openPackModal(pack.pack_name);
+    el.className = 'pack-row';
+    el.onclick = () => openPackModal(pack.pack_name, pack.display_name);
+    const name = pack.display_name || pack.pack_name;
+    const showCode = pack.display_name && pack.display_name !== pack.pack_name;
     el.innerHTML = `
-      <div class="pack-card-body">
-        <div class="pack-card-name">${pack.pack_name}</div>
-        <div class="pack-card-meta"><span class="badge">${pack.card_count}枚</span></div>
+      ${pack.logo_url ? `<img class="pack-row-logo" src="${pack.logo_url}" alt="" loading="lazy" onerror="this.outerHTML='<div class=pack-row-logo-placeholder>&#x1F0CF;</div>'">` : '<div class="pack-row-logo-placeholder">&#x1F0CF;</div>'}
+      <div class="pack-row-info">
+        <div class="pack-row-name">${name}</div>
+        ${showCode ? `<div class="pack-row-code">${pack.pack_name}</div>` : ''}
+      </div>
+      <div class="pack-row-right">
+        ${pack.release_date ? `<span class="pack-row-date">${pack.release_date}</span>` : ''}
+        <span class="badge">${pack.card_count}枚</span>
+        <span class="pack-row-arrow">&#x203A;</span>
       </div>`;
-    grid.appendChild(el);
+    list.appendChild(el);
   }
   packsShown += slice.length;
   document.getElementById('loadMore').style.display = packsShown < allPacks.length ? 'flex' : 'none';
@@ -291,7 +308,9 @@ function showMorePacks() {
 }
 
 // ===== MODAL =====
-async function openPackModal(packName) {
+async function openPackModal(packCode, displayName) {
+  const packName = packCode;
+  const title = displayName || packCode;
   const modal = document.getElementById('cardModal');
   const header = document.getElementById('modalHeader');
   const toolbar = document.getElementById('modalToolbar');
@@ -299,8 +318,8 @@ async function openPackModal(packName) {
 
   header.innerHTML = `
     <div class="modal-header-info">
-      <div class="modal-header-title">${packName}</div>
-      <div class="modal-header-meta" id="modalMeta">読み込み中...</div>
+      <div class="modal-header-title">${title}</div>
+      <div class="modal-header-meta" id="modalMeta">${title !== packCode ? packCode + ' / ' : ''}読み込み中...</div>
     </div>
     <button class="modal-close" onclick="closeModal()">閉じる</button>`;
 
@@ -319,7 +338,7 @@ async function openPackModal(packName) {
     const res = await fetch(`/api/card-images?action=cards&game=${currentGame}&pack=${encodeURIComponent(packName)}`);
     const data = await res.json();
     modalCards = data.cards || [];
-    document.getElementById('modalMeta').textContent = `${modalCards.length}枚収録`;
+    document.getElementById('modalMeta').textContent = `${title !== packCode ? packCode + ' / ' : ''}${modalCards.length}枚収録`;
     sortAndRenderCards();
   } catch { body.innerHTML = '<div class="modal-loading">読み込みに失敗しました</div>'; }
 }
