@@ -5,6 +5,7 @@
     "api/admin.js": { "maxDuration": 120 },
     "api/agent-master.js": { "maxDuration": 300 },
     "api/line-webhook.js": { "maxDuration": 60 },
-    "api/ebay.js": { "maxDuration": 30 }
+    "api/ebay.js": { "maxDuration": 30 },
+    "api/price-updater.js": { "maxDuration": 120 }
   }
 }

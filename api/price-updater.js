@@ -146,6 +146,97 @@ async function fetchPsa10Price(cardName, game = 'pokeca') {
   };
 }
 
+// ===== カードラッシュメディア 買取価格スクレイピング =====
+
+const CARDRUSH_GAMES = {
+  pokeca: { path: 'pokemon', game: 'pokeca' },
+  onepiece: { path: 'onepiece', game: 'onepiece' },
+};
+
+async function fetchCardrushPage(gamePath, page, limit = 100) {
+  const url = `https://cardrush.media/${gamePath}/buying_prices?limit=${limit}&page=${page}&sort[key]=amount&sort[order]=desc`;
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'TCGVibe-PriceBot/1.0 (+https://tcgvibe.com)' },
+  });
+  if (!res.ok) throw new Error(`cardrush ${gamePath} page${page}: ${res.status}`);
+  const html = await res.text();
+  const match = html.match(/<script\s+id="__NEXT_DATA__"\s+type="application\/json">(.*?)<\/script>/s);
+  if (!match) throw new Error(`__NEXT_DATA__ not found: ${gamePath} page${page}`);
+  const data = JSON.parse(match[1]);
+  const props = data?.props?.pageProps;
+  return {
+    items: props?.buyingPrices || [],
+    lastPage: props?.lastPage || 1,
+  };
+}
+
+function cardrushToCardPrice(item, game) {
+  const name = item.extra_difference
+    ? `${item.name}（${item.extra_difference}）`
+    : item.name;
+  return {
+    card_name: name,
+    buy_price: `¥${item.amount}`,
+    rarity: item.rarity || '-',
+    shop: 'カードラッシュ',
+    game,
+    pack_name: item.pack_code || '',
+    model_number: item.model_number || '',
+  };
+}
+
+async function scrapeBuyPrices(maxPages = 10) {
+  diagnostics.push('カードラッシュ買取価格スクレイピング開始');
+  let totalSaved = 0;
+
+  for (const [, cfg] of Object.entries(CARDRUSH_GAMES)) {
+    try {
+      // 既存のカードラッシュデータを削除
+      await supabaseDelete('card_prices', `shop=eq.カードラッシュ&game=eq.${cfg.game}`);
+      diagnostics.push(`${cfg.game}: 旧データ削除完了`);
+
+      const records = [];
+      const first = await fetchCardrushPage(cfg.path, 1);
+      records.push(...first.items.map(i => cardrushToCardPrice(i, cfg.game)));
+      const pages = Math.min(first.lastPage, maxPages);
+      diagnostics.push(`${cfg.game}: ${first.lastPage}ページ中${pages}ページ取得予定`);
+
+      for (let p = 2; p <= pages; p++) {
+        await sleep(500);
+        try {
+          const page = await fetchCardrushPage(cfg.path, p);
+          records.push(...page.items.map(i => cardrushToCardPrice(i, cfg.game)));
+        } catch (e) { diagnostics.push(`${cfg.game} page${p}失敗: ${e.message}`); }
+      }
+
+      // 重複除去（同名カードは高い方を優先＝先に来る）
+      const seen = new Set();
+      const unique = records.filter(r => {
+        const key = `${r.card_name}__${r.model_number}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      // バッチ挿入
+      let saved = 0;
+      for (let i = 0; i < unique.length; i += 50) {
+        const batch = unique.slice(i, i + 50);
+        const result = await supabasePost('card_prices', batch);
+        if (result) saved += batch.length;
+      }
+
+      totalSaved += saved;
+      diagnostics.push(`${cfg.game}: ${saved}/${unique.length}件保存`);
+    } catch (e) {
+      diagnostics.push(`${cfg.game}失敗: ${e.message}`);
+    }
+  }
+
+  diagnostics.push(`カードラッシュ合計: ${totalSaved}件保存`);
+  return { saved: totalSaved };
+}
+
 // ===== 平均買取価格計算 =====
 
 async function calcAverageBuyPrices() {
@@ -332,7 +423,7 @@ export default async function handler(req, res) {
   diagnostics.length = 0;
 
   // 書き込み系アクションは内部APIキー必須、読み取りはフロントから許可
-  const writeActions = ['update_psa10', 'record_history', 'detect_surges', 'daily_update', 'avg_prices'];
+  const writeActions = ['update_psa10', 'record_history', 'detect_surges', 'daily_update', 'avg_prices', 'scrape_buyprices'];
   if (writeActions.includes(action)) {
     const key = req.headers['x-api-key'] || req.body?.api_key;
     if (!key || key !== process.env.INTERNAL_API_KEY) {
@@ -390,6 +481,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ surges: surges.slice(0, 30) });
     }
 
+    // カードラッシュ買取価格スクレイピング
+    if (action === 'scrape_buyprices') {
+      const result = await scrapeBuyPrices(parseInt(card_limit) || 10);
+      return res.status(200).json({ status: 'done', ...result, diagnostics });
+    }
+
     // 日次バッチ
     if (action === 'daily_update') {
       const history = await recordPriceHistory();
@@ -403,7 +500,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: 'done', history, psa10: psa.updated, surges: surges.surges.length, diagnostics });
     }
 
-    return res.status(400).json({ error: 'action必須', actions: ['avg_prices','update_psa10','record_history','detect_surges','get_psa10','get_surges','daily_update'] });
+    return res.status(400).json({ error: 'action必須', actions: ['avg_prices','update_psa10','record_history','detect_surges','get_psa10','get_surges','daily_update','scrape_buyprices'] });
   } catch (e) {
     return res.status(500).json({ error: e.message, diagnostics });
   }

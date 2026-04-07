@@ -52,6 +52,13 @@ jobs:
     needs: step2-generate
     timeout-minutes: 10
     steps:
+      - name: scrape-buyprices
+        run: |
+          echo "=== 買取価格スクレイピング(カードラッシュ) ==="
+          curl -sS --max-time 120 -X POST https://tcgvibe.com/api/price-updater \
+            -H "Content-Type: application/json" \
+            -H "X-API-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -d '{"action":"scrape_buyprices","card_limit":10}' || true
       - name: record-history
         run: |
           echo "=== 価格履歴記録 ==="
