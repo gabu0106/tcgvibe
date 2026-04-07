@@ -93,16 +93,43 @@ async function fetchEnglishLogoMap() {
   } catch { return {}; }
 }
 
-// 日本語セットID→英語セットIDの正規化（ロゴ検索用）
-function jaToEnSetId(jaId) {
+// 日本語セットID→英語セットID候補リスト（複数パターンでマッチ試行）
+// 例: SV8→[sv08,sv8], SV8a→[sv08.5,sv8.5,sv08a], SV11W→[sv10.5w,sv11w]
+function jaToEnCandidates(jaId) {
   const lower = jaId.toLowerCase();
-  // SV系: sv8→sv08, sv1s→sv01（ゼロ埋め+サブセットコード除去）
-  const svMatch = lower.match(/^sv(\d+)([a-z]?)$/);
-  if (svMatch) return `sv${svMatch[1].padStart(2, '0')}${svMatch[2]}`;
-  // SM系: sm1m→sm01, sm12a→sm12a
-  const smMatch = lower.match(/^sm(\d+)([a-z]?)$/);
-  if (smMatch && smMatch[1].length === 1) return `sm${smMatch[1].padStart(2, '0')}${smMatch[2]}`;
-  return lower;
+  const out = [lower];
+
+  // SV系
+  const sv = lower.match(/^sv(\d+)([a-z]?)$/);
+  if (sv) {
+    const n = parseInt(sv[1]), pad = n.toString().padStart(2, '0'), sfx = sv[2];
+    out.push(`sv${pad}${sfx}`, `sv${pad}`);
+    // 'a'サフィックス → 英語では'.5' (SV8a→sv08.5)
+    if (sfx === 'a') out.push(`sv${pad}.5`, `sv${n}.5`);
+    // 'e'サフィックス → sve (SV*e→sve)
+    if (sfx === 'e') out.push('sve');
+    // W/Bサフィックス → 英語では(n-1).5w/.5b (SV11W→sv10.5w)
+    if (sfx === 'w' || sfx === 'b') {
+      const prev = n - 1;
+      out.push(`sv${prev}.5${sfx}`, `sv${prev.toString().padStart(2, '0')}.5${sfx}`);
+    }
+    // S/Vサフィックス → 番号のみ (SV1S→sv01)
+    if (sfx === 's' || sfx === 'v') out.push(`sv${pad}`);
+  }
+
+  // SM系: sm1m→sm1, sm12a→sm12, sm3+→sm3.5 等
+  const sm = lower.match(/^sm(\d+)([a-z+]?)$/);
+  if (sm) {
+    const n = sm[1], sfx = sm[2];
+    out.push(`sm${n}`, `sm${parseInt(n)}`);
+    if (sfx === '+' || sfx === 'a') out.push(`sm${n}.5`, `sm${parseInt(n)}.5`);
+  }
+
+  // XY/BW系: ほぼ直接マッチ
+  const xyBw = lower.match(/^(xy|bw)(\d+)([a-z]?)$/);
+  if (xyBw) out.push(`${xyBw[1]}${xyBw[2]}`);
+
+  return [...new Set(out)];
 }
 
 // 全セットを取得して card_sets に保存（日本語名 + 英語APIロゴ）
@@ -144,9 +171,12 @@ async function syncPokemonSets() {
   let saved = 0;
   for (let i = 0; i < sets.length; i += 50) {
     const batch = sets.slice(i, i + 50).map(s => {
-      // ロゴURL: 英語APIの完全一致→正規化マッチ→null
-      const enId = jaToEnSetId(s.id);
-      const logoUrl = enLogoMap[s.id.toLowerCase()] || enLogoMap[enId] || null;
+      // ロゴURL: 候補リストから最初にマッチするものを使用
+      const candidates = jaToEnCandidates(s.id);
+      let logoUrl = null;
+      for (const c of candidates) {
+        if (enLogoMap[c]) { logoUrl = enLogoMap[c]; break; }
+      }
       return {
         set_id: s.id,
         set_name: s.name,
