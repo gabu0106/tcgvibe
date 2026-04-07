@@ -107,11 +107,18 @@
   .ori-result-card img{width:100%;aspect-ratio:0.716;object-fit:cover;display:block}
   .ori-result-card .ori-card-name{font-size:0.65rem;padding:0.3rem 0.4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
   .ori-result-card .ori-card-price{font-size:0.6rem;color:var(--gold);text-align:center;padding-bottom:0.3rem}
-  .ori-sel-card{position:relative;width:90px;cursor:pointer;border:2px solid var(--gold2);border-radius:4px;overflow:hidden;transition:transform 0.15s}
-  .ori-sel-card:hover{transform:scale(1.05)}
-  .ori-sel-card img{width:100%;aspect-ratio:0.716;object-fit:cover;display:block}
-  .ori-sel-card .ori-sel-badge{position:absolute;top:2px;right:2px;background:var(--danger);color:#fff;font-size:0.55rem;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1}
-  .ori-sel-card .ori-sel-label{font-size:0.6rem;text-align:center;padding:0.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ori-item{display:flex;align-items:flex-start;gap:0.75rem;padding:0.75rem;border:1px solid var(--border);border-radius:4px;background:var(--surface);margin-bottom:0.5rem;transition:box-shadow 0.15s}
+  .ori-item:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+  .ori-item.dragging{opacity:0.5;box-shadow:0 4px 16px rgba(0,0,0,0.15)}
+  .ori-item-thumb{width:60px;flex-shrink:0;border-radius:3px;overflow:hidden;border:2px solid var(--gold2);cursor:grab}
+  .ori-item-thumb img{width:100%;display:block}
+  .ori-item-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:0.35rem}
+  .ori-item-name{font-size:0.82rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ori-item-row{display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap}
+  .ori-item-row select,.ori-item-row input{margin:0;padding:0.3rem 0.5rem;font-size:0.72rem;width:auto;min-width:0}
+  .ori-item-row .ori-mini-label{font-size:0.62rem;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;flex-shrink:0}
+  .ori-item-actions{display:flex;flex-direction:column;gap:0.3rem;flex-shrink:0}
+  .ori-item-actions button{padding:0.25rem 0.5rem;font-size:0.65rem}
   @media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:1.5rem;}.stat-grid{grid-template-columns:1fr 1fr;}.two-col{grid-template-columns:1fr;}}
 </style>
 </head>
@@ -366,79 +373,93 @@
     <!-- ORIPA IMAGE CREATOR -->
     <div class="page" id="page-oripa">
       <h1 class="page-title">オリパ画像作成</h1>
-      <p class="page-desc">ド派手なオリパ宣伝画像をCanvas APIで生成します</p>
+      <p class="page-desc">ド派手なオリパ宣伝画像をCanvas APIで生成 — カードをドラッグ&ドロップで自由配置</p>
 
-      <div class="card">
-        <div class="card-title">基本情報</div>
-        <div class="two-col">
-          <div><label>オリパ名</label><input type="text" id="ori-name" placeholder="例：超豪華オリパ" value="超豪華オリパ"></div>
-          <div><label>サブタイトル</label><input type="text" id="ori-subtitle" placeholder="例：高額カード確定！"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
-          <div><label>価格</label><input type="text" id="ori-price" placeholder="例：¥4,000" value="¥4,000"></div>
-          <div><label>ポイント</label><input type="text" id="ori-points" placeholder="例：ALL 330P" value="ALL 330P"></div>
-          <div><label>口数</label><input type="text" id="ori-lots" placeholder="例：限定100口"></div>
-        </div>
-        <label>注意書き</label>
-        <input type="text" id="ori-note" placeholder="例：※画像はイメージです" value="※画像はイメージです。カードの状態は個体差があります。">
-      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+        <!-- LEFT COLUMN: settings -->
+        <div>
+          <div class="card">
+            <div class="card-title">基本情報</div>
+            <div class="two-col">
+              <div><label>オリパ名</label><input type="text" id="ori-name" placeholder="例：超豪華オリパ" value="超豪華オリパ" oninput="oriAutoPreview()"></div>
+              <div><label>サブタイトル</label><input type="text" id="ori-subtitle" placeholder="例：高額カード確定！" oninput="oriAutoPreview()"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+              <div><label>価格</label><input type="text" id="ori-price" placeholder="¥4,000" value="¥4,000" oninput="oriAutoPreview()"></div>
+              <div><label>ポイント</label><input type="text" id="ori-points" placeholder="ALL 330P" value="ALL 330P" oninput="oriAutoPreview()"></div>
+              <div><label>口数</label><input type="text" id="ori-lots" placeholder="限定100口" oninput="oriAutoPreview()"></div>
+            </div>
+            <label>注意書き</label>
+            <input type="text" id="ori-note" placeholder="※画像はイメージです" value="※画像はイメージです。カードの状態は個体差があります。" oninput="oriAutoPreview()">
+          </div>
 
-      <div class="card">
-        <div class="card-title">封入カード選択</div>
-        <div style="display:flex;gap:0.75rem;margin-bottom:1rem">
-          <input type="text" id="ori-search" placeholder="カード名で検索..." style="margin:0;flex:1" onkeydown="if(event.key==='Enter')oriSearchCards()">
-          <button class="btn" onclick="oriSearchCards()">検索</button>
-        </div>
-        <div id="ori-search-results" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:0.5rem;max-height:300px;overflow-y:auto;margin-bottom:1.25rem"></div>
-        <div class="card-title" style="margin-top:0.5rem">選択済みカード（ドラッグで並替え・クリックで削除）</div>
-        <div id="ori-selected-cards" style="display:flex;gap:0.75rem;flex-wrap:wrap;min-height:60px;padding:0.75rem;background:var(--bg2);border:1px dashed var(--border);border-radius:2px"></div>
-      </div>
+          <div class="card">
+            <div class="card-title">デザイン設定</div>
+            <div class="two-col">
+              <div>
+                <label>出力サイズ</label>
+                <select id="ori-size" onchange="oriResetLayout();oriAutoPreview()">
+                  <option value="x">X投稿用 (1200×675)</option>
+                  <option value="a4">印刷用 A4横 (3508×2480)</option>
+                </select>
+              </div>
+              <div>
+                <label>背景テーマ</label>
+                <select id="ori-theme" onchange="oriAutoPreview()">
+                  <option value="rainbow">虹色キラキラ</option>
+                  <option value="gold">ゴールド豪華</option>
+                  <option value="dark">ダーク高級</option>
+                  <option value="blue">ブルーオーシャン</option>
+                  <option value="red">レッドインフェルノ</option>
+                  <option value="purple">パープルミスティック</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
-      <div class="card">
-        <div class="card-title">デザイン設定</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
-          <div>
-            <label>出力サイズ</label>
-            <select id="ori-size" onchange="oriUpdatePreview()">
-              <option value="x">X投稿用 (1200×675)</option>
-              <option value="a4">印刷用 A4横 (3508×2480)</option>
-            </select>
+          <div class="card">
+            <div class="card-title">カード・ボックス追加</div>
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
+              <select id="ori-search-type" style="margin:0;width:auto;min-width:120px">
+                <option value="card">カード検索</option>
+                <option value="box">ボックス画像</option>
+              </select>
+              <input type="text" id="ori-search" placeholder="検索..." style="margin:0;flex:1" onkeydown="if(event.key==='Enter')oriSearch()">
+              <button class="btn" onclick="oriSearch()">検索</button>
+            </div>
+            <div id="ori-search-results" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem;max-height:240px;overflow-y:auto"></div>
           </div>
-          <div>
-            <label>背景テーマ</label>
-            <select id="ori-theme" onchange="oriUpdatePreview()">
-              <option value="rainbow">虹色キラキラ</option>
-              <option value="gold">ゴールド豪華</option>
-              <option value="dark">ダーク高級</option>
-              <option value="blue">ブルーオーシャン</option>
-            </select>
-          </div>
-          <div>
-            <label>メインカード枚数</label>
-            <select id="ori-main-count" onchange="oriUpdatePreview()">
-              <option value="1">1枚（センター大）</option>
-              <option value="2">2枚</option>
-              <option value="3" selected>3枚</option>
-              <option value="5">5枚</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:flex;gap:2rem;margin-top:0.5rem">
-          <div class="toggle-wrap" style="margin:0">
-            <label class="toggle"><input type="checkbox" id="ori-psa" checked onchange="oriUpdatePreview()"><span class="toggle-slider"></span></label>
-            <span class="toggle-label">PSA10バッジ表示</span>
-          </div>
-        </div>
-      </div>
 
-      <div class="card">
-        <div class="card-title">プレビュー</div>
-        <div style="text-align:center;background:#111;padding:1.5rem;border-radius:2px;overflow:auto">
-          <canvas id="ori-canvas" style="max-width:100%;height:auto;border:1px solid rgba(255,255,255,0.1)"></canvas>
+          <div class="card">
+            <div class="card-title">配置アイテム一覧 <span style="font-size:0.65rem;color:var(--muted);text-transform:none;letter-spacing:0">(ドラッグで並替え＝重なり順)</span></div>
+            <div id="ori-items-list" style="min-height:40px"></div>
+            <p id="ori-items-empty" style="color:var(--muted);font-size:0.75rem;padding:0.5rem 0">アイテムを追加してください</p>
+          </div>
         </div>
-        <div style="display:flex;gap:0.75rem;margin-top:1.25rem;flex-wrap:wrap">
-          <button class="btn btn-gold" onclick="oriUpdatePreview()">プレビュー更新</button>
-          <button class="btn btn-success" onclick="oriDownload()">ダウンロード (PNG)</button>
+
+        <!-- RIGHT COLUMN: preview -->
+        <div>
+          <div class="card" style="position:sticky;top:1rem">
+            <div class="card-title">プレビュー <span style="font-size:0.65rem;color:var(--muted);text-transform:none;letter-spacing:0">— キャンバス上でドラッグして配置</span></div>
+            <div id="ori-canvas-wrap" style="position:relative;background:#111;border-radius:2px;overflow:hidden;cursor:crosshair">
+              <canvas id="ori-canvas" style="width:100%;display:block"></canvas>
+            </div>
+            <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap">
+              <button class="btn btn-gold" onclick="oriAutoLayout()">自動配置</button>
+              <button class="btn btn-success" onclick="oriDownload()">PNG保存</button>
+              <button class="btn" onclick="oriCopyForX()">X投稿用コピー</button>
+            </div>
+            <div class="status-msg" id="ori-status"></div>
+
+            <div style="margin-top:1rem">
+              <label>X投稿テキスト</label>
+              <textarea id="ori-x-text" style="min-height:80px;font-size:0.82rem" placeholder="🎰超豪華オリパ販売中！&#10;💰¥4,000 / ALL 330P&#10;🔥PSA10確定！&#10;&#10;#ポケカ #オリパ #TCGVibe">🎰超豪華オリパ販売中！
+💰¥4,000 / ALL 330P
+🔥高額カード多数封入！
+
+#ポケカ #オリパ #TCGVibe</textarea>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -924,70 +945,211 @@ function showMsg(id, type, text) {
   if (text) setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ===== ORIPA IMAGE CREATOR =====
-const oriSelectedCards = [];
+// ===== ORIPA IMAGE CREATOR v2 =====
 
-async function oriSearchCards() {
+// --- Data model ---
+// Each item: { id, type:'card'|'box', name, image_url, x, y, size:'xl'|'lg'|'md'|'sm', badge:'none'|'PSA10'|'PSA9'|'BGS10'|'BGS9.5', label:'', labelColor:'gold'|'red'|'blue'|'green'|'purple', _img:null }
+const oriItems = [];
+let oriNextId = 1;
+let oriDragIdx = -1; // canvas drag
+let oriDragOffX = 0, oriDragOffY = 0;
+let oriPreviewTimer = null;
+const ORI_SIZES = { xl: 1.6, lg: 1.0, md: 0.65, sm: 0.42 };
+const ORI_SIZE_LABELS = { xl: '特大', lg: '大', md: '中', sm: '小' };
+
+function oriGetSize() {
+  return document.getElementById('ori-size').value === 'a4' ? { w: 3508, h: 2480 } : { w: 1200, h: 675 };
+}
+
+function oriAutoPreview() {
+  clearTimeout(oriPreviewTimer);
+  oriPreviewTimer = setTimeout(() => oriRender(), 120);
+}
+
+// --- Search ---
+async function oriSearch() {
+  const type = document.getElementById('ori-search-type').value;
   const q = document.getElementById('ori-search').value.trim();
   if (!q) return;
   const el = document.getElementById('ori-search-results');
   el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">検索中...</p>';
-  try {
-    const res = await fetch(`/api/card-images?action=search&game=pokeca&search=${encodeURIComponent(q)}&limit=50`);
-    const data = await res.json();
-    const cards = data.cards || [];
-    if (!cards.length) { el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">見つかりませんでした</p>'; return; }
-    el.innerHTML = cards.filter(c => c.image_url).map((c, i) => `
-      <div class="ori-result-card" onclick="oriAddCard(${i})" data-idx="${i}">
-        <img src="${c.image_url}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'">
-        <div class="ori-card-name">${c.card_name}</div>
-        <div class="ori-card-price">${c.buy_price || ''}</div>
+
+  if (type === 'card') {
+    try {
+      const res = await fetch(`/api/card-images?action=search&game=pokeca&search=${encodeURIComponent(q)}&limit=50`);
+      const data = await res.json();
+      const cards = (data.cards || []).filter(c => c.image_url);
+      if (!cards.length) { el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">見つかりませんでした</p>'; return; }
+      window._oriResults = cards.map(c => ({ type: 'card', name: c.card_name, image_url: c.image_url, price: c.buy_price }));
+      el.innerHTML = window._oriResults.map((c, i) => `
+        <div class="ori-result-card" onclick="oriAddItem(${i})">
+          <img src="${c.image_url}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'">
+          <div class="ori-card-name">${c.name}</div>
+          <div class="ori-card-price">${c.price || ''}</div>
+        </div>
+      `).join('');
+    } catch(e) { el.innerHTML = '<p style="color:var(--danger);font-size:0.8rem">'+e.message+'</p>'; }
+  } else {
+    // Box search: search card_sets
+    try {
+      const res = await fetch(`/api/card-images?action=packs&game=pokeca`);
+      const data = await res.json();
+      const packs = (data.packs || []).filter(p => p.logo_url && p.display_name.includes(q));
+      if (!packs.length) { el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">見つかりませんでした</p>'; return; }
+      window._oriResults = packs.map(p => ({ type: 'box', name: p.display_name, image_url: p.logo_url }));
+      el.innerHTML = window._oriResults.map((c, i) => `
+        <div class="ori-result-card" onclick="oriAddItem(${i})">
+          <img src="${c.image_url}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'" style="aspect-ratio:auto;max-height:140px;object-fit:contain">
+          <div class="ori-card-name">${c.name}</div>
+        </div>
+      `).join('');
+    } catch(e) { el.innerHTML = '<p style="color:var(--danger);font-size:0.8rem">'+e.message+'</p>'; }
+  }
+}
+
+function oriAddItem(idx) {
+  const r = window._oriResults?.[idx];
+  if (!r) return;
+  const { w, h } = oriGetSize();
+  // Stack items with slight offset
+  const off = oriItems.length * 0.03;
+  oriItems.push({
+    id: oriNextId++, type: r.type, name: r.name, image_url: r.image_url,
+    x: 0.15 + off, y: 0.08 + off, size: oriItems.length === 0 ? 'lg' : 'md',
+    badge: 'none', label: '', labelColor: 'gold', _img: null,
+  });
+  oriRenderItemsList();
+  oriAutoLayout();
+}
+
+function oriRemoveItem(id) {
+  const idx = oriItems.findIndex(it => it.id === id);
+  if (idx >= 0) oriItems.splice(idx, 1);
+  oriRenderItemsList();
+  oriAutoPreview();
+}
+
+function oriMoveItem(id, dir) {
+  const idx = oriItems.findIndex(it => it.id === id);
+  const tgt = idx + dir;
+  if (idx < 0 || tgt < 0 || tgt >= oriItems.length) return;
+  [oriItems[idx], oriItems[tgt]] = [oriItems[tgt], oriItems[idx]];
+  oriRenderItemsList();
+  oriAutoPreview();
+}
+
+function oriUpdateItem(id, key, val) {
+  const it = oriItems.find(it => it.id === id);
+  if (it) { it[key] = val; oriAutoPreview(); }
+}
+
+// --- Items list UI (left panel) ---
+function oriRenderItemsList() {
+  const el = document.getElementById('ori-items-list');
+  const empty = document.getElementById('ori-items-empty');
+  if (!oriItems.length) { el.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+
+  el.innerHTML = oriItems.map((it, i) => `
+    <div class="ori-item" draggable="true" data-id="${it.id}" ondragstart="oriListDragStart(event,${i})" ondragover="event.preventDefault()" ondrop="oriListDrop(event,${i})">
+      <div class="ori-item-thumb"><img src="${it.image_url}" alt=""></div>
+      <div class="ori-item-body">
+        <div class="ori-item-name">${it.name}</div>
+        <div class="ori-item-row">
+          <span class="ori-mini-label">サイズ</span>
+          <select onchange="oriUpdateItem(${it.id},'size',this.value)" style="width:70px">
+            ${Object.entries(ORI_SIZE_LABELS).map(([k,v]) => `<option value="${k}" ${it.size===k?'selected':''}>${v}</option>`).join('')}
+          </select>
+          <span class="ori-mini-label">バッジ</span>
+          <select onchange="oriUpdateItem(${it.id},'badge',this.value)" style="width:85px">
+            <option value="none" ${it.badge==='none'?'selected':''}>なし</option>
+            <option value="PSA10" ${it.badge==='PSA10'?'selected':''}>PSA 10</option>
+            <option value="PSA9" ${it.badge==='PSA9'?'selected':''}>PSA 9</option>
+            <option value="BGS10" ${it.badge==='BGS10'?'selected':''}>BGS 10</option>
+            <option value="BGS9.5" ${it.badge==='BGS9.5'?'selected':''}>BGS 9.5</option>
+          </select>
+        </div>
+        <div class="ori-item-row">
+          <span class="ori-mini-label">ラベル</span>
+          <input value="${it.label}" onchange="oriUpdateItem(${it.id},'label',this.value)" placeholder="ラストワン等" style="width:100px">
+          <select onchange="oriUpdateItem(${it.id},'labelColor',this.value)" style="width:65px">
+            <option value="gold" ${it.labelColor==='gold'?'selected':''}>金</option>
+            <option value="red" ${it.labelColor==='red'?'selected':''}>赤</option>
+            <option value="blue" ${it.labelColor==='blue'?'selected':''}>青</option>
+            <option value="green" ${it.labelColor==='green'?'selected':''}>緑</option>
+            <option value="purple" ${it.labelColor==='purple'?'selected':''}>紫</option>
+          </select>
+        </div>
       </div>
-    `).join('');
-    window._oriSearchResults = cards;
-  } catch(e) { el.innerHTML = '<p style="color:var(--danger);font-size:0.8rem">エラー: '+e.message+'</p>'; }
-}
-
-function oriAddCard(idx) {
-  const c = window._oriSearchResults?.[idx];
-  if (!c || !c.image_url) return;
-  if (oriSelectedCards.length >= 10) { alert('最大10枚まで選択できます'); return; }
-  oriSelectedCards.push({ ...c });
-  oriRenderSelected();
-  oriUpdatePreview();
-}
-
-function oriRemoveCard(idx) {
-  oriSelectedCards.splice(idx, 1);
-  oriRenderSelected();
-  oriUpdatePreview();
-}
-
-function oriRenderSelected() {
-  const el = document.getElementById('ori-selected-cards');
-  if (!oriSelectedCards.length) { el.innerHTML = '<p style="color:var(--muted);font-size:0.75rem;margin:auto">カードを検索して追加してください</p>'; return; }
-  el.innerHTML = oriSelectedCards.map((c, i) => `
-    <div class="ori-sel-card" onclick="oriRemoveCard(${i})">
-      <div class="ori-sel-badge">×</div>
-      <img src="${c.image_url}" alt="">
-      <div class="ori-sel-label">${c.card_name}</div>
+      <div class="ori-item-actions">
+        <button class="btn btn-sm btn-outline" onclick="oriMoveItem(${it.id},-1)" title="前面へ">▲</button>
+        <button class="btn btn-sm btn-outline" onclick="oriMoveItem(${it.id},1)" title="背面へ">▼</button>
+        <button class="btn btn-sm btn-danger" onclick="oriRemoveItem(${it.id})">×</button>
+      </div>
     </div>
   `).join('');
 }
 
-function oriGetSize() {
-  const s = document.getElementById('ori-size').value;
-  return s === 'a4' ? { w: 3508, h: 2480 } : { w: 1200, h: 675 };
+// List drag-and-drop reorder
+let oriListDragFrom = -1;
+function oriListDragStart(e, idx) { oriListDragFrom = idx; e.dataTransfer.effectAllowed = 'move'; }
+function oriListDrop(e, idx) {
+  e.preventDefault();
+  if (oriListDragFrom < 0 || oriListDragFrom === idx) return;
+  const [item] = oriItems.splice(oriListDragFrom, 1);
+  oriItems.splice(idx, 0, item);
+  oriListDragFrom = -1;
+  oriRenderItemsList();
+  oriAutoPreview();
 }
 
-// Load image with CORS handling
+// --- Auto layout ---
+function oriAutoLayout() {
+  const { w, h } = oriGetSize();
+  if (!oriItems.length) { oriAutoPreview(); return; }
+
+  const cardArea = { top: 0.06, bottom: 0.55, left: 0.04, right: 0.96 };
+  const aW = cardArea.right - cardArea.left;
+  const aH = cardArea.bottom - cardArea.top;
+
+  // Compute each item's fractional width based on size
+  const baseH = aH * 0.92;
+  const aspect = 0.716;
+  const totalItems = oriItems.length;
+
+  // Calculate total width needed
+  const sizeMultipliers = oriItems.map(it => ORI_SIZES[it.size] || 1.0);
+  const totalMult = sizeMultipliers.reduce((a,b) => a+b, 0);
+  const availW = aW * w;
+  const baseCardW = Math.min(availW / (totalMult + 0.2), baseH * h * aspect * 0.9);
+
+  let cx = cardArea.left;
+  const gap = 0.01;
+  const totalUsedW = sizeMultipliers.reduce((s, m) => s + baseCardW * m / w, 0) + gap * (totalItems - 1);
+  cx = cardArea.left + (aW - totalUsedW) / 2;
+
+  for (let i = 0; i < oriItems.length; i++) {
+    const mult = sizeMultipliers[i];
+    const itemW = baseCardW * mult / w;
+    const itemH = itemW / aspect * (w / h);
+    oriItems[i].x = cx;
+    oriItems[i].y = cardArea.top + (aH - itemH) / 2;
+    cx += itemW + gap;
+  }
+  oriAutoPreview();
+}
+
+function oriResetLayout() {
+  oriAutoLayout();
+}
+
+// --- Image loading ---
 function oriLoadImg(url) {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
-    // cardrush.media画像はCORS非対応のためプロキシ経由で取得
     if (url && url.includes('files.cardrush.media')) {
       img.src = `/api/card-images?action=proxy&url=${encodeURIComponent(url)}`;
     } else {
@@ -996,321 +1158,220 @@ function oriLoadImg(url) {
   });
 }
 
-// ---- Canvas Drawing ----
+// Image cache
+const oriImgCache = {};
+async function oriGetImg(url) {
+  if (!url) return null;
+  if (oriImgCache[url]) return oriImgCache[url];
+  const img = await oriLoadImg(url);
+  if (img) oriImgCache[url] = img;
+  return img;
+}
 
+// --- Themes ---
 const ORI_THEMES = {
-  rainbow: {
-    bg: (ctx, w, h) => {
-      const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, '#1a0533'); g.addColorStop(0.15, '#2d1b69');
-      g.addColorStop(0.3, '#0d3b66'); g.addColorStop(0.5, '#1a5c3a');
-      g.addColorStop(0.7, '#8b6914'); g.addColorStop(0.85, '#8b1a1a');
-      g.addColorStop(1, '#4a0e4e');
-      return g;
-    },
-    accent: '#ffd700', accent2: '#ff6ec7', glow: 'rgba(255,215,0,0.3)',
-  },
-  gold: {
-    bg: (ctx, w, h) => {
-      const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, '#1a1000'); g.addColorStop(0.3, '#3d2800');
-      g.addColorStop(0.6, '#5c3d00'); g.addColorStop(1, '#1a1000');
-      return g;
-    },
-    accent: '#ffd700', accent2: '#ffaa00', glow: 'rgba(255,180,0,0.35)',
-  },
-  dark: {
-    bg: (ctx, w, h) => {
-      const g = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w*0.7);
-      g.addColorStop(0, '#1a1a2e'); g.addColorStop(0.5, '#0f0f1a');
-      g.addColorStop(1, '#050510');
-      return g;
-    },
-    accent: '#c0c0c0', accent2: '#8888ff', glow: 'rgba(100,100,255,0.2)',
-  },
-  blue: {
-    bg: (ctx, w, h) => {
-      const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, '#001030'); g.addColorStop(0.4, '#002060');
-      g.addColorStop(0.7, '#003090'); g.addColorStop(1, '#001040');
-      return g;
-    },
-    accent: '#00cfff', accent2: '#4488ff', glow: 'rgba(0,180,255,0.3)',
-  },
+  rainbow: { stops: [['0','#1a0533'],['0.15','#2d1b69'],['0.3','#0d3b66'],['0.5','#1a5c3a'],['0.7','#8b6914'],['0.85','#8b1a1a'],['1','#4a0e4e']], accent: '#ffd700', accent2: '#ff6ec7' },
+  gold:    { stops: [['0','#1a1000'],['0.3','#3d2800'],['0.6','#5c3d00'],['1','#1a1000']], accent: '#ffd700', accent2: '#ffaa00' },
+  dark:    { stops: [['0','#0f0f1a'],['0.5','#1a1a2e'],['1','#050510']], accent: '#c0c0c0', accent2: '#8888ff', radial: true },
+  blue:    { stops: [['0','#001030'],['0.4','#002060'],['0.7','#003090'],['1','#001040']], accent: '#00cfff', accent2: '#4488ff' },
+  red:     { stops: [['0','#1a0000'],['0.3','#4a0a0a'],['0.6','#6b1010'],['1','#1a0000']], accent: '#ff4444', accent2: '#ffaa00' },
+  purple:  { stops: [['0','#0d0020'],['0.3','#2a0845'],['0.7','#4a0e6e'],['1','#0d0020']], accent: '#cc66ff', accent2: '#ff66cc' },
 };
 
 function oriDrawBg(ctx, w, h, theme) {
-  ctx.fillStyle = theme.bg(ctx, w, h);
+  let g;
+  if (theme.radial) {
+    g = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w*0.7);
+  } else {
+    g = ctx.createLinearGradient(0, 0, w, h);
+  }
+  for (const [s, c] of theme.stops) g.addColorStop(parseFloat(s), c);
+  ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 
-  // Light rays from center
-  const cx = w / 2, cy = h * 0.35;
+  const sc = w / 1200;
+  const cx = w/2, cy = h*0.35;
+
+  // Light rays
   for (let i = 0; i < 24; i++) {
-    const angle = (i / 24) * Math.PI * 2;
-    const len = Math.max(w, h) * 1.2;
+    const angle = (i/24)*Math.PI*2, len = Math.max(w,h)*1.2;
     ctx.save();
-    ctx.globalAlpha = 0.06 + Math.random() * 0.04;
+    ctx.globalAlpha = 0.06 + Math.random()*0.04;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + Math.cos(angle - 0.04) * len, cy + Math.sin(angle - 0.04) * len);
-    ctx.lineTo(cx + Math.cos(angle + 0.04) * len, cy + Math.sin(angle + 0.04) * len);
+    ctx.lineTo(cx+Math.cos(angle-0.04)*len, cy+Math.sin(angle-0.04)*len);
+    ctx.lineTo(cx+Math.cos(angle+0.04)*len, cy+Math.sin(angle+0.04)*len);
     ctx.closePath();
     ctx.fillStyle = theme.accent;
     ctx.fill();
     ctx.restore();
   }
 
-  // Sparkle particles
-  const sc = w / 1200;
+  // Sparkles
   for (let i = 0; i < 80; i++) {
-    const x = Math.random() * w, y = Math.random() * h;
-    const r = (1 + Math.random() * 3) * sc;
+    const x = Math.random()*w, y = Math.random()*h, r = (1+Math.random()*3)*sc;
     ctx.save();
-    ctx.globalAlpha = 0.3 + Math.random() * 0.7;
-    const sg = ctx.createRadialGradient(x, y, 0, x, y, r * 4);
-    sg.addColorStop(0, '#fff');
-    sg.addColorStop(0.3, theme.accent);
-    sg.addColorStop(1, 'transparent');
+    ctx.globalAlpha = 0.3+Math.random()*0.7;
+    const sg = ctx.createRadialGradient(x,y,0,x,y,r*4);
+    sg.addColorStop(0,'#fff'); sg.addColorStop(0.3,theme.accent); sg.addColorStop(1,'transparent');
     ctx.fillStyle = sg;
-    ctx.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
-    // Cross sparkle
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = sc;
-    ctx.globalAlpha = 0.5 + Math.random() * 0.5;
-    ctx.beginPath();
-    ctx.moveTo(x - r * 3, y); ctx.lineTo(x + r * 3, y);
-    ctx.moveTo(x, y - r * 3); ctx.lineTo(x, y + r * 3);
-    ctx.stroke();
+    ctx.fillRect(x-r*4,y-r*4,r*8,r*8);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = sc; ctx.globalAlpha = 0.5+Math.random()*0.5;
+    ctx.beginPath(); ctx.moveTo(x-r*3,y); ctx.lineTo(x+r*3,y); ctx.moveTo(x,y-r*3); ctx.lineTo(x,y+r*3); ctx.stroke();
     ctx.restore();
   }
 
-  // Diamond/jewel shapes
+  // Diamonds
   for (let i = 0; i < 12; i++) {
-    const x = Math.random() * w, y = Math.random() * h;
-    const size = (8 + Math.random() * 16) * sc;
-    ctx.save();
-    ctx.globalAlpha = 0.08 + Math.random() * 0.12;
-    ctx.translate(x, y);
-    ctx.rotate(Math.PI / 4);
-    ctx.fillStyle = theme.accent2;
-    ctx.fillRect(-size / 2, -size / 2, size, size);
-    ctx.restore();
+    const x = Math.random()*w, y = Math.random()*h, sz = (8+Math.random()*16)*sc;
+    ctx.save(); ctx.globalAlpha = 0.08+Math.random()*0.12; ctx.translate(x,y); ctx.rotate(Math.PI/4);
+    ctx.fillStyle = theme.accent2; ctx.fillRect(-sz/2,-sz/2,sz,sz); ctx.restore();
   }
 
-  // Edge vignette
-  const vg = ctx.createRadialGradient(cx, h / 2, w * 0.25, cx, h / 2, w * 0.75);
-  vg.addColorStop(0, 'transparent');
-  vg.addColorStop(1, 'rgba(0,0,0,0.5)');
-  ctx.fillStyle = vg;
-  ctx.fillRect(0, 0, w, h);
+  // Vignette
+  const vg = ctx.createRadialGradient(cx,h/2,w*0.25,cx,h/2,w*0.75);
+  vg.addColorStop(0,'transparent'); vg.addColorStop(1,'rgba(0,0,0,0.5)');
+  ctx.fillStyle = vg; ctx.fillRect(0,0,w,h);
 
-  // Bottom gradient for text readability
-  const btm = ctx.createLinearGradient(0, h * 0.55, 0, h);
-  btm.addColorStop(0, 'transparent');
-  btm.addColorStop(0.5, 'rgba(0,0,0,0.4)');
-  btm.addColorStop(1, 'rgba(0,0,0,0.7)');
-  ctx.fillStyle = btm;
-  ctx.fillRect(0, 0, w, h);
+  // Bottom gradient
+  const btm = ctx.createLinearGradient(0,h*0.55,0,h);
+  btm.addColorStop(0,'transparent'); btm.addColorStop(0.5,'rgba(0,0,0,0.4)'); btm.addColorStop(1,'rgba(0,0,0,0.7)');
+  ctx.fillStyle = btm; ctx.fillRect(0,0,w,h);
 }
 
-function oriDrawGoldFrame(ctx, x, y, w, h, sc, isMain) {
-  const bw = (isMain ? 6 : 4) * sc;
-  // Outer glow
+function oriDrawGoldFrame(ctx, x, y, fw, fh, sc) {
+  const bw = 5*sc;
   ctx.save();
-  ctx.shadowColor = 'rgba(255,215,0,0.6)';
-  ctx.shadowBlur = 20 * sc;
-  ctx.strokeStyle = '#ffd700';
-  ctx.lineWidth = bw;
-  ctx.strokeRect(x - bw/2, y - bw/2, w + bw, h + bw);
+  ctx.shadowColor = 'rgba(255,215,0,0.6)'; ctx.shadowBlur = 20*sc;
+  ctx.strokeStyle = '#ffd700'; ctx.lineWidth = bw;
+  ctx.strokeRect(x-bw/2,y-bw/2,fw+bw,fh+bw);
   ctx.restore();
-
-  // Gold gradient border
-  const grd = ctx.createLinearGradient(x, y, x + w, y + h);
-  grd.addColorStop(0, '#fff8b0');
-  grd.addColorStop(0.2, '#ffd700');
-  grd.addColorStop(0.5, '#ffed80');
-  grd.addColorStop(0.8, '#ffd700');
-  grd.addColorStop(1, '#b8860b');
-  ctx.strokeStyle = grd;
-  ctx.lineWidth = bw;
-  ctx.strokeRect(x, y, w, h);
-
-  // Inner highlight
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-  ctx.lineWidth = sc;
-  ctx.strokeRect(x + bw * 0.6, y + bw * 0.6, w - bw * 1.2, h - bw * 1.2);
-
-  // Corner accents
-  const cn = 12 * sc;
-  ctx.strokeStyle = '#fff8b0';
-  ctx.lineWidth = 2 * sc;
-  [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]].forEach(([cx,cy,dx,dy]) => {
-    ctx.beginPath();
-    ctx.moveTo(cx, cy + dy * cn);
-    ctx.lineTo(cx, cy);
-    ctx.lineTo(cx + dx * cn, cy);
-    ctx.stroke();
+  const grd = ctx.createLinearGradient(x,y,x+fw,y+fh);
+  grd.addColorStop(0,'#fff8b0'); grd.addColorStop(0.2,'#ffd700'); grd.addColorStop(0.5,'#ffed80'); grd.addColorStop(0.8,'#ffd700'); grd.addColorStop(1,'#b8860b');
+  ctx.strokeStyle = grd; ctx.lineWidth = bw; ctx.strokeRect(x,y,fw,fh);
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = sc;
+  ctx.strokeRect(x+bw*0.6,y+bw*0.6,fw-bw*1.2,fh-bw*1.2);
+  const cn = 12*sc; ctx.strokeStyle = '#fff8b0'; ctx.lineWidth = 2*sc;
+  [[x,y,1,1],[x+fw,y,-1,1],[x,y+fh,1,-1],[x+fw,y+fh,-1,-1]].forEach(([px,py,dx,dy]) => {
+    ctx.beginPath(); ctx.moveTo(px,py+dy*cn); ctx.lineTo(px,py); ctx.lineTo(px+dx*cn,py); ctx.stroke();
   });
 }
 
-function oriDrawPSA(ctx, x, y, size, sc) {
-  // Gold circle
+function oriDrawBadge(ctx, x, y, size, sc, badge) {
+  if (badge === 'none') return;
   ctx.save();
-  ctx.shadowColor = 'rgba(255,215,0,0.8)';
-  ctx.shadowBlur = 10 * sc;
-  const g = ctx.createRadialGradient(x, y, 0, x, y, size);
-  g.addColorStop(0, '#ffed80');
-  g.addColorStop(0.5, '#ffd700');
-  g.addColorStop(1, '#b8860b');
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.arc(x, y, size, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.shadowColor = 'rgba(255,215,0,0.8)'; ctx.shadowBlur = 10*sc;
+  const bg = ctx.createRadialGradient(x,y,0,x,y,size);
+  bg.addColorStop(0,'#ffed80'); bg.addColorStop(0.5,'#ffd700'); bg.addColorStop(1,'#b8860b');
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2); ctx.fill();
   ctx.restore();
+  ctx.strokeStyle = '#fff8b0'; ctx.lineWidth = 1.5*sc;
+  ctx.beginPath(); ctx.arc(x,y,size*0.82,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle = '#1a0800'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  // Parse badge
+  const m = badge.match(/^(PSA|BGS)\s*(.+)$/);
+  if (m) {
+    ctx.font = `bold ${size*0.5}px 'DM Sans',sans-serif`;
+    ctx.fillText(m[1], x, y - size*0.18);
+    ctx.font = `bold ${size*0.6}px 'DM Sans',sans-serif`;
+    ctx.fillText(m[2], x, y + size*0.28);
+  }
+}
 
-  // Inner ring
-  ctx.strokeStyle = '#fff8b0';
-  ctx.lineWidth = 1.5 * sc;
-  ctx.beginPath();
-  ctx.arc(x, y, size * 0.82, 0, Math.PI * 2);
-  ctx.stroke();
+const ORI_LABEL_COLORS = {
+  gold:   { bg: 'rgba(255,215,0,0.9)', text: '#1a0800' },
+  red:    { bg: 'rgba(220,30,30,0.9)', text: '#fff' },
+  blue:   { bg: 'rgba(30,90,220,0.9)', text: '#fff' },
+  green:  { bg: 'rgba(30,160,60,0.9)', text: '#fff' },
+  purple: { bg: 'rgba(130,30,200,0.9)', text: '#fff' },
+};
 
-  // Text
-  ctx.fillStyle = '#1a0800';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `bold ${size * 0.55}px 'DM Sans', sans-serif`;
-  ctx.fillText('PSA', x, y - size * 0.18);
-  ctx.font = `bold ${size * 0.65}px 'DM Sans', sans-serif`;
-  ctx.fillText('10', x, y + size * 0.3);
+function oriDrawLabel(ctx, x, y, w, sc, label, colorKey) {
+  if (!label) return;
+  const col = ORI_LABEL_COLORS[colorKey] || ORI_LABEL_COLORS.gold;
+  const fs = 14*sc;
+  ctx.font = `bold ${fs}px 'DM Sans',sans-serif`;
+  const tw = ctx.measureText(label).width;
+  const pw = tw + 16*sc, ph = fs + 10*sc;
+  const px = x + w/2 - pw/2, py = y - ph - 4*sc;
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 8*sc;
+  ctx.fillStyle = col.bg;
+  ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 4*sc); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = col.text; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = `bold ${fs}px 'DM Sans',sans-serif`;
+  ctx.fillText(label, px+pw/2, py+ph/2);
 }
 
 function oriDrawText(ctx, text, x, y, fontSize, color, opts = {}) {
   ctx.save();
   ctx.textAlign = opts.align || 'center';
   ctx.textBaseline = opts.baseline || 'middle';
-  const ff = opts.serif ? "'Cormorant Garamond', serif" : "'DM Sans', sans-serif";
-  ctx.font = `${opts.weight || 'bold'} ${fontSize}px ${ff}`;
-
-  if (opts.outline) {
-    ctx.strokeStyle = opts.outline;
-    ctx.lineWidth = opts.outlineWidth || fontSize * 0.08;
-    ctx.lineJoin = 'round';
-    ctx.strokeText(text, x, y);
-  }
-  if (opts.shadow) {
-    ctx.shadowColor = opts.shadow;
-    ctx.shadowBlur = opts.shadowBlur || fontSize * 0.3;
-  }
-  ctx.fillStyle = color;
-  ctx.fillText(text, x, y);
+  ctx.font = `${opts.weight||'bold'} ${fontSize}px ${opts.serif?"'Cormorant Garamond',serif":"'DM Sans',sans-serif"}`;
+  if (opts.outline) { ctx.strokeStyle = opts.outline; ctx.lineWidth = opts.outlineWidth || fontSize*0.08; ctx.lineJoin = 'round'; ctx.strokeText(text,x,y); }
+  if (opts.shadow) { ctx.shadowColor = opts.shadow; ctx.shadowBlur = opts.shadowBlur || fontSize*0.3; }
+  ctx.fillStyle = color; ctx.fillText(text,x,y);
   ctx.restore();
 }
 
-async function oriUpdatePreview() {
+// --- Main render ---
+async function oriRender() {
   const canvas = document.getElementById('ori-canvas');
   const { w, h } = oriGetSize();
-  canvas.width = w;
-  canvas.height = h;
+  canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
   const sc = w / 1200;
   const themeKey = document.getElementById('ori-theme').value;
   const theme = ORI_THEMES[themeKey] || ORI_THEMES.rainbow;
-  const showPSA = document.getElementById('ori-psa').checked;
-  const mainCount = parseInt(document.getElementById('ori-main-count').value) || 3;
 
-  // Background
   oriDrawBg(ctx, w, h, theme);
 
-  // Load card images
-  const cards = oriSelectedCards.slice(0, 10);
-  const imgs = await Promise.all(cards.map(c => oriLoadImg(c.image_url)));
+  // Load all images
+  await Promise.all(oriItems.map(async it => { it._img = await oriGetImg(it.image_url); }));
 
-  // Card layout
-  const cardAspect = 0.716;
-  const areaTop = h * 0.06;
-  const areaBottom = h * 0.52;
-  const areaHeight = areaBottom - areaTop;
-  const areaWidth = w * 0.88;
-  const areaLeft = (w - areaWidth) / 2;
+  // Draw items (array order = back to front)
+  const aspect = 0.716;
+  for (const it of oriItems) {
+    const mult = ORI_SIZES[it.size] || 1.0;
+    const cardH = h * 0.46 * mult;
+    const isBox = it.type === 'box';
+    const cardW = isBox ? cardH : cardH * aspect;
+    const px = it.x * w, py = it.y * h;
 
-  if (cards.length > 0) {
-    const mainCards = Math.min(mainCount, cards.length);
-    const subCards = cards.length - mainCards;
+    // Shadow
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 15*sc; ctx.shadowOffsetY = 5*sc;
+    ctx.fillStyle = '#111'; ctx.fillRect(px, py, cardW, cardH);
+    ctx.restore();
 
-    // Main cards
-    const mainH = areaHeight * (subCards > 0 ? 0.95 : 1);
-    const mainCardW = mainH * cardAspect;
-    const mainGap = 12 * sc;
-    const mainTotalW = mainCards * mainCardW + (mainCards - 1) * mainGap;
-    const mainStartX = (w - mainTotalW) / 2;
-
-    for (let i = 0; i < mainCards; i++) {
-      const cx = mainStartX + i * (mainCardW + mainGap);
-      const cy = areaTop;
-      // Card shadow
-      ctx.save();
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = 15 * sc;
-      ctx.shadowOffsetY = 5 * sc;
-      ctx.fillStyle = '#111';
-      ctx.fillRect(cx, cy, mainCardW, mainH);
-      ctx.restore();
-
-      if (imgs[i]) {
-        ctx.drawImage(imgs[i], cx, cy, mainCardW, mainH);
-      } else {
-        ctx.fillStyle = '#222';
-        ctx.fillRect(cx, cy, mainCardW, mainH);
-        ctx.fillStyle = '#555';
-        ctx.textAlign = 'center';
-        ctx.font = `${14 * sc}px sans-serif`;
-        ctx.fillText(cards[i]?.card_name || '?', cx + mainCardW / 2, cy + mainH / 2);
-      }
-      oriDrawGoldFrame(ctx, cx, cy, mainCardW, mainH, sc, true);
-
-      if (showPSA) {
-        oriDrawPSA(ctx, cx + mainCardW - 8 * sc, cy + 8 * sc, 22 * sc, sc);
-      }
+    if (it._img) {
+      ctx.drawImage(it._img, px, py, cardW, cardH);
+    } else {
+      ctx.fillStyle = '#222'; ctx.fillRect(px, py, cardW, cardH);
+      ctx.fillStyle = '#555'; ctx.textAlign = 'center'; ctx.font = `${12*sc}px sans-serif`;
+      ctx.fillText(it.name || '?', px+cardW/2, py+cardH/2);
     }
 
-    // Sub cards (smaller, below or overlapping bottom)
-    if (subCards > 0) {
-      const subH = mainH * 0.45;
-      const subW = subH * cardAspect;
-      const subGap = 8 * sc;
-      const subTotalW = subCards * subW + (subCards - 1) * subGap;
-      const subStartX = (w - subTotalW) / 2;
-      const subY = areaTop + mainH - subH * 0.3;
+    oriDrawGoldFrame(ctx, px, py, cardW, cardH, sc);
 
-      for (let i = 0; i < subCards; i++) {
-        const si = mainCards + i;
-        const sx = subStartX + i * (subW + subGap);
-        ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.4)';
-        ctx.shadowBlur = 10 * sc;
-        ctx.fillStyle = '#111';
-        ctx.fillRect(sx, subY, subW, subH);
-        ctx.restore();
-
-        if (imgs[si]) {
-          ctx.drawImage(imgs[si], sx, subY, subW, subH);
-        } else {
-          ctx.fillStyle = '#222';
-          ctx.fillRect(sx, subY, subW, subH);
-        }
-        oriDrawGoldFrame(ctx, sx, subY, subW, subH, sc, false);
-      }
+    if (it.badge !== 'none') {
+      oriDrawBadge(ctx, px+cardW-10*sc, py+10*sc, 22*sc*mult, sc, it.badge);
     }
-  } else {
-    // Placeholder
-    ctx.fillStyle = 'rgba(255,255,255,0.1)';
-    ctx.textAlign = 'center';
-    ctx.font = `${18 * sc}px sans-serif`;
-    ctx.fillText('カードを検索して追加してください', w / 2, h * 0.3);
+    if (it.label) {
+      oriDrawLabel(ctx, px, py, cardW, sc, it.label, it.labelColor);
+    }
   }
 
-  // Title area (bottom section)
+  // Placeholder
+  if (!oriItems.length) {
+    ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.textAlign = 'center';
+    ctx.font = `${18*sc}px sans-serif`;
+    ctx.fillText('カードを検索して追加してください', w/2, h*0.3);
+  }
+
+  // Text area
   const titleY = h * 0.62;
   const name = document.getElementById('ori-name').value || 'オリパ';
   const subtitle = document.getElementById('ori-subtitle').value;
@@ -1320,90 +1381,130 @@ async function oriUpdatePreview() {
   const note = document.getElementById('ori-note').value;
 
   // Decorative line
-  const lineY = titleY - 10 * sc;
-  const lineG = ctx.createLinearGradient(w * 0.15, 0, w * 0.85, 0);
-  lineG.addColorStop(0, 'transparent');
-  lineG.addColorStop(0.2, theme.accent);
-  lineG.addColorStop(0.5, '#fff');
-  lineG.addColorStop(0.8, theme.accent);
-  lineG.addColorStop(1, 'transparent');
-  ctx.strokeStyle = lineG;
-  ctx.lineWidth = 2 * sc;
-  ctx.beginPath();
-  ctx.moveTo(w * 0.1, lineY);
-  ctx.lineTo(w * 0.9, lineY);
-  ctx.stroke();
+  const lineG = ctx.createLinearGradient(w*0.15,0,w*0.85,0);
+  lineG.addColorStop(0,'transparent'); lineG.addColorStop(0.2,theme.accent); lineG.addColorStop(0.5,'#fff');
+  lineG.addColorStop(0.8,theme.accent); lineG.addColorStop(1,'transparent');
+  ctx.strokeStyle = lineG; ctx.lineWidth = 2*sc;
+  ctx.beginPath(); ctx.moveTo(w*0.1,titleY-10*sc); ctx.lineTo(w*0.9,titleY-10*sc); ctx.stroke();
 
-  // Title
-  oriDrawText(ctx, name, w / 2, titleY + 30 * sc, 52 * sc, '#fff', {
-    outline: theme.accent, outlineWidth: 3 * sc,
-    shadow: theme.accent, shadowBlur: 30 * sc,
-    weight: '800',
-  });
+  oriDrawText(ctx, name, w/2, titleY+30*sc, 52*sc, '#fff', { outline: theme.accent, outlineWidth: 3*sc, shadow: theme.accent, shadowBlur: 30*sc, weight: '800' });
+  if (subtitle) oriDrawText(ctx, subtitle, w/2, titleY+65*sc, 22*sc, theme.accent, { shadow: theme.accent, shadowBlur: 10*sc });
 
-  // Subtitle
-  if (subtitle) {
-    oriDrawText(ctx, subtitle, w / 2, titleY + 65 * sc, 22 * sc, theme.accent, {
-      shadow: theme.accent, shadowBlur: 10 * sc,
-    });
-  }
-
-  // Price band
   const priceText = [price, points, lots].filter(Boolean).join('  ');
   if (priceText) {
-    const priceY = titleY + (subtitle ? 100 : 80) * sc;
-    // Price background pill
+    const priceY = titleY + (subtitle ? 100 : 80)*sc;
     ctx.save();
-    const pw = ctx.measureText ? 400 * sc : 300 * sc;
-    ctx.font = `bold ${28 * sc}px 'DM Sans', sans-serif`;
+    ctx.font = `bold ${28*sc}px 'DM Sans',sans-serif`;
     const pm = ctx.measureText(priceText);
-    const pillW = pm.width + 60 * sc;
-    const pillH = 44 * sc;
-    const pillX = w / 2 - pillW / 2;
-    const pillGrd = ctx.createLinearGradient(pillX, 0, pillX + pillW, 0);
-    pillGrd.addColorStop(0, 'rgba(255,215,0,0.15)');
-    pillGrd.addColorStop(0.5, 'rgba(255,215,0,0.25)');
-    pillGrd.addColorStop(1, 'rgba(255,215,0,0.15)');
-    ctx.fillStyle = pillGrd;
-    ctx.beginPath();
-    ctx.roundRect(pillX, priceY - pillH / 2, pillW, pillH, pillH / 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,215,0,0.5)';
-    ctx.lineWidth = 1.5 * sc;
-    ctx.stroke();
+    const pillW = pm.width+60*sc, pillH = 44*sc, pillX = w/2-pillW/2;
+    const pg = ctx.createLinearGradient(pillX,0,pillX+pillW,0);
+    pg.addColorStop(0,'rgba(255,215,0,0.15)'); pg.addColorStop(0.5,'rgba(255,215,0,0.25)'); pg.addColorStop(1,'rgba(255,215,0,0.15)');
+    ctx.fillStyle = pg; ctx.beginPath(); ctx.roundRect(pillX,priceY-pillH/2,pillW,pillH,pillH/2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,215,0,0.5)'; ctx.lineWidth = 1.5*sc; ctx.stroke();
     ctx.restore();
-
-    oriDrawText(ctx, priceText, w / 2, priceY, 28 * sc, '#ffd700', {
-      shadow: 'rgba(255,215,0,0.5)', shadowBlur: 15 * sc,
-    });
+    oriDrawText(ctx, priceText, w/2, priceY, 28*sc, '#ffd700', { shadow: 'rgba(255,215,0,0.5)', shadowBlur: 15*sc });
   }
 
-  // Note
-  if (note) {
-    oriDrawText(ctx, note, w / 2, h - 18 * sc, 11 * sc, 'rgba(255,255,255,0.5)', {
-      weight: '400',
-    });
-  }
-
-  // Watermark
-  oriDrawText(ctx, 'TCGVIBE.COM', w - 15 * sc, h - 18 * sc, 10 * sc, 'rgba(255,255,255,0.25)', {
-    align: 'right', weight: '500',
-  });
+  if (note) oriDrawText(ctx, note, w/2, h-18*sc, 11*sc, 'rgba(255,255,255,0.5)', { weight: '400' });
+  oriDrawText(ctx, 'TCGVIBE.COM', w-15*sc, h-18*sc, 10*sc, 'rgba(255,255,255,0.25)', { align: 'right', weight: '500' });
 }
 
+// --- Canvas drag & drop ---
+(function() {
+  const wrap = document.getElementById('ori-canvas-wrap');
+  if (!wrap) return;
+  const canvas = document.getElementById('ori-canvas');
+  let dragging = false;
+
+  function getCanvasCoords(e) {
+    const r = canvas.getBoundingClientRect();
+    const { w, h } = oriGetSize();
+    return { fx: (e.clientX - r.left) / r.width, fy: (e.clientY - r.top) / r.height };
+  }
+
+  function hitTest(fx, fy) {
+    const { w, h } = oriGetSize();
+    const aspect = 0.716;
+    // Reverse order (top items drawn last = in front)
+    for (let i = oriItems.length - 1; i >= 0; i--) {
+      const it = oriItems[i];
+      const mult = ORI_SIZES[it.size] || 1.0;
+      const cardH = 0.46 * mult;
+      const isBox = it.type === 'box';
+      const cardW = isBox ? cardH * (h/w) : cardH * aspect * (h/w);
+      if (fx >= it.x && fx <= it.x + cardW && fy >= it.y && fy <= it.y + cardH) return i;
+    }
+    return -1;
+  }
+
+  canvas.addEventListener('pointerdown', e => {
+    const { fx, fy } = getCanvasCoords(e);
+    const idx = hitTest(fx, fy);
+    if (idx >= 0) {
+      oriDragIdx = idx;
+      oriDragOffX = fx - oriItems[idx].x;
+      oriDragOffY = fy - oriItems[idx].y;
+      dragging = true;
+      canvas.setPointerCapture(e.pointerId);
+      canvas.style.cursor = 'grabbing';
+    }
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (!dragging || oriDragIdx < 0) return;
+    const { fx, fy } = getCanvasCoords(e);
+    oriItems[oriDragIdx].x = fx - oriDragOffX;
+    oriItems[oriDragIdx].y = fy - oriDragOffY;
+    oriRender();
+  });
+
+  canvas.addEventListener('pointerup', () => {
+    dragging = false;
+    oriDragIdx = -1;
+    canvas.style.cursor = 'crosshair';
+  });
+})();
+
+// --- Download & Copy ---
 function oriDownload() {
   const canvas = document.getElementById('ori-canvas');
   if (!canvas.width || canvas.width < 10) { alert('先にプレビューを生成してください'); return; }
   const link = document.createElement('a');
   const name = document.getElementById('ori-name').value || 'oripa';
   const size = document.getElementById('ori-size').value;
-  link.download = `${name}_${size === 'a4' ? 'A4' : 'X'}.png`;
+  link.download = `${name}_${size==='a4'?'A4':'X'}.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
 
-// Init oripa preview on page show
-oriRenderSelected();
+async function oriCopyForX() {
+  const canvas = document.getElementById('ori-canvas');
+  if (!canvas.width || canvas.width < 10) { showMsg('ori-status','error','先にプレビューを生成してください'); return; }
+  const text = document.getElementById('ori-x-text').value;
+  try {
+    // Copy image to clipboard
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'image/png': blob,
+        'text/plain': new Blob([text], { type: 'text/plain' }),
+      })
+    ]);
+    showMsg('ori-status', 'success', '✓ 画像とテキストをクリップボードにコピーしました');
+  } catch(e) {
+    // Fallback: copy text only
+    try {
+      await navigator.clipboard.writeText(text);
+      showMsg('ori-status', 'success', '✓ テキストをコピーしました（画像はPNG保存してください）');
+    } catch(e2) {
+      showMsg('ori-status', 'error', 'コピーに失敗しました');
+    }
+  }
+}
+
+// Initial render
+oriRenderItemsList();
+setTimeout(() => oriRender(), 100);
 </script>
 </body>
 </html>
