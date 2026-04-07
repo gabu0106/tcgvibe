@@ -76,13 +76,42 @@ async function tcgdexFetch(endpoint) {
   return await res.json();
 }
 
-// 全セットを取得して card_sets に保存（日本語名）
+// TCGdex英語APIからロゴURLマップを構築
+async function fetchEnglishLogoMap() {
+  try {
+    const res = await fetch('https://api.tcgdex.net/v2/en/sets');
+    if (!res.ok) return {};
+    const enSets = await res.json();
+    const map = {};
+    for (const s of enSets) {
+      if (s.logo) {
+        // 英語ID(小文字)→ロゴURL+.png
+        map[s.id.toLowerCase()] = s.logo + '.png';
+      }
+    }
+    return map;
+  } catch { return {}; }
+}
+
+// 日本語セットID→英語セットIDの正規化（ロゴ検索用）
+function jaToEnSetId(jaId) {
+  const lower = jaId.toLowerCase();
+  // SV系: sv8→sv08, sv1s→sv01（ゼロ埋め+サブセットコード除去）
+  const svMatch = lower.match(/^sv(\d+)([a-z]?)$/);
+  if (svMatch) return `sv${svMatch[1].padStart(2, '0')}${svMatch[2]}`;
+  // SM系: sm1m→sm01, sm12a→sm12a
+  const smMatch = lower.match(/^sm(\d+)([a-z]?)$/);
+  if (smMatch && smMatch[1].length === 1) return `sm${smMatch[1].padStart(2, '0')}${smMatch[2]}`;
+  return lower;
+}
+
+// 全セットを取得して card_sets に保存（日本語名 + 英語APIロゴ）
 async function syncPokemonSets() {
   console.log('TCGdex セット同期開始（日本語）');
   const rawSets = await tcgdexFetch('sets');
   if (!Array.isArray(rawSets)) throw new Error('TCGdex sets応答が配列でない');
 
-  // TCGdexに重複IDが存在するため除去し、releaseDate降順でソート
+  // TCGdexに重複IDが存在するため除去
   const seenIds = new Set();
   const sets = [];
   for (const s of rawSets) {
@@ -92,6 +121,10 @@ async function syncPokemonSets() {
 
   // 既存のポケカセットを削除して全入れ替え
   await supabaseDelete('card_sets', 'game=eq.pokeca');
+
+  // 英語APIからロゴURLマップを取得
+  const enLogoMap = await fetchEnglishLogoMap();
+  diagnostics.push(`TCGdex EN: ${Object.keys(enLogoMap).length}セットのロゴ取得`);
 
   // 各セットの詳細からreleaseDateを取得（並列で高速化）
   diagnostics.push('TCGdex: releaseDateを取得中...');
@@ -110,16 +143,20 @@ async function syncPokemonSets() {
 
   let saved = 0;
   for (let i = 0; i < sets.length; i += 50) {
-    const batch = sets.slice(i, i + 50).map(s => ({
-      set_id: s.id,
-      set_name: s.name,
-      game: 'pokeca',
-      total_cards: s.cardCount?.total || s.cardCount?.official || 0,
-      release_date: setDetails[s.id] || null,
-      symbol_url: s.symbol || null,
-      // pokemontcg.ioのロゴ画像（小文字set_id）
-      logo_url: `https://images.pokemontcg.io/${s.id.toLowerCase()}/logo.png`,
-    }));
+    const batch = sets.slice(i, i + 50).map(s => {
+      // ロゴURL: 英語APIの完全一致→正規化マッチ→null
+      const enId = jaToEnSetId(s.id);
+      const logoUrl = enLogoMap[s.id.toLowerCase()] || enLogoMap[enId] || null;
+      return {
+        set_id: s.id,
+        set_name: s.name,
+        game: 'pokeca',
+        total_cards: s.cardCount?.total || s.cardCount?.official || 0,
+        release_date: setDetails[s.id] || null,
+        symbol_url: s.symbol || null,
+        logo_url: logoUrl,
+      };
+    });
     const result = await supabasePost('card_sets', batch);
     if (result) saved += batch.length;
     await sleep(100);

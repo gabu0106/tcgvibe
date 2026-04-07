@@ -68,7 +68,7 @@ body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:
 .pack-row{display:flex;align-items:center;gap:1rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1.1rem;cursor:pointer;transition:all 0.25s;box-shadow:0 1px 4px var(--shadow);}
 .pack-row:hover{border-color:var(--gold2);transform:translateX(4px);box-shadow:0 4px 16px var(--shadow2),0 0 12px var(--gold-glow);}
 .pack-row-logo{width:48px;height:48px;border-radius:6px;object-fit:contain;flex-shrink:0;background:var(--bg2);}
-.pack-row-logo-placeholder{width:48px;height:48px;border-radius:6px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;opacity:0.3;flex-shrink:0;}
+.pack-row-logo-placeholder{width:48px;height:48px;border-radius:6px;background:var(--bg2);display:flex;align-items:center;justify-content:center;color:var(--gold2);opacity:0.6;flex-shrink:0;}
 .pack-row-info{flex:1;min-width:0;}
 .pack-row-name{font-size:0.88rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .pack-row-code{font-size:0.62rem;color:var(--muted);margin-top:0.1rem;}
@@ -211,6 +211,7 @@ let currentGame = 'pokeca';
 let allPacks = [];
 let packsShown = 0;
 const PACKS_PER_PAGE = 30;
+const defaultLogoHtml = '<div class="pack-row-logo-placeholder"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="3"/></svg></div>';
 let modalCards = [];
 let currentSort = 'number';
 let searchTimer = null;
@@ -284,7 +285,7 @@ function renderPacks(reset) {
     const name = pack.display_name || pack.pack_name;
     const showCode = pack.display_name && pack.display_name !== pack.pack_name;
     el.innerHTML = `
-      ${pack.logo_url ? `<img class="pack-row-logo" src="${pack.logo_url}" alt="" loading="lazy" onerror="this.outerHTML='<div class=pack-row-logo-placeholder>&#x1F0CF;</div>'">` : '<div class="pack-row-logo-placeholder">&#x1F0CF;</div>'}
+      ${pack.logo_url ? `<img class="pack-row-logo" src="${pack.logo_url}" alt="" loading="lazy" onerror="this.outerHTML=defaultLogoHtml">` : defaultLogoHtml}
       <div class="pack-row-info">
         <div class="pack-row-name">${name}</div>
         ${showCode ? `<div class="pack-row-code">${pack.pack_name}</div>` : ''}
