@@ -119,6 +119,9 @@
   .ori-item-row .ori-mini-label{font-size:0.62rem;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;flex-shrink:0}
   .ori-item-actions{display:flex;flex-direction:column;gap:0.3rem;flex-shrink:0}
   .ori-item-actions button{padding:0.25rem 0.5rem;font-size:0.65rem}
+  .ori-text-el{display:flex;align-items:center;gap:0.5rem;padding:0.5rem;border:1px solid var(--border);border-radius:4px;margin-bottom:0.4rem;background:var(--surface);flex-wrap:wrap}
+  .ori-text-el input[type=text]{margin:0;padding:0.3rem 0.5rem;font-size:0.82rem}
+  .ori-text-el select{margin:0;padding:0.25rem 0.3rem;font-size:0.7rem;width:auto;min-width:0}
   @media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:1.5rem;}.stat-grid{grid-template-columns:1fr 1fr;}.two-col{grid-template-columns:1fr;}}
 </style>
 </head>
@@ -379,17 +382,9 @@
         <!-- LEFT COLUMN: settings -->
         <div>
           <div class="card">
-            <div class="card-title">基本情報</div>
-            <div class="two-col">
-              <div><label>オリパ名</label><input type="text" id="ori-name" placeholder="例：超豪華オリパ" value="超豪華オリパ" oninput="oriAutoPreview()"></div>
-              <div><label>サブタイトル</label><input type="text" id="ori-subtitle" placeholder="例：高額カード確定！" oninput="oriAutoPreview()"></div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
-              <div><label>価格</label><input type="text" id="ori-price" placeholder="¥4,000" value="¥4,000" oninput="oriAutoPreview()"></div>
-              <div><label>ポイント</label><input type="text" id="ori-points" placeholder="ALL 330P" value="ALL 330P" oninput="oriAutoPreview()"></div>
-              <div><label>口数</label><input type="text" id="ori-lots" placeholder="限定100口" oninput="oriAutoPreview()"></div>
-            </div>
-            <label>注意書き</label>
+            <div class="card-title">テキスト要素 <span style="font-size:0.65rem;color:var(--muted);text-transform:none;letter-spacing:0">— キャンバス上でドラッグ移動可能</span></div>
+            <div id="ori-text-elements"></div>
+            <label style="margin-top:0.5rem">注意書き</label>
             <input type="text" id="ori-note" placeholder="※画像はイメージです" value="※画像はイメージです。カードの状態は個体差があります。" oninput="oriAutoPreview()">
           </div>
 
@@ -412,6 +407,8 @@
                   <option value="blue">ブルーオーシャン</option>
                   <option value="red">レッドインフェルノ</option>
                   <option value="purple">パープルミスティック</option>
+                  <option value="casino">カジノネオン</option>
+                  <option value="fire">炎バースト</option>
                 </select>
               </div>
             </div>
@@ -945,25 +942,51 @@ function showMsg(id, type, text) {
   if (text) setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ===== ORIPA IMAGE CREATOR v2 =====
+// ===== ORIPA IMAGE CREATOR v3 =====
 
 // --- Data model ---
-// Each item: { id, type:'card'|'box', name, image_url, x, y, size:'xl'|'lg'|'md'|'sm', badge:'none'|'PSA10'|'PSA9'|'BGS10'|'BGS9.5', label:'', labelColor:'gold'|'red'|'blue'|'green'|'purple', _img:null }
 const oriItems = [];
 let oriNextId = 1;
-let oriDragIdx = -1; // canvas drag
-let oriDragOffX = 0, oriDragOffY = 0;
+let oriDragTarget = null; // {type:'item'|'text', idx/key, offX, offY}
 let oriPreviewTimer = null;
 const ORI_SIZES = { xl: 1.6, lg: 1.0, md: 0.65, sm: 0.42 };
 const ORI_SIZE_LABELS = { xl: '特大', lg: '大', md: '中', sm: '小' };
 
+// Text elements with positions, sizes, colors (all draggable)
+const ORI_TEXT_COLOR_MAP = { white:'#ffffff', gold:'#ffd700', red:'#ff3333', rainbow:'rainbow' };
+const oriTextEls = {
+  title:    { text: '超豪華オリパ', x: 0.5, y: 0.65, fontSize: 52, color: 'white', visible: true },
+  subtitle: { text: '', x: 0.5, y: 0.72, fontSize: 22, color: 'gold', visible: true },
+  price:    { text: '¥4,000  ALL 330P', x: 0.5, y: 0.80, fontSize: 28, color: 'gold', visible: true },
+  lots:     { text: '', x: 0.5, y: 0.87, fontSize: 20, color: 'white', visible: true },
+};
+
 function oriGetSize() {
   return document.getElementById('ori-size').value === 'a4' ? { w: 3508, h: 2480 } : { w: 1200, h: 675 };
 }
-
 function oriAutoPreview() {
   clearTimeout(oriPreviewTimer);
-  oriPreviewTimer = setTimeout(() => oriRender(), 120);
+  oriPreviewTimer = setTimeout(() => oriRender(), 100);
+}
+
+// --- Text elements UI ---
+function oriRenderTextEls() {
+  const labels = { title: 'オリパ名', subtitle: 'サブタイトル', price: '価格・ポイント', lots: '口数・補足' };
+  const el = document.getElementById('ori-text-elements');
+  el.innerHTML = Object.entries(oriTextEls).map(([key, t]) => `
+    <div class="ori-text-el">
+      <input type="text" value="${t.text}" oninput="oriTextEls['${key}'].text=this.value;oriAutoPreview()" placeholder="${labels[key]}" style="flex:1;min-width:100px">
+      <select onchange="oriTextEls['${key}'].fontSize=+this.value;oriAutoPreview()" title="サイズ">
+        ${[16,20,22,28,36,44,52,64,80].map(s=>`<option value="${s}" ${t.fontSize===s?'selected':''}>${s}px</option>`).join('')}
+      </select>
+      <select onchange="oriTextEls['${key}'].color=this.value;oriAutoPreview()" title="色">
+        <option value="white" ${t.color==='white'?'selected':''}>白</option>
+        <option value="gold" ${t.color==='gold'?'selected':''}>金</option>
+        <option value="red" ${t.color==='red'?'selected':''}>赤</option>
+        <option value="rainbow" ${t.color==='rainbow'?'selected':''}>虹</option>
+      </select>
+    </div>
+  `).join('');
 }
 
 // --- Search ---
@@ -973,50 +996,47 @@ async function oriSearch() {
   if (!q) return;
   const el = document.getElementById('ori-search-results');
   el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">検索中...</p>';
-
   if (type === 'card') {
     try {
       const res = await fetch(`/api/card-images?action=search&game=pokeca&search=${encodeURIComponent(q)}&limit=50`);
       const data = await res.json();
       const cards = (data.cards || []).filter(c => c.image_url);
       if (!cards.length) { el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">見つかりませんでした</p>'; return; }
-      window._oriResults = cards.map(c => ({ type: 'card', name: c.card_name, image_url: c.image_url, price: c.buy_price }));
-      el.innerHTML = window._oriResults.map((c, i) => `
+      window._oriResults = cards.map(c => ({ type:'card', name:c.card_name, image_url:c.image_url, price:c.buy_price }));
+      el.innerHTML = window._oriResults.map((c,i) => `
         <div class="ori-result-card" onclick="oriAddItem(${i})">
           <img src="${c.image_url}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'">
           <div class="ori-card-name">${c.name}</div>
-          <div class="ori-card-price">${c.price || ''}</div>
-        </div>
-      `).join('');
+          <div class="ori-card-price">${c.price||''}</div>
+        </div>`).join('');
     } catch(e) { el.innerHTML = '<p style="color:var(--danger);font-size:0.8rem">'+e.message+'</p>'; }
   } else {
-    // Box search: search card_sets
     try {
       const res = await fetch(`/api/card-images?action=packs&game=pokeca`);
       const data = await res.json();
-      const packs = (data.packs || []).filter(p => p.logo_url && p.display_name.includes(q));
+      const packs = (data.packs||[]).filter(p => p.logo_url && p.display_name.includes(q));
       if (!packs.length) { el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">見つかりませんでした</p>'; return; }
-      window._oriResults = packs.map(p => ({ type: 'box', name: p.display_name, image_url: p.logo_url }));
-      el.innerHTML = window._oriResults.map((c, i) => `
+      window._oriResults = packs.map(p => ({ type:'box', name:p.display_name, image_url:p.logo_url }));
+      el.innerHTML = window._oriResults.map((c,i) => `
         <div class="ori-result-card" onclick="oriAddItem(${i})">
           <img src="${c.image_url}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'" style="aspect-ratio:auto;max-height:140px;object-fit:contain">
           <div class="ori-card-name">${c.name}</div>
-        </div>
-      `).join('');
+        </div>`).join('');
     } catch(e) { el.innerHTML = '<p style="color:var(--danger);font-size:0.8rem">'+e.message+'</p>'; }
   }
+}
+
+function oriParsePrice(p) {
+  if (!p) return 0;
+  return parseInt(String(p).replace(/[^0-9]/g,'')) || 0;
 }
 
 function oriAddItem(idx) {
   const r = window._oriResults?.[idx];
   if (!r) return;
-  const { w, h } = oriGetSize();
-  // Stack items with slight offset
-  const off = oriItems.length * 0.03;
   oriItems.push({
-    id: oriNextId++, type: r.type, name: r.name, image_url: r.image_url,
-    x: 0.15 + off, y: 0.08 + off, size: oriItems.length === 0 ? 'lg' : 'md',
-    badge: 'none', label: '', labelColor: 'gold', _img: null,
+    id: oriNextId++, type:r.type, name:r.name, image_url:r.image_url, priceNum:oriParsePrice(r.price),
+    x:0.1, y:0.1, size:'md', badge:'none', label:'', labelColor:'gold', _img:null,
   });
   oriRenderItemsList();
   oriAutoLayout();
@@ -1043,22 +1063,21 @@ function oriUpdateItem(id, key, val) {
   if (it) { it[key] = val; oriAutoPreview(); }
 }
 
-// --- Items list UI (left panel) ---
+// --- Items list ---
 function oriRenderItemsList() {
   const el = document.getElementById('ori-items-list');
   const empty = document.getElementById('ori-items-empty');
   if (!oriItems.length) { el.innerHTML = ''; empty.style.display = ''; return; }
   empty.style.display = 'none';
-
   el.innerHTML = oriItems.map((it, i) => `
     <div class="ori-item" draggable="true" data-id="${it.id}" ondragstart="oriListDragStart(event,${i})" ondragover="event.preventDefault()" ondrop="oriListDrop(event,${i})">
       <div class="ori-item-thumb"><img src="${it.image_url}" alt=""></div>
       <div class="ori-item-body">
-        <div class="ori-item-name">${it.name}</div>
+        <div class="ori-item-name">${it.name} ${it.priceNum?'<span style=\"color:var(--gold);font-size:0.7rem\">¥'+it.priceNum.toLocaleString()+'</span>':''}</div>
         <div class="ori-item-row">
           <span class="ori-mini-label">サイズ</span>
           <select onchange="oriUpdateItem(${it.id},'size',this.value)" style="width:70px">
-            ${Object.entries(ORI_SIZE_LABELS).map(([k,v]) => `<option value="${k}" ${it.size===k?'selected':''}>${v}</option>`).join('')}
+            ${Object.entries(ORI_SIZE_LABELS).map(([k,v])=>`<option value="${k}" ${it.size===k?'selected':''}>${v}</option>`).join('')}
           </select>
           <span class="ori-mini-label">バッジ</span>
           <select onchange="oriUpdateItem(${it.id},'badge',this.value)" style="width:85px">
@@ -1090,7 +1109,6 @@ function oriRenderItemsList() {
   `).join('');
 }
 
-// List drag-and-drop reorder
 let oriListDragFrom = -1;
 function oriListDragStart(e, idx) { oriListDragFrom = idx; e.dataTransfer.effectAllowed = 'move'; }
 function oriListDrop(e, idx) {
@@ -1103,62 +1121,79 @@ function oriListDrop(e, idx) {
   oriAutoPreview();
 }
 
-// --- Auto layout ---
+// --- Smart auto layout: sort by price, top-3 large upper row, rest small lower row ---
 function oriAutoLayout() {
-  const { w, h } = oriGetSize();
   if (!oriItems.length) { oriAutoPreview(); return; }
-
-  const cardArea = { top: 0.06, bottom: 0.55, left: 0.04, right: 0.96 };
-  const aW = cardArea.right - cardArea.left;
-  const aH = cardArea.bottom - cardArea.top;
-
-  // Compute each item's fractional width based on size
-  const baseH = aH * 0.92;
+  const { w, h } = oriGetSize();
   const aspect = 0.716;
-  const totalItems = oriItems.length;
 
-  // Calculate total width needed
-  const sizeMultipliers = oriItems.map(it => ORI_SIZES[it.size] || 1.0);
-  const totalMult = sizeMultipliers.reduce((a,b) => a+b, 0);
-  const availW = aW * w;
-  const baseCardW = Math.min(availW / (totalMult + 0.2), baseH * h * aspect * 0.9);
+  // Sort by price descending (highest first)
+  const sorted = [...oriItems].sort((a,b) => b.priceNum - a.priceNum);
+  // Reorder oriItems to match sorted order
+  oriItems.length = 0;
+  oriItems.push(...sorted);
 
-  let cx = cardArea.left;
-  const gap = 0.01;
-  const totalUsedW = sizeMultipliers.reduce((s, m) => s + baseCardW * m / w, 0) + gap * (totalItems - 1);
-  cx = cardArea.left + (aW - totalUsedW) / 2;
+  const mainCount = Math.min(3, oriItems.length);
+  const subCount = oriItems.length - mainCount;
 
+  // Assign sizes
   for (let i = 0; i < oriItems.length; i++) {
-    const mult = sizeMultipliers[i];
-    const itemW = baseCardW * mult / w;
-    const itemH = itemW / aspect * (w / h);
-    oriItems[i].x = cx;
-    oriItems[i].y = cardArea.top + (aH - itemH) / 2;
-    cx += itemW + gap;
+    if (i === 0) oriItems[i].size = oriItems.length === 1 ? 'xl' : 'lg';
+    else if (i < mainCount) oriItems[i].size = 'lg';
+    else oriItems[i].size = 'sm';
   }
+
+  // Upper row: main cards
+  const mainArea = { top: 0.04, bottom: subCount > 0 ? 0.52 : 0.56, left: 0.04, right: 0.96 };
+  const mainH = (mainArea.bottom - mainArea.top);
+  const mainCardH = mainH * 0.95;
+  const mainCardW_frac = mainCardH * aspect * (h / w);
+  const mainGap = 0.015;
+  const mainTotalW = mainCount * mainCardW_frac + (mainCount - 1) * mainGap;
+  const mainStartX = 0.5 - mainTotalW / 2;
+
+  for (let i = 0; i < mainCount; i++) {
+    oriItems[i].x = mainStartX + i * (mainCardW_frac + mainGap);
+    oriItems[i].y = mainArea.top + (mainH - mainCardH) / 2;
+  }
+
+  // Lower row: sub cards
+  if (subCount > 0) {
+    const subArea = { top: 0.50, bottom: 0.58, left: 0.06, right: 0.94 };
+    const subH = subArea.bottom - subArea.top;
+    const subMult = ORI_SIZES['sm'];
+    const subCardH = h * 0.46 * subMult;
+    const subCardH_frac = subCardH / h;
+    const subCardW_frac = subCardH_frac * aspect * (h / w);
+    const subGap = 0.012;
+    const subTotalW = subCount * subCardW_frac + (subCount - 1) * subGap;
+    const subStartX = 0.5 - subTotalW / 2;
+
+    for (let i = 0; i < subCount; i++) {
+      const si = mainCount + i;
+      oriItems[si].x = subStartX + i * (subCardW_frac + subGap);
+      oriItems[si].y = subArea.top;
+    }
+  }
+
+  oriRenderItemsList();
   oriAutoPreview();
 }
 
-function oriResetLayout() {
-  oriAutoLayout();
-}
+function oriResetLayout() { oriAutoLayout(); }
 
 // --- Image loading ---
 function oriLoadImg(url) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
     if (url && url.includes('files.cardrush.media')) {
       img.src = `/api/card-images?action=proxy&url=${encodeURIComponent(url)}`;
-    } else {
-      img.src = url;
-    }
+    } else { img.src = url; }
   });
 }
-
-// Image cache
 const oriImgCache = {};
 async function oriGetImg(url) {
   if (!url) return null;
@@ -1168,84 +1203,128 @@ async function oriGetImg(url) {
   return img;
 }
 
-// --- Themes ---
+// --- Themes (enhanced + casino/fire) ---
 const ORI_THEMES = {
-  rainbow: { stops: [['0','#1a0533'],['0.15','#2d1b69'],['0.3','#0d3b66'],['0.5','#1a5c3a'],['0.7','#8b6914'],['0.85','#8b1a1a'],['1','#4a0e4e']], accent: '#ffd700', accent2: '#ff6ec7' },
-  gold:    { stops: [['0','#1a1000'],['0.3','#3d2800'],['0.6','#5c3d00'],['1','#1a1000']], accent: '#ffd700', accent2: '#ffaa00' },
-  dark:    { stops: [['0','#0f0f1a'],['0.5','#1a1a2e'],['1','#050510']], accent: '#c0c0c0', accent2: '#8888ff', radial: true },
-  blue:    { stops: [['0','#001030'],['0.4','#002060'],['0.7','#003090'],['1','#001040']], accent: '#00cfff', accent2: '#4488ff' },
-  red:     { stops: [['0','#1a0000'],['0.3','#4a0a0a'],['0.6','#6b1010'],['1','#1a0000']], accent: '#ff4444', accent2: '#ffaa00' },
-  purple:  { stops: [['0','#0d0020'],['0.3','#2a0845'],['0.7','#4a0e6e'],['1','#0d0020']], accent: '#cc66ff', accent2: '#ff66cc' },
+  rainbow: { stops:[['0','#1a0533'],['0.15','#2d1b69'],['0.3','#0d3b66'],['0.5','#1a5c3a'],['0.7','#8b6914'],['0.85','#8b1a1a'],['1','#4a0e4e']], accent:'#ffd700', accent2:'#ff6ec7', fx:'burst' },
+  gold:    { stops:[['0','#1a1000'],['0.3','#3d2800'],['0.6','#5c3d00'],['1','#1a1000']], accent:'#ffd700', accent2:'#ffaa00', fx:'burst' },
+  dark:    { stops:[['0','#0f0f1a'],['0.5','#1a1a2e'],['1','#050510']], accent:'#c0c0c0', accent2:'#8888ff', radial:true },
+  blue:    { stops:[['0','#001030'],['0.4','#002060'],['0.7','#003090'],['1','#001040']], accent:'#00cfff', accent2:'#4488ff', fx:'burst' },
+  red:     { stops:[['0','#1a0000'],['0.3','#4a0a0a'],['0.6','#6b1010'],['1','#1a0000']], accent:'#ff4444', accent2:'#ffaa00', fx:'burst' },
+  purple:  { stops:[['0','#0d0020'],['0.3','#2a0845'],['0.7','#4a0e6e'],['1','#0d0020']], accent:'#cc66ff', accent2:'#ff66cc', fx:'burst' },
+  casino:  { stops:[['0','#0a0014'],['0.3','#120028'],['0.6','#1a003c'],['1','#0a0014']], accent:'#00ff88', accent2:'#ff00ff', fx:'casino' },
+  fire:    { stops:[['0','#0f0000'],['0.2','#2a0500'],['0.5','#4a0a00'],['0.8','#2a0500'],['1','#0f0000']], accent:'#ff6600', accent2:'#ffcc00', fx:'fire' },
 };
 
 function oriDrawBg(ctx, w, h, theme) {
-  let g;
-  if (theme.radial) {
-    g = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w*0.7);
-  } else {
-    g = ctx.createLinearGradient(0, 0, w, h);
-  }
-  for (const [s, c] of theme.stops) g.addColorStop(parseFloat(s), c);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, w, h);
-
   const sc = w / 1200;
+  // Base gradient
+  let g = theme.radial ? ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,w*0.7) : ctx.createLinearGradient(0,0,w,h);
+  for (const [s,c] of theme.stops) g.addColorStop(parseFloat(s),c);
+  ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+
   const cx = w/2, cy = h*0.35;
 
-  // Light rays
-  for (let i = 0; i < 24; i++) {
-    const angle = (i/24)*Math.PI*2, len = Math.max(w,h)*1.2;
-    ctx.save();
-    ctx.globalAlpha = 0.06 + Math.random()*0.04;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx+Math.cos(angle-0.04)*len, cy+Math.sin(angle-0.04)*len);
-    ctx.lineTo(cx+Math.cos(angle+0.04)*len, cy+Math.sin(angle+0.04)*len);
-    ctx.closePath();
-    ctx.fillStyle = theme.accent;
-    ctx.fill();
-    ctx.restore();
+  // Burst rays (enhanced)
+  const rayCount = theme.fx === 'fire' ? 36 : 24;
+  const rayAlpha = theme.fx === 'burst' || theme.fx === 'fire' ? 0.08 : 0.05;
+  for (let i = 0; i < rayCount; i++) {
+    const angle = (i/rayCount)*Math.PI*2, len = Math.max(w,h)*1.3;
+    const spread = theme.fx === 'fire' ? 0.06 : 0.04;
+    ctx.save(); ctx.globalAlpha = rayAlpha + Math.random()*0.05;
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.lineTo(cx+Math.cos(angle-spread)*len, cy+Math.sin(angle-spread)*len);
+    ctx.lineTo(cx+Math.cos(angle+spread)*len, cy+Math.sin(angle+spread)*len);
+    ctx.closePath(); ctx.fillStyle = theme.accent; ctx.fill(); ctx.restore();
   }
 
-  // Sparkles
-  for (let i = 0; i < 80; i++) {
+  // Casino-specific effects
+  if (theme.fx === 'casino') {
+    // Neon rings
+    for (let i = 0; i < 5; i++) {
+      const rx = w*(0.1+Math.random()*0.8), ry = h*(0.1+Math.random()*0.8), rr = (30+Math.random()*80)*sc;
+      ctx.save(); ctx.globalAlpha = 0.1+Math.random()*0.1;
+      ctx.strokeStyle = ['#00ff88','#ff00ff','#ffff00','#00ffff','#ff4444'][i];
+      ctx.lineWidth = 3*sc; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 20*sc;
+      ctx.beginPath(); ctx.arc(rx,ry,rr,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+    // Card suit symbols
+    const suits = ['♠','♥','♦','♣'];
+    for (let i = 0; i < 20; i++) {
+      const sx = Math.random()*w, sy = Math.random()*h;
+      ctx.save(); ctx.globalAlpha = 0.06+Math.random()*0.08;
+      ctx.font = `${(20+Math.random()*40)*sc}px serif`;
+      ctx.fillStyle = ['#00ff88','#ff00ff','#ffff00','#ff4444'][i%4];
+      ctx.textAlign = 'center'; ctx.fillText(suits[i%4], sx, sy);
+      ctx.restore();
+    }
+    // Chip circles
+    for (let i = 0; i < 8; i++) {
+      const chipX = Math.random()*w, chipY = Math.random()*h, chipR = (10+Math.random()*20)*sc;
+      ctx.save(); ctx.globalAlpha = 0.08;
+      ctx.beginPath(); ctx.arc(chipX,chipY,chipR,0,Math.PI*2);
+      ctx.strokeStyle = theme.accent; ctx.lineWidth = 3*sc;
+      ctx.setLineDash([4*sc,4*sc]); ctx.stroke(); ctx.restore();
+    }
+  }
+
+  // Fire-specific effects
+  if (theme.fx === 'fire') {
+    // Flame shapes from bottom
+    for (let i = 0; i < 30; i++) {
+      const fx = Math.random()*w, fy = h - Math.random()*h*0.5;
+      const fh = (40+Math.random()*100)*sc;
+      const fw = (15+Math.random()*30)*sc;
+      ctx.save(); ctx.globalAlpha = 0.06+Math.random()*0.08;
+      const fg = ctx.createLinearGradient(fx,fy,fx,fy-fh);
+      fg.addColorStop(0,'#ff4400'); fg.addColorStop(0.5,'#ff8800'); fg.addColorStop(1,'transparent');
+      ctx.fillStyle = fg;
+      ctx.beginPath(); ctx.ellipse(fx,fy,fw,fh,0,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    // Ember particles
+    for (let i = 0; i < 40; i++) {
+      const ex = Math.random()*w, ey = h*0.3+Math.random()*h*0.7;
+      const er = (1+Math.random()*3)*sc;
+      ctx.save(); ctx.globalAlpha = 0.4+Math.random()*0.6;
+      ctx.fillStyle = ['#ff4400','#ff8800','#ffcc00','#ffffff'][Math.floor(Math.random()*4)];
+      ctx.beginPath(); ctx.arc(ex,ey,er,0,Math.PI*2); ctx.fill(); ctx.restore();
+    }
+  }
+
+  // Sparkles (all themes)
+  const sparkleCount = theme.fx === 'casino' ? 120 : 80;
+  for (let i = 0; i < sparkleCount; i++) {
     const x = Math.random()*w, y = Math.random()*h, r = (1+Math.random()*3)*sc;
-    ctx.save();
-    ctx.globalAlpha = 0.3+Math.random()*0.7;
+    ctx.save(); ctx.globalAlpha = 0.3+Math.random()*0.7;
     const sg = ctx.createRadialGradient(x,y,0,x,y,r*4);
     sg.addColorStop(0,'#fff'); sg.addColorStop(0.3,theme.accent); sg.addColorStop(1,'transparent');
-    ctx.fillStyle = sg;
-    ctx.fillRect(x-r*4,y-r*4,r*8,r*8);
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = sc; ctx.globalAlpha = 0.5+Math.random()*0.5;
+    ctx.fillStyle = sg; ctx.fillRect(x-r*4,y-r*4,r*8,r*8);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = sc; ctx.globalAlpha = 0.4+Math.random()*0.6;
     ctx.beginPath(); ctx.moveTo(x-r*3,y); ctx.lineTo(x+r*3,y); ctx.moveTo(x,y-r*3); ctx.lineTo(x,y+r*3); ctx.stroke();
     ctx.restore();
   }
 
   // Diamonds
-  for (let i = 0; i < 12; i++) {
-    const x = Math.random()*w, y = Math.random()*h, sz = (8+Math.random()*16)*sc;
-    ctx.save(); ctx.globalAlpha = 0.08+Math.random()*0.12; ctx.translate(x,y); ctx.rotate(Math.PI/4);
+  for (let i = 0; i < 15; i++) {
+    const x = Math.random()*w, y = Math.random()*h, sz = (8+Math.random()*18)*sc;
+    ctx.save(); ctx.globalAlpha = 0.06+Math.random()*0.1; ctx.translate(x,y); ctx.rotate(Math.PI/4);
     ctx.fillStyle = theme.accent2; ctx.fillRect(-sz/2,-sz/2,sz,sz); ctx.restore();
   }
 
-  // Vignette
-  const vg = ctx.createRadialGradient(cx,h/2,w*0.25,cx,h/2,w*0.75);
+  // Vignette + bottom gradient
+  const vg = ctx.createRadialGradient(cx,h/2,w*0.2,cx,h/2,w*0.75);
   vg.addColorStop(0,'transparent'); vg.addColorStop(1,'rgba(0,0,0,0.5)');
   ctx.fillStyle = vg; ctx.fillRect(0,0,w,h);
-
-  // Bottom gradient
-  const btm = ctx.createLinearGradient(0,h*0.55,0,h);
-  btm.addColorStop(0,'transparent'); btm.addColorStop(0.5,'rgba(0,0,0,0.4)'); btm.addColorStop(1,'rgba(0,0,0,0.7)');
+  const btm = ctx.createLinearGradient(0,h*0.5,0,h);
+  btm.addColorStop(0,'transparent'); btm.addColorStop(0.4,'rgba(0,0,0,0.35)'); btm.addColorStop(1,'rgba(0,0,0,0.75)');
   ctx.fillStyle = btm; ctx.fillRect(0,0,w,h);
 }
 
 function oriDrawGoldFrame(ctx, x, y, fw, fh, sc) {
   const bw = 5*sc;
-  ctx.save();
-  ctx.shadowColor = 'rgba(255,215,0,0.6)'; ctx.shadowBlur = 20*sc;
-  ctx.strokeStyle = '#ffd700'; ctx.lineWidth = bw;
-  ctx.strokeRect(x-bw/2,y-bw/2,fw+bw,fh+bw);
-  ctx.restore();
+  ctx.save(); ctx.shadowColor = 'rgba(255,215,0,0.6)'; ctx.shadowBlur = 20*sc;
+  ctx.strokeStyle = '#ffd700'; ctx.lineWidth = bw; ctx.strokeRect(x-bw/2,y-bw/2,fw+bw,fh+bw); ctx.restore();
   const grd = ctx.createLinearGradient(x,y,x+fw,y+fh);
   grd.addColorStop(0,'#fff8b0'); grd.addColorStop(0.2,'#ffd700'); grd.addColorStop(0.5,'#ffed80'); grd.addColorStop(0.8,'#ffd700'); grd.addColorStop(1,'#b8860b');
   ctx.strokeStyle = grd; ctx.lineWidth = bw; ctx.strokeRect(x,y,fw,fh);
@@ -1259,60 +1338,64 @@ function oriDrawGoldFrame(ctx, x, y, fw, fh, sc) {
 
 function oriDrawBadge(ctx, x, y, size, sc, badge) {
   if (badge === 'none') return;
-  ctx.save();
-  ctx.shadowColor = 'rgba(255,215,0,0.8)'; ctx.shadowBlur = 10*sc;
+  ctx.save(); ctx.shadowColor = 'rgba(255,215,0,0.8)'; ctx.shadowBlur = 10*sc;
   const bg = ctx.createRadialGradient(x,y,0,x,y,size);
   bg.addColorStop(0,'#ffed80'); bg.addColorStop(0.5,'#ffd700'); bg.addColorStop(1,'#b8860b');
-  ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2); ctx.fill();
-  ctx.restore();
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2); ctx.fill(); ctx.restore();
   ctx.strokeStyle = '#fff8b0'; ctx.lineWidth = 1.5*sc;
   ctx.beginPath(); ctx.arc(x,y,size*0.82,0,Math.PI*2); ctx.stroke();
   ctx.fillStyle = '#1a0800'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  // Parse badge
   const m = badge.match(/^(PSA|BGS)\s*(.+)$/);
   if (m) {
-    ctx.font = `bold ${size*0.5}px 'DM Sans',sans-serif`;
-    ctx.fillText(m[1], x, y - size*0.18);
-    ctx.font = `bold ${size*0.6}px 'DM Sans',sans-serif`;
-    ctx.fillText(m[2], x, y + size*0.28);
+    ctx.font = `bold ${size*0.5}px 'DM Sans',sans-serif`; ctx.fillText(m[1],x,y-size*0.18);
+    ctx.font = `bold ${size*0.6}px 'DM Sans',sans-serif`; ctx.fillText(m[2],x,y+size*0.28);
   }
 }
 
 const ORI_LABEL_COLORS = {
-  gold:   { bg: 'rgba(255,215,0,0.9)', text: '#1a0800' },
-  red:    { bg: 'rgba(220,30,30,0.9)', text: '#fff' },
-  blue:   { bg: 'rgba(30,90,220,0.9)', text: '#fff' },
-  green:  { bg: 'rgba(30,160,60,0.9)', text: '#fff' },
-  purple: { bg: 'rgba(130,30,200,0.9)', text: '#fff' },
+  gold:{bg:'rgba(255,215,0,0.9)',text:'#1a0800'}, red:{bg:'rgba(220,30,30,0.9)',text:'#fff'},
+  blue:{bg:'rgba(30,90,220,0.9)',text:'#fff'}, green:{bg:'rgba(30,160,60,0.9)',text:'#fff'},
+  purple:{bg:'rgba(130,30,200,0.9)',text:'#fff'},
 };
 
-function oriDrawLabel(ctx, x, y, w, sc, label, colorKey) {
+function oriDrawLabel(ctx, x, y, cw, sc, label, colorKey) {
   if (!label) return;
-  const col = ORI_LABEL_COLORS[colorKey] || ORI_LABEL_COLORS.gold;
+  const col = ORI_LABEL_COLORS[colorKey]||ORI_LABEL_COLORS.gold;
   const fs = 14*sc;
   ctx.font = `bold ${fs}px 'DM Sans',sans-serif`;
   const tw = ctx.measureText(label).width;
-  const pw = tw + 16*sc, ph = fs + 10*sc;
-  const px = x + w/2 - pw/2, py = y - ph - 4*sc;
-
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 8*sc;
-  ctx.fillStyle = col.bg;
-  ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 4*sc); ctx.fill();
-  ctx.restore();
+  const pw = tw+16*sc, ph = fs+10*sc, px = x+cw/2-pw/2, py = y-ph-4*sc;
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 8*sc;
+  ctx.fillStyle = col.bg; ctx.beginPath(); ctx.roundRect(px,py,pw,ph,4*sc); ctx.fill(); ctx.restore();
   ctx.fillStyle = col.text; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.font = `bold ${fs}px 'DM Sans',sans-serif`;
-  ctx.fillText(label, px+pw/2, py+ph/2);
+  ctx.font = `bold ${fs}px 'DM Sans',sans-serif`; ctx.fillText(label,px+pw/2,py+ph/2);
 }
 
-function oriDrawText(ctx, text, x, y, fontSize, color, opts = {}) {
+function oriDrawText(ctx, text, x, y, fontSize, colorKey, opts = {}) {
+  if (!text) return;
   ctx.save();
   ctx.textAlign = opts.align || 'center';
   ctx.textBaseline = opts.baseline || 'middle';
-  ctx.font = `${opts.weight||'bold'} ${fontSize}px ${opts.serif?"'Cormorant Garamond',serif":"'DM Sans',sans-serif"}`;
-  if (opts.outline) { ctx.strokeStyle = opts.outline; ctx.lineWidth = opts.outlineWidth || fontSize*0.08; ctx.lineJoin = 'round'; ctx.strokeText(text,x,y); }
+  ctx.font = `${opts.weight||'bold'} ${fontSize}px 'DM Sans',sans-serif`;
+
+  // Resolve color
+  let fillStyle;
+  if (colorKey === 'rainbow') {
+    const g = ctx.createLinearGradient(x - fontSize*2, y, x + fontSize*2, y);
+    g.addColorStop(0,'#ff0000'); g.addColorStop(0.17,'#ff8800'); g.addColorStop(0.33,'#ffff00');
+    g.addColorStop(0.5,'#00ff00'); g.addColorStop(0.67,'#0088ff'); g.addColorStop(0.83,'#8800ff');
+    g.addColorStop(1,'#ff00ff');
+    fillStyle = g;
+  } else {
+    fillStyle = ORI_TEXT_COLOR_MAP[colorKey] || colorKey;
+  }
+
+  if (opts.outline) {
+    ctx.strokeStyle = opts.outline; ctx.lineWidth = opts.outlineWidth || fontSize*0.08;
+    ctx.lineJoin = 'round'; ctx.strokeText(text,x,y);
+  }
   if (opts.shadow) { ctx.shadowColor = opts.shadow; ctx.shadowBlur = opts.shadowBlur || fontSize*0.3; }
-  ctx.fillStyle = color; ctx.fillText(text,x,y);
+  ctx.fillStyle = fillStyle; ctx.fillText(text,x,y);
   ctx.restore();
 }
 
@@ -1328,181 +1411,162 @@ async function oriRender() {
 
   oriDrawBg(ctx, w, h, theme);
 
-  // Load all images
+  // Load images
   await Promise.all(oriItems.map(async it => { it._img = await oriGetImg(it.image_url); }));
 
-  // Draw items (array order = back to front)
+  // Draw items
   const aspect = 0.716;
   for (const it of oriItems) {
-    const mult = ORI_SIZES[it.size] || 1.0;
-    const cardH = h * 0.46 * mult;
-    const isBox = it.type === 'box';
-    const cardW = isBox ? cardH : cardH * aspect;
-    const px = it.x * w, py = it.y * h;
-
-    // Shadow
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 15*sc; ctx.shadowOffsetY = 5*sc;
-    ctx.fillStyle = '#111'; ctx.fillRect(px, py, cardW, cardH);
-    ctx.restore();
-
-    if (it._img) {
-      ctx.drawImage(it._img, px, py, cardW, cardH);
-    } else {
-      ctx.fillStyle = '#222'; ctx.fillRect(px, py, cardW, cardH);
-      ctx.fillStyle = '#555'; ctx.textAlign = 'center'; ctx.font = `${12*sc}px sans-serif`;
-      ctx.fillText(it.name || '?', px+cardW/2, py+cardH/2);
-    }
-
-    oriDrawGoldFrame(ctx, px, py, cardW, cardH, sc);
-
-    if (it.badge !== 'none') {
-      oriDrawBadge(ctx, px+cardW-10*sc, py+10*sc, 22*sc*mult, sc, it.badge);
-    }
-    if (it.label) {
-      oriDrawLabel(ctx, px, py, cardW, sc, it.label, it.labelColor);
-    }
+    const mult = ORI_SIZES[it.size]||1.0;
+    const cardH = h*0.46*mult, isBox = it.type==='box', cardW = isBox?cardH:cardH*aspect;
+    const px = it.x*w, py = it.y*h;
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 15*sc; ctx.shadowOffsetY = 5*sc;
+    ctx.fillStyle = '#111'; ctx.fillRect(px,py,cardW,cardH); ctx.restore();
+    if (it._img) { ctx.drawImage(it._img,px,py,cardW,cardH); }
+    else { ctx.fillStyle='#222'; ctx.fillRect(px,py,cardW,cardH); ctx.fillStyle='#555'; ctx.textAlign='center'; ctx.font=`${12*sc}px sans-serif`; ctx.fillText(it.name||'?',px+cardW/2,py+cardH/2); }
+    oriDrawGoldFrame(ctx,px,py,cardW,cardH,sc);
+    if (it.badge!=='none') oriDrawBadge(ctx,px+cardW-10*sc,py+10*sc,22*sc*mult,sc,it.badge);
+    if (it.label) oriDrawLabel(ctx,px,py,cardW,sc,it.label,it.labelColor);
   }
 
-  // Placeholder
   if (!oriItems.length) {
     ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.textAlign = 'center';
-    ctx.font = `${18*sc}px sans-serif`;
-    ctx.fillText('カードを検索して追加してください', w/2, h*0.3);
+    ctx.font = `${18*sc}px sans-serif`; ctx.fillText('カードを検索して追加してください', w/2, h*0.3);
   }
 
-  // Text area
-  const titleY = h * 0.62;
-  const name = document.getElementById('ori-name').value || 'オリパ';
-  const subtitle = document.getElementById('ori-subtitle').value;
-  const price = document.getElementById('ori-price').value;
-  const points = document.getElementById('ori-points').value;
-  const lots = document.getElementById('ori-lots').value;
-  const note = document.getElementById('ori-note').value;
+  // Draw text elements
+  const t = oriTextEls;
+  if (t.title.text) {
+    // Decorative line above title
+    const lineY = t.title.y*h - t.title.fontSize*sc*0.6 - 8*sc;
+    const lineG = ctx.createLinearGradient(w*0.15,0,w*0.85,0);
+    lineG.addColorStop(0,'transparent'); lineG.addColorStop(0.2,theme.accent); lineG.addColorStop(0.5,'#fff');
+    lineG.addColorStop(0.8,theme.accent); lineG.addColorStop(1,'transparent');
+    ctx.strokeStyle = lineG; ctx.lineWidth = 2*sc;
+    ctx.beginPath(); ctx.moveTo(w*0.1,lineY); ctx.lineTo(w*0.9,lineY); ctx.stroke();
 
-  // Decorative line
-  const lineG = ctx.createLinearGradient(w*0.15,0,w*0.85,0);
-  lineG.addColorStop(0,'transparent'); lineG.addColorStop(0.2,theme.accent); lineG.addColorStop(0.5,'#fff');
-  lineG.addColorStop(0.8,theme.accent); lineG.addColorStop(1,'transparent');
-  ctx.strokeStyle = lineG; ctx.lineWidth = 2*sc;
-  ctx.beginPath(); ctx.moveTo(w*0.1,titleY-10*sc); ctx.lineTo(w*0.9,titleY-10*sc); ctx.stroke();
-
-  oriDrawText(ctx, name, w/2, titleY+30*sc, 52*sc, '#fff', { outline: theme.accent, outlineWidth: 3*sc, shadow: theme.accent, shadowBlur: 30*sc, weight: '800' });
-  if (subtitle) oriDrawText(ctx, subtitle, w/2, titleY+65*sc, 22*sc, theme.accent, { shadow: theme.accent, shadowBlur: 10*sc });
-
-  const priceText = [price, points, lots].filter(Boolean).join('  ');
-  if (priceText) {
-    const priceY = titleY + (subtitle ? 100 : 80)*sc;
-    ctx.save();
-    ctx.font = `bold ${28*sc}px 'DM Sans',sans-serif`;
-    const pm = ctx.measureText(priceText);
-    const pillW = pm.width+60*sc, pillH = 44*sc, pillX = w/2-pillW/2;
+    oriDrawText(ctx, t.title.text, t.title.x*w, t.title.y*h, t.title.fontSize*sc, t.title.color, {
+      outline: theme.accent, outlineWidth: 3*sc, shadow: theme.accent, shadowBlur: 30*sc, weight:'800'
+    });
+  }
+  if (t.subtitle.text) {
+    oriDrawText(ctx, t.subtitle.text, t.subtitle.x*w, t.subtitle.y*h, t.subtitle.fontSize*sc, t.subtitle.color, { shadow: theme.accent, shadowBlur: 10*sc });
+  }
+  if (t.price.text) {
+    const priceY = t.price.y*h;
+    ctx.save(); ctx.font = `bold ${t.price.fontSize*sc}px 'DM Sans',sans-serif`;
+    const pm = ctx.measureText(t.price.text);
+    const pillW = pm.width+60*sc, pillH = (t.price.fontSize+16)*sc, pillX = t.price.x*w-pillW/2;
     const pg = ctx.createLinearGradient(pillX,0,pillX+pillW,0);
-    pg.addColorStop(0,'rgba(255,215,0,0.15)'); pg.addColorStop(0.5,'rgba(255,215,0,0.25)'); pg.addColorStop(1,'rgba(255,215,0,0.15)');
+    pg.addColorStop(0,'rgba(255,215,0,0.12)'); pg.addColorStop(0.5,'rgba(255,215,0,0.22)'); pg.addColorStop(1,'rgba(255,215,0,0.12)');
     ctx.fillStyle = pg; ctx.beginPath(); ctx.roundRect(pillX,priceY-pillH/2,pillW,pillH,pillH/2); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,215,0,0.5)'; ctx.lineWidth = 1.5*sc; ctx.stroke();
-    ctx.restore();
-    oriDrawText(ctx, priceText, w/2, priceY, 28*sc, '#ffd700', { shadow: 'rgba(255,215,0,0.5)', shadowBlur: 15*sc });
+    ctx.strokeStyle = 'rgba(255,215,0,0.4)'; ctx.lineWidth = 1.5*sc; ctx.stroke(); ctx.restore();
+    oriDrawText(ctx, t.price.text, t.price.x*w, priceY, t.price.fontSize*sc, t.price.color, { shadow:'rgba(255,215,0,0.5)', shadowBlur:15*sc });
+  }
+  if (t.lots.text) {
+    oriDrawText(ctx, t.lots.text, t.lots.x*w, t.lots.y*h, t.lots.fontSize*sc, t.lots.color, { shadow: theme.accent, shadowBlur: 8*sc });
   }
 
-  if (note) oriDrawText(ctx, note, w/2, h-18*sc, 11*sc, 'rgba(255,255,255,0.5)', { weight: '400' });
-  oriDrawText(ctx, 'TCGVIBE.COM', w-15*sc, h-18*sc, 10*sc, 'rgba(255,255,255,0.25)', { align: 'right', weight: '500' });
+  const note = document.getElementById('ori-note').value;
+  if (note) oriDrawText(ctx, note, w/2, h-18*sc, 11*sc, 'white', { weight:'400' });
+  oriDrawText(ctx, 'TCGVIBE.COM', w-15*sc, h-18*sc, 10*sc, 'white', { align:'right', weight:'500' });
 }
 
-// --- Canvas drag & drop ---
+// --- Canvas drag & drop (items + text elements) ---
 (function() {
-  const wrap = document.getElementById('ori-canvas-wrap');
-  if (!wrap) return;
   const canvas = document.getElementById('ori-canvas');
+  if (!canvas) return;
   let dragging = false;
 
-  function getCanvasCoords(e) {
+  function coords(e) {
     const r = canvas.getBoundingClientRect();
-    const { w, h } = oriGetSize();
-    return { fx: (e.clientX - r.left) / r.width, fy: (e.clientY - r.top) / r.height };
+    return { fx: (e.clientX-r.left)/r.width, fy: (e.clientY-r.top)/r.height };
   }
 
-  function hitTest(fx, fy) {
+  function hitTestItem(fx, fy) {
     const { w, h } = oriGetSize();
     const aspect = 0.716;
-    // Reverse order (top items drawn last = in front)
-    for (let i = oriItems.length - 1; i >= 0; i--) {
-      const it = oriItems[i];
-      const mult = ORI_SIZES[it.size] || 1.0;
-      const cardH = 0.46 * mult;
-      const isBox = it.type === 'box';
-      const cardW = isBox ? cardH * (h/w) : cardH * aspect * (h/w);
-      if (fx >= it.x && fx <= it.x + cardW && fy >= it.y && fy <= it.y + cardH) return i;
+    for (let i = oriItems.length-1; i >= 0; i--) {
+      const it = oriItems[i], mult = ORI_SIZES[it.size]||1.0;
+      const cardH_f = 0.46*mult, isBox = it.type==='box';
+      const cardW_f = isBox ? cardH_f*(h/w) : cardH_f*aspect*(h/w);
+      if (fx>=it.x && fx<=it.x+cardW_f && fy>=it.y && fy<=it.y+cardH_f) return i;
     }
     return -1;
   }
 
+  function hitTestText(fx, fy) {
+    const { w, h } = oriGetSize();
+    const sc = w/1200;
+    for (const [key, t] of Object.entries(oriTextEls)) {
+      if (!t.text) continue;
+      const halfW = (t.fontSize*sc*t.text.length*0.35)/w;
+      const halfH = (t.fontSize*sc*0.6)/h;
+      if (fx>=t.x-halfW && fx<=t.x+halfW && fy>=t.y-halfH && fy<=t.y+halfH) return key;
+    }
+    return null;
+  }
+
   canvas.addEventListener('pointerdown', e => {
-    const { fx, fy } = getCanvasCoords(e);
-    const idx = hitTest(fx, fy);
+    const { fx, fy } = coords(e);
+    // Check text first (foreground)
+    const textKey = hitTestText(fx, fy);
+    if (textKey) {
+      oriDragTarget = { type:'text', key:textKey, offX:fx-oriTextEls[textKey].x, offY:fy-oriTextEls[textKey].y };
+      dragging = true; canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'grabbing'; return;
+    }
+    const idx = hitTestItem(fx, fy);
     if (idx >= 0) {
-      oriDragIdx = idx;
-      oriDragOffX = fx - oriItems[idx].x;
-      oriDragOffY = fy - oriItems[idx].y;
-      dragging = true;
-      canvas.setPointerCapture(e.pointerId);
-      canvas.style.cursor = 'grabbing';
+      oriDragTarget = { type:'item', idx, offX:fx-oriItems[idx].x, offY:fy-oriItems[idx].y };
+      dragging = true; canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'grabbing';
     }
   });
 
   canvas.addEventListener('pointermove', e => {
-    if (!dragging || oriDragIdx < 0) return;
-    const { fx, fy } = getCanvasCoords(e);
-    oriItems[oriDragIdx].x = fx - oriDragOffX;
-    oriItems[oriDragIdx].y = fy - oriDragOffY;
+    if (!dragging || !oriDragTarget) return;
+    const { fx, fy } = coords(e);
+    if (oriDragTarget.type === 'item') {
+      oriItems[oriDragTarget.idx].x = fx - oriDragTarget.offX;
+      oriItems[oriDragTarget.idx].y = fy - oriDragTarget.offY;
+    } else if (oriDragTarget.type === 'text') {
+      oriTextEls[oriDragTarget.key].x = fx - oriDragTarget.offX;
+      oriTextEls[oriDragTarget.key].y = fy - oriDragTarget.offY;
+    }
     oriRender();
   });
 
   canvas.addEventListener('pointerup', () => {
-    dragging = false;
-    oriDragIdx = -1;
-    canvas.style.cursor = 'crosshair';
+    dragging = false; oriDragTarget = null; canvas.style.cursor = 'crosshair';
   });
 })();
 
 // --- Download & Copy ---
 function oriDownload() {
   const canvas = document.getElementById('ori-canvas');
-  if (!canvas.width || canvas.width < 10) { alert('先にプレビューを生成してください'); return; }
-  const link = document.createElement('a');
-  const name = document.getElementById('ori-name').value || 'oripa';
+  if (!canvas.width||canvas.width<10) { alert('先にプレビューを生成してください'); return; }
+  const a = document.createElement('a');
+  const name = oriTextEls.title.text || 'oripa';
   const size = document.getElementById('ori-size').value;
-  link.download = `${name}_${size==='a4'?'A4':'X'}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  a.download = `${name}_${size==='a4'?'A4':'X'}.png`;
+  a.href = canvas.toDataURL('image/png'); a.click();
 }
 
 async function oriCopyForX() {
   const canvas = document.getElementById('ori-canvas');
-  if (!canvas.width || canvas.width < 10) { showMsg('ori-status','error','先にプレビューを生成してください'); return; }
+  if (!canvas.width||canvas.width<10) { showMsg('ori-status','error','先にプレビューを生成してください'); return; }
   const text = document.getElementById('ori-x-text').value;
   try {
-    // Copy image to clipboard
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        'image/png': blob,
-        'text/plain': new Blob([text], { type: 'text/plain' }),
-      })
-    ]);
-    showMsg('ori-status', 'success', '✓ 画像とテキストをクリップボードにコピーしました');
+    const blob = await new Promise(r => canvas.toBlob(r,'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({'image/png':blob,'text/plain':new Blob([text],{type:'text/plain'})})]);
+    showMsg('ori-status','success','✓ 画像とテキストをクリップボードにコピーしました');
   } catch(e) {
-    // Fallback: copy text only
-    try {
-      await navigator.clipboard.writeText(text);
-      showMsg('ori-status', 'success', '✓ テキストをコピーしました（画像はPNG保存してください）');
-    } catch(e2) {
-      showMsg('ori-status', 'error', 'コピーに失敗しました');
-    }
+    try { await navigator.clipboard.writeText(text); showMsg('ori-status','success','✓ テキストをコピーしました（画像はPNG保存してください）'); }
+    catch(e2) { showMsg('ori-status','error','コピーに失敗しました'); }
   }
 }
 
-// Initial render
+// Init
+oriRenderTextEls();
 oriRenderItemsList();
 setTimeout(() => oriRender(), 100);
 </script>
