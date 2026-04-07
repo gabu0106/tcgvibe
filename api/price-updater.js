@@ -170,6 +170,8 @@ async function fetchCardrushPage(gamePath, page, limit = 100) {
   };
 }
 
+// sell_priceフィールドにカードラッシュの商品画像URLを格納
+// 画像URL形式: https://files.cardrush.media/{pokemon|onepiece}/ocha_products/{id}.webp
 function cardrushToCardPrice(item, game) {
   const name = item.extra_difference
     ? `${item.name}（${item.extra_difference}）`
@@ -177,6 +179,7 @@ function cardrushToCardPrice(item, game) {
   return {
     card_name: name,
     buy_price: `¥${item.amount}`,
+    sell_price: item.ocha_product?.image_source || '',
     rarity: item.rarity || '-',
     shop: 'カードラッシュ',
     game,
@@ -185,36 +188,13 @@ function cardrushToCardPrice(item, game) {
   };
 }
 
-function cardrushToCardImage(item, game) {
-  const imageUrl = item.ocha_product?.image_source || null;
-  if (!imageUrl) return null;
-  const name = item.extra_difference
-    ? `${item.name}（${item.extra_difference}）`
-    : item.name;
-  return {
-    card_id: `cardrush-${game}-${item.id}`,
-    card_name: name,
-    card_name_en: null,
-    number: item.model_number || '',
-    rarity: item.rarity || '-',
-    set_name: item.pack_code || '',
-    set_id: item.pack_code || '',
-    image_small: imageUrl,
-    image_large: imageUrl,
-    game,
-  };
-}
-
 async function scrapeBuyPrices(maxPages = 10) {
   diagnostics.push('カードラッシュ買取価格スクレイピング開始');
-  let totalPricesSaved = 0;
-  let totalImagesSaved = 0;
+  let totalSaved = 0;
 
   for (const [, cfg] of Object.entries(CARDRUSH_GAMES)) {
     try {
-      // 既存のカードラッシュデータを削除
       await supabaseDelete('card_prices', `shop=eq.カードラッシュ&game=eq.${cfg.game}`);
-      await supabaseDelete('card_images', `card_id=like.cardrush-${cfg.game}-*`);
       diagnostics.push(`${cfg.game}: 旧データ削除完了`);
 
       const rawItems = [];
@@ -241,34 +221,22 @@ async function scrapeBuyPrices(maxPages = 10) {
         return true;
       });
 
-      // card_prices バッチ挿入
-      const priceRecords = uniqueItems.map(i => cardrushToCardPrice(i, cfg.game));
-      let priceSaved = 0;
-      for (let i = 0; i < priceRecords.length; i += 50) {
-        const batch = priceRecords.slice(i, i + 50);
+      const records = uniqueItems.map(i => cardrushToCardPrice(i, cfg.game));
+      let saved = 0;
+      for (let i = 0; i < records.length; i += 50) {
+        const batch = records.slice(i, i + 50);
         const result = await supabasePost('card_prices', batch);
-        if (result) priceSaved += batch.length;
+        if (result) saved += batch.length;
       }
-      totalPricesSaved += priceSaved;
-
-      // card_images バッチ挿入
-      const imageRecords = uniqueItems.map(i => cardrushToCardImage(i, cfg.game)).filter(Boolean);
-      let imageSaved = 0;
-      for (let i = 0; i < imageRecords.length; i += 50) {
-        const batch = imageRecords.slice(i, i + 50);
-        const result = await supabasePost('card_images', batch);
-        if (result) imageSaved += batch.length;
-      }
-      totalImagesSaved += imageSaved;
-
-      diagnostics.push(`${cfg.game}: 価格${priceSaved}件, 画像${imageSaved}件保存`);
+      totalSaved += saved;
+      diagnostics.push(`${cfg.game}: ${saved}/${uniqueItems.length}件保存（画像URL含む）`);
     } catch (e) {
       diagnostics.push(`${cfg.game}失敗: ${e.message}`);
     }
   }
 
-  diagnostics.push(`カードラッシュ合計: 価格${totalPricesSaved}件, 画像${totalImagesSaved}件`);
-  return { prices_saved: totalPricesSaved, images_saved: totalImagesSaved };
+  diagnostics.push(`カードラッシュ合計: ${totalSaved}件保存`);
+  return { saved: totalSaved };
 }
 
 // ===== 平均買取価格計算 =====
