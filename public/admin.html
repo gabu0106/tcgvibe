@@ -987,7 +987,12 @@ function oriLoadImg(url) {
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
-    img.src = url;
+    // cardrush.media画像はCORS非対応のためプロキシ経由で取得
+    if (url && url.includes('files.cardrush.media')) {
+      img.src = `/api/card-images?action=proxy&url=${encodeURIComponent(url)}`;
+    } else {
+      img.src = url;
+    }
   });
 }
 

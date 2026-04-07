@@ -132,7 +132,27 @@ export default async function handler(req, res) {
       return res.status(200).json({ ranking });
     }
 
-    return res.status(400).json({ error: 'action必須', actions: ['packs', 'cards', 'ranking', 'search'] });
+    // 画像プロキシ（CORS回避用 — cardrush.media画像をCanvas描画するために使用）
+    if (action === 'proxy') {
+      const imgUrl = req.query.url;
+      if (!imgUrl || !imgUrl.startsWith('https://files.cardrush.media/')) {
+        return res.status(400).json({ error: 'cardrush.media URLのみ対応' });
+      }
+      try {
+        const imgRes = await fetch(imgUrl);
+        if (!imgRes.ok) return res.status(imgRes.status).end();
+        const buf = Buffer.from(await imgRes.arrayBuffer());
+        const ct = imgRes.headers.get('content-type') || 'image/webp';
+        res.setHeader('Content-Type', ct);
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        return res.status(200).send(buf);
+      } catch (e) {
+        return res.status(502).json({ error: 'proxy fetch failed' });
+      }
+    }
+
+    return res.status(400).json({ error: 'action必須', actions: ['packs', 'cards', 'ranking', 'search', 'proxy'] });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
