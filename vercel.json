@@ -6,6 +6,7 @@
     "api/agent-master.js": { "maxDuration": 300 },
     "api/line-webhook.js": { "maxDuration": 60 },
     "api/ebay.js": { "maxDuration": 30 },
-    "api/price-updater.js": { "maxDuration": 120 }
+    "api/price-updater.js": { "maxDuration": 120 },
+    "api/card-images.js": { "maxDuration": 30 }
   }
 }

@@ -10,11 +10,11 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tcgvibe.com/card-list.html">
 <link rel="canonical" href="https://tcgvibe.com/card-list.html">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#faf9f6;--bg2:#f3f1ec;--bg3:#ece9e2;--surface:#fff;--border:rgba(0,0,0,0.06);--border2:rgba(0,0,0,0.1);--text:#1a1814;--muted:#8a857e;--gold:#b8952a;--gold2:#d4af5a;--gold-light:#f5edda;--gold-glow:rgba(184,149,42,0.12);--shadow:rgba(0,0,0,0.06);--shadow2:rgba(0,0,0,0.1);--red:#c0392b;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 ::selection{background:var(--gold2);color:#fff;}
 
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,249,246,0.88);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;height:56px;}
@@ -37,19 +37,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 .container{max-width:1280px;margin:0 auto;padding:0 2rem 4rem;}
 
-/* TOOLBAR */
 .toolbar{display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem;}
 .search-input{background:var(--surface);border:1px solid var(--border2);padding:0.55rem 1.2rem;font-family:inherit;font-size:0.8rem;color:var(--text);border-radius:999px;outline:none;width:260px;transition:all 0.2s;box-shadow:0 1px 3px var(--shadow);}
 .search-input:focus{border-color:var(--gold2);box-shadow:0 2px 10px var(--gold-glow);}
 .search-input::placeholder{color:var(--muted);}
-.toolbar-select{background:var(--surface);border:1px solid var(--border2);padding:0.45rem 0.8rem;font-family:inherit;font-size:0.72rem;color:var(--text);border-radius:999px;outline:none;cursor:pointer;}
 .toolbar-right{margin-left:auto;display:flex;gap:0.5rem;align-items:center;}
-.view-btn{background:none;border:1px solid var(--border2);padding:0.35rem 0.7rem;font-size:0.72rem;color:var(--muted);cursor:pointer;border-radius:4px;transition:all 0.2s;}
-.view-btn.active,.view-btn:hover{border-color:var(--gold2);color:var(--gold);}
 .stats{color:var(--muted);font-size:0.72rem;letter-spacing:0.04em;}
 .stats strong{color:var(--gold);}
 
-/* RANKING STRIP */
+/* RANKING */
 .ranking-section{margin-bottom:2rem;}
 .section-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;}
 .section-title::before{content:'';width:3px;height:1.2em;background:var(--gold);border-radius:2px;}
@@ -57,27 +53,28 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .ranking-scroll::-webkit-scrollbar{height:4px;}
 .ranking-scroll::-webkit-scrollbar-track{background:var(--bg2);border-radius:2px;}
 .ranking-scroll::-webkit-scrollbar-thumb{background:var(--gold2);border-radius:2px;}
-.rank-card{flex-shrink:0;width:130px;scroll-snap-align:start;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:all 0.25s;box-shadow:0 1px 4px var(--shadow);position:relative;}
+.rank-card{flex-shrink:0;width:140px;scroll-snap-align:start;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:all 0.25s;box-shadow:0 1px 4px var(--shadow);position:relative;}
 .rank-card:hover{border-color:var(--gold2);transform:translateY(-3px);box-shadow:0 6px 20px var(--shadow2);}
 .rank-badge{position:absolute;top:6px;left:6px;background:var(--gold);color:#fff;font-size:0.55rem;font-weight:700;padding:0.15rem 0.4rem;border-radius:3px;z-index:1;}
 .rank-card-img{height:160px;background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .rank-card-img img{height:100%;object-fit:contain;}
-.rank-card-body{padding:0.4rem 0.5rem 0.5rem;}
+.rank-card-body{padding:0.45rem 0.55rem 0.55rem;}
 .rank-card-name{font-size:0.62rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rank-card-num{font-size:0.52rem;color:var(--muted);margin-top:0.05rem;}
 .rank-card-price{font-size:0.68rem;font-weight:600;color:var(--red);margin-top:0.15rem;}
 
 /* PACK GRID */
-.pack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.25rem;}
+.pack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;}
 .pack-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all 0.3s;box-shadow:0 2px 6px var(--shadow);}
 .pack-card:hover{border-color:var(--gold2);transform:translateY(-4px);box-shadow:0 12px 36px var(--shadow2),0 0 20px var(--gold-glow);}
-.pack-card-img{height:160px;background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:1rem;}
-.pack-card-img img{max-height:100%;max-width:90%;object-fit:contain;filter:drop-shadow(0 3px 12px rgba(0,0,0,0.08));transition:transform 0.3s;}
-.pack-card:hover .pack-card-img img{transform:scale(1.06);}
-.pack-card-img .pack-emoji{font-size:3rem;opacity:0.25;}
-.pack-card-body{padding:0.9rem 1.1rem 1rem;border-top:1px solid var(--border);}
+.pack-card-body{padding:1rem 1.1rem;}
 .pack-card-name{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:400;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em;}
 .pack-card-meta{display:flex;gap:0.5rem;align-items:center;margin-top:0.5rem;font-size:0.62rem;color:var(--muted);}
 .badge{background:var(--gold-light);color:var(--gold);padding:0.15rem 0.5rem;border-radius:999px;font-size:0.58rem;font-weight:600;}
+.load-more{display:flex;justify-content:center;margin:2rem 0;}
+.load-btn{background:var(--surface);border:1px solid var(--border2);color:var(--muted);padding:0.6rem 2.5rem;font-family:inherit;font-size:0.76rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;border-radius:999px;transition:all 0.25s;}
+.load-btn:hover{border-color:var(--gold);color:var(--gold);}
+.load-btn:disabled{opacity:0.4;cursor:default;}
 
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.3);backdrop-filter:blur(6px);overflow-y:auto;padding:1.5rem;}
@@ -85,38 +82,33 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:1100px;margin:1.5rem auto;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.12);animation:modalIn 0.25s ease;}
 @keyframes modalIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
 .modal-header{display:flex;align-items:center;gap:1rem;padding:1.25rem 1.75rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1;}
-.modal-header-img{width:56px;height:56px;object-fit:contain;flex-shrink:0;}
-.modal-header-emoji{width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:var(--bg2);border-radius:10px;flex-shrink:0;}
 .modal-header-info{flex:1;min-width:0;}
 .modal-header-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;}
 .modal-header-meta{font-size:0.7rem;color:var(--muted);margin-top:0.15rem;}
 .modal-close{background:none;border:1px solid var(--border2);color:var(--muted);padding:0.35rem 1rem;font-family:inherit;font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;border-radius:999px;transition:all 0.2s;flex-shrink:0;}
 .modal-close:hover{border-color:var(--gold);color:var(--gold);}
 .modal-toolbar{display:flex;gap:0.5rem;flex-wrap:wrap;padding:0.75rem 1.75rem;border-bottom:1px solid var(--border);background:var(--bg);}
+.view-btn{background:none;border:1px solid var(--border2);padding:0.35rem 0.7rem;font-size:0.72rem;color:var(--muted);cursor:pointer;border-radius:4px;transition:all 0.2s;font-family:inherit;}
+.view-btn.active,.view-btn:hover{border-color:var(--gold2);color:var(--gold);}
 .modal-body{padding:1.25rem 1.75rem 1.75rem;}
 .modal-loading{text-align:center;padding:3rem;color:var(--muted);font-size:0.82rem;}
 
 /* CARD GRID */
-.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:0.75rem;}
-.card-item{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;cursor:pointer;transition:all 0.25s;box-shadow:0 1px 3px var(--shadow);position:relative;}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:0.85rem;}
+.card-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:all 0.25s;box-shadow:0 1px 3px var(--shadow);position:relative;}
 .card-item:hover{border-color:var(--gold2);transform:translateY(-3px);box-shadow:0 8px 24px var(--shadow2);}
 .card-img-wrap{position:relative;padding-top:140%;background:var(--bg2);overflow:hidden;}
 .card-img-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:transform 0.3s;}
 .card-item:hover .card-img-wrap img{transform:scale(1.05);}
-.card-meta{padding:0.4rem 0.55rem;}
-.card-meta-name{font-size:0.65rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.card-meta-sub{font-size:0.54rem;color:var(--muted);margin-top:0.08rem;display:flex;gap:0.25rem;align-items:center;}
-.rarity-badge{display:inline-block;padding:0.08rem 0.32rem;font-size:0.5rem;font-weight:600;border-radius:3px;background:var(--gold-light);color:var(--gold);}
-.card-price{font-size:0.6rem;font-weight:600;color:var(--red);margin-top:0.12rem;}
-
-/* PRICE TOOLTIP */
-.card-tooltip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:0.6rem 0.8rem;box-shadow:0 8px 28px rgba(0,0,0,0.12);z-index:10;width:180px;pointer-events:none;}
-.card-item:hover .card-tooltip{display:block;}
-.tooltip-name{font-size:0.7rem;font-weight:600;margin-bottom:0.3rem;}
-.tooltip-row{display:flex;justify-content:space-between;font-size:0.62rem;color:var(--muted);padding:0.12rem 0;border-bottom:1px solid var(--border);}
-.tooltip-row:last-child{border:none;}
-.tooltip-val{font-weight:600;color:var(--text);}
-.tooltip-val.price{color:var(--red);}
+.card-no-img{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;opacity:0.15;}
+.card-meta{padding:0.5rem 0.6rem 0.6rem;}
+.card-meta-name{font-size:0.68rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-meta-detail{display:flex;flex-wrap:wrap;gap:0.2rem 0.4rem;margin-top:0.25rem;align-items:center;}
+.card-meta-detail span{font-size:0.54rem;color:var(--muted);}
+.rarity-badge{display:inline-block;padding:0.1rem 0.35rem;font-size:0.52rem;font-weight:600;border-radius:3px;background:var(--gold-light);color:var(--gold);}
+.rarity-badge.sr{background:#ffe8e8;color:#c0392b;}
+.rarity-badge.sar,.rarity-badge.ur,.rarity-badge.sec{background:linear-gradient(135deg,#f5edda,#ffe8d0);color:#b8652a;}
+.card-price{font-size:0.64rem;font-weight:600;color:var(--red);margin-top:0.2rem;}
 
 /* LIGHTBOX */
 .lightbox{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;padding:2rem;}
@@ -124,13 +116,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .lightbox img{max-width:90vw;max-height:85vh;border-radius:10px;box-shadow:0 16px 60px rgba(0,0,0,0.35);}
 .lightbox-close{position:absolute;top:1.5rem;right:2rem;background:rgba(255,255,255,0.1);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:1.4rem;cursor:pointer;transition:background 0.2s;display:flex;align-items:center;justify-content:center;}
 .lightbox-close:hover{background:rgba(255,255,255,0.2);}
-.lightbox-info{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);padding:0.7rem 1.5rem;border-radius:10px;font-size:0.8rem;text-align:center;max-width:90vw;box-shadow:0 8px 28px rgba(0,0,0,0.1);}
-.lightbox-info strong{display:block;margin-bottom:0.15rem;color:var(--gold);}
+.lightbox-info{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);padding:0.8rem 1.5rem;border-radius:10px;font-size:0.8rem;text-align:center;max-width:90vw;box-shadow:0 8px 28px rgba(0,0,0,0.1);}
+.lightbox-info strong{display:block;margin-bottom:0.2rem;color:var(--gold);}
+.lightbox-detail{font-size:0.7rem;color:var(--muted);margin-top:0.15rem;}
 
-.load-more{display:flex;justify-content:center;margin:2rem 0;}
-.load-btn{background:var(--surface);border:1px solid var(--border2);color:var(--muted);padding:0.6rem 2.5rem;font-family:inherit;font-size:0.76rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;border-radius:999px;transition:all 0.25s;box-shadow:0 1px 4px var(--shadow);}
-.load-btn:hover{border-color:var(--gold);color:var(--gold);}
-.load-btn:disabled{opacity:0.4;cursor:default;}
 .loading{text-align:center;padding:3rem;color:var(--muted);font-size:0.82rem;}
 
 @media(max-width:768px){
@@ -140,15 +129,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   .toolbar{flex-direction:column;align-items:stretch;}
   .toolbar-right{margin-left:0;justify-content:space-between;}
   .search-input{width:100%;}
-  .pack-grid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:0.8rem;}
-  .pack-card-img{height:120px;}
-  .card-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem;}
+  .pack-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.8rem;}
+  .card-grid{grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:0.6rem;}
   .modal-header{padding:1rem;flex-wrap:wrap;}
   .modal-toolbar{padding:0.6rem 1rem;}
   .modal-body{padding:0.8rem 1rem;}
-  .rank-card{width:110px;}
-  .rank-card-img{height:130px;}
-  .card-tooltip{display:none!important;}
+  .rank-card{width:120px;}
+  .rank-card-img{height:140px;}
 }
 </style>
 </head>
@@ -161,7 +148,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 <div class="hero">
   <h1 class="hero-title">Card <span>Gallery</span></h1>
-  <p class="hero-sub">パック別カード画像ギャラリー / 買取価格・レアリティ情報</p>
+  <p class="hero-sub">パック別カード画像・買取価格一覧（カードラッシュ準拠）</p>
 </div>
 
 <div class="tab-bar">
@@ -170,24 +157,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 
 <div class="container">
-  <!-- RANKING -->
   <div class="ranking-section" id="rankingSection">
     <div class="section-title">高額カードランキング</div>
     <div class="ranking-scroll" id="rankingScroll"><div class="loading">読み込み中...</div></div>
   </div>
 
-  <!-- TOOLBAR -->
   <div class="toolbar">
     <input class="search-input" type="text" id="searchInput" placeholder="カード名で検索..." oninput="debounceSearch()">
     <div class="toolbar-right">
-      <span class="stats"><strong id="statsSetCount">-</strong> パック収録</span>
+      <span class="stats"><strong id="statsPackCount">-</strong> パック収録</span>
     </div>
   </div>
 
-  <!-- PACKS / SEARCH RESULTS -->
-  <div class="pack-grid" id="packGrid"><div class="loading">読み込み中...</div></div>
-  <div class="load-more" id="loadMore" style="display:none">
-    <button class="load-btn" id="loadBtn" onclick="loadMorePacks()">さらにパックを表示</button>
+  <div id="mainContent">
+    <div class="pack-grid" id="packGrid"><div class="loading">読み込み中...</div></div>
+    <div class="load-more" id="loadMore" style="display:none">
+      <button class="load-btn" id="loadBtn" onclick="showMorePacks()">さらにパックを表示</button>
+    </div>
   </div>
 </div>
 
@@ -204,92 +190,53 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
   <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
   <img id="lightboxImg" src="" alt="">
-  <div class="lightbox-info"><strong id="lightboxName"></strong><span id="lightboxMeta"></span></div>
+  <div class="lightbox-info">
+    <strong id="lightboxName"></strong>
+    <span id="lightboxMeta"></span>
+    <div class="lightbox-detail" id="lightboxDetail"></div>
+  </div>
 </div>
 
 <script>
 let currentGame = 'pokeca';
-let allSets = [];
-let setsShown = 0;
-const SETS_PER_PAGE = 24;
+let allPacks = [];
+let packsShown = 0;
+const PACKS_PER_PAGE = 30;
 let modalCards = [];
-let priceMap = {};
 let currentSort = 'number';
 let searchTimer = null;
 
-function cardImg(url) {
-  if (!url) return '';
-  if (url.includes('onepiece-cardgame.com')) return '/api/card-proxy?url=' + encodeURIComponent(url);
-  return url;
+function fmtPrice(p) {
+  if (!p) return '';
+  const n = parseInt((p+'').replace(/[^0-9]/g, ''));
+  return n > 0 ? '¥' + n.toLocaleString() : p;
+}
+
+function rarityClass(r) {
+  if (!r) return '';
+  const u = r.toUpperCase();
+  if (u === 'SR' || u === 'SUPER RARE') return 'sr';
+  if (u === 'SAR' || u === 'SPECIAL ART RARE' || u === 'ART RARE') return 'sar';
+  if (u === 'UR' || u === 'ULTRA RARE') return 'ur';
+  if (u === 'SEC' || u === 'SECRET RARE' || u.includes('SEC')) return 'sec';
+  return '';
 }
 
 // ===== INIT =====
 async function init() {
   document.getElementById('packGrid').innerHTML = '<div class="loading">読み込み中...</div>';
-  setsShown = 0;
-  await Promise.all([fetchSets(), loadRanking(), loadPriceMap(), loadPsa10Map(), loadSurges()]);
+  packsShown = 0;
+  await Promise.all([fetchPacks(), loadRanking()]);
   renderPacks(true);
 }
 
-async function fetchSets() {
+async function fetchPacks() {
   try {
-    const res = await fetch(`/api/card-images?action=sets&game=${currentGame}`);
+    const res = await fetch(`/api/card-images?action=packs&game=${currentGame}`);
     const data = await res.json();
-    allSets = (data.sets || []).filter(s => s.set_name || s.set_name_en);
-    document.getElementById('statsSetCount').textContent = allSets.length;
-  } catch(e) { console.error(e); }
-}
-
-// ===== PRICE MAP =====
-async function loadPriceMap() {
-  try {
-    const res = await fetch(`/api/card-images?action=match_prices&game=${currentGame}`);
-    const data = await res.json();
-    priceMap = {};
-    for (const p of (data.prices || [])) {
-      if (p.card_name && p.buy_price) {
-        if (!priceMap[p.card_name] || parseInt((p.buy_price||'0').replace(/[^0-9]/g,'')) > parseInt((priceMap[p.card_name].buy_price||'0').replace(/[^0-9]/g,''))) {
-          priceMap[p.card_name] = p;
-        }
-      }
-    }
-  } catch {}
-}
-
-function getPrice(cardName) {
-  return priceMap[cardName] || priceMap[(cardName||'').replace(/[（(].*[）)]/g,'').trim()] || null;
-}
-
-// ===== PSA10 MAP =====
-let psa10Map = {};
-async function loadPsa10Map() {
-  try {
-    const res = await fetch('/api/price-updater', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_psa10' }) });
-    const data = await res.json();
-    psa10Map = {};
-    for (const p of (data.prices || [])) {
-      if (p.card_name && p.estimated_price) psa10Map[p.card_name] = p;
-    }
-  } catch {}
-}
-function getPsa10(cardName) {
-  return psa10Map[cardName] || psa10Map[(cardName||'').replace(/[（(].*[）)]/g,'').trim()] || null;
-}
-
-// ===== SURGES =====
-let surgeMap = {};
-async function loadSurges() {
-  try {
-    const res = await fetch('/api/price-updater', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_surges' }) });
-    const data = await res.json();
-    surgeMap = {};
-    for (const s of (data.surges || [])) {
-      if (s.card_name) surgeMap[s.card_name] = s;
-    }
-  } catch {}
-}
-function getSurge(cardName) {
-  return surgeMap[cardName] || null;
+    allPacks = data.packs || [];
+    document.getElementById('statsPackCount').textContent = allPacks.length;
+  } catch(e) { console.error(e); allPacks = []; }
 }
 
 // ===== RANKING =====
@@ -301,12 +248,13 @@ async function loadRanking() {
     const el = document.getElementById('rankingScroll');
     if (ranking.length === 0) { el.innerHTML = '<span class="loading" style="padding:1rem">データなし</span>'; return; }
     el.innerHTML = ranking.map(r => `
-      <div class="rank-card" onclick="openLightboxDirect('${cardImg(r.image_url||'')}','${(r.card_name||'').replace(/'/g,"\\'")}','${r.buy_price||''}')">
+      <div class="rank-card" onclick="openLightboxDirect('${r.image_url||''}','${esc(r.card_name)}','${fmtPrice(r.buy_price)}','${r.model_number||''} / ${r.rarity||''}')">
         <span class="rank-badge">#${r.rank}</span>
-        <div class="rank-card-img">${r.image_url ? `<img src="${cardImg(r.image_url)}" loading="lazy">` : ''}</div>
+        <div class="rank-card-img">${r.image_url ? `<img src="${r.image_url}" loading="lazy" alt="">` : '<span style="font-size:2rem;opacity:0.15">🃏</span>'}</div>
         <div class="rank-card-body">
           <div class="rank-card-name">${r.card_name||''}</div>
-          <div class="rank-card-price">${r.buy_price||''}</div>
+          <div class="rank-card-num">${r.model_number||''} ${r.rarity && r.rarity!=='-' ? '/ '+r.rarity : ''}</div>
+          <div class="rank-card-price">${fmtPrice(r.buy_price)}</div>
         </div>
       </div>
     `).join('');
@@ -316,29 +264,26 @@ async function loadRanking() {
 // ===== PACK GRID =====
 function renderPacks(reset) {
   const grid = document.getElementById('packGrid');
-  if (reset) { grid.innerHTML = ''; setsShown = 0; }
-  const setsToShow = allSets.slice(setsShown, setsShown + SETS_PER_PAGE);
-  if (setsToShow.length === 0 && setsShown === 0) { grid.innerHTML = '<div class="loading">パックが見つかりません</div>'; document.getElementById('loadMore').style.display = 'none'; return; }
+  if (reset) { grid.innerHTML = ''; packsShown = 0; }
+  const slice = allPacks.slice(packsShown, packsShown + PACKS_PER_PAGE);
+  if (slice.length === 0 && packsShown === 0) { grid.innerHTML = '<div class="loading">パックが見つかりません</div>'; document.getElementById('loadMore').style.display='none'; return; }
 
-  for (const set of setsToShow) {
+  for (const pack of slice) {
     const el = document.createElement('div');
     el.className = 'pack-card';
-    el.onclick = () => openPackModal(set);
-    const img = set.logo_url;
-    const name = set.set_name || set.set_name_en || set.set_id;
+    el.onclick = () => openPackModal(pack.pack_name);
     el.innerHTML = `
-      <div class="pack-card-img">${img ? `<img src="${cardImg(img)}" alt="${name}" onerror="this.outerHTML='<span class=pack-emoji>🃏</span>'" loading="lazy">` : '<span class="pack-emoji">🃏</span>'}</div>
       <div class="pack-card-body">
-        <div class="pack-card-name">${name}</div>
-        <div class="pack-card-meta">${set.release_date ? `<span>${set.release_date}</span>` : ''}${set.total_cards > 0 ? `<span class="badge">${set.total_cards}枚</span>` : ''}</div>
+        <div class="pack-card-name">${pack.pack_name}</div>
+        <div class="pack-card-meta"><span class="badge">${pack.card_count}枚</span></div>
       </div>`;
     grid.appendChild(el);
   }
-  setsShown += setsToShow.length;
-  document.getElementById('loadMore').style.display = setsShown < allSets.length ? 'flex' : 'none';
+  packsShown += slice.length;
+  document.getElementById('loadMore').style.display = packsShown < allPacks.length ? 'flex' : 'none';
 }
 
-async function loadMorePacks() {
+function showMorePacks() {
   const btn = document.getElementById('loadBtn');
   btn.disabled = true; btn.textContent = '読み込み中...';
   renderPacks(false);
@@ -346,19 +291,16 @@ async function loadMorePacks() {
 }
 
 // ===== MODAL =====
-async function openPackModal(set) {
+async function openPackModal(packName) {
   const modal = document.getElementById('cardModal');
   const header = document.getElementById('modalHeader');
   const toolbar = document.getElementById('modalToolbar');
   const body = document.getElementById('modalBody');
-  const img = set.logo_url;
-  const name = set.set_name || set.set_name_en || set.set_id;
 
   header.innerHTML = `
-    ${img ? `<img class="modal-header-img" src="${cardImg(img)}" alt="" onerror="this.outerHTML='<div class=modal-header-emoji>🃏</div>'">` : '<div class="modal-header-emoji">🃏</div>'}
     <div class="modal-header-info">
-      <div class="modal-header-title">${name}</div>
-      <div class="modal-header-meta">${[set.release_date, set.total_cards ? set.total_cards+'枚' : ''].filter(Boolean).join(' / ')}</div>
+      <div class="modal-header-title">${packName}</div>
+      <div class="modal-header-meta" id="modalMeta">読み込み中...</div>
     </div>
     <button class="modal-close" onclick="closeModal()">閉じる</button>`;
 
@@ -374,68 +316,63 @@ async function openPackModal(set) {
   currentSort = 'number';
 
   try {
-    const res = await fetch(`/api/card-images?game=${currentGame}&set_id=${encodeURIComponent(set.set_id)}&limit=500`);
+    const res = await fetch(`/api/card-images?action=cards&game=${currentGame}&pack=${encodeURIComponent(packName)}`);
     const data = await res.json();
-    modalCards = (data.cards || []).filter(c => c.image_small);
-    sortAndRenderModalCards();
+    modalCards = data.cards || [];
+    document.getElementById('modalMeta').textContent = `${modalCards.length}枚収録`;
+    sortAndRenderCards();
   } catch { body.innerHTML = '<div class="modal-loading">読み込みに失敗しました</div>'; }
 }
 
-const RARITY_ORDER = {'Secret Rare':1,'Illustration Rare':2,'Art Rare':3,'Special Art Rare':3,'SAR':3,'Super Rare':4,'SR':4,'Double rare':5,'Ultra Rare':6,'Rare':7,'R':7,'Uncommon':8,'UC':8,'Common':9,'C':9,'Leader':0,'Character':10,'Event':11,'Stage':12};
+const RARITY_ORDER = {'SEC':1,'SECRET RARE':1,'SEC/SP':1,'UR':2,'ULTRA RARE':2,'SAR':3,'SPECIAL ART RARE':3,'ART RARE':3,'AR':4,'SR':5,'SUPER RARE':5,'RR':6,'DOUBLE RARE':6,'RR+':6,'R':7,'RARE':7,'UC':8,'U':8,'UNCOMMON':8,'C':9,'COMMON':9,'N':10,'L':0,'LEADER':0,'-':50};
 
 function sortCards(type, btn) {
   currentSort = type;
   document.querySelectorAll('.modal-toolbar .view-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  sortAndRenderModalCards();
+  sortAndRenderCards();
 }
 
-function sortAndRenderModalCards() {
+function sortAndRenderCards() {
   const cards = [...modalCards];
   if (currentSort === 'number') {
-    cards.sort((a,b) => (parseInt((a.number||'').replace(/^.*-/,'').replace(/_.*$/,''))||9999) - (parseInt((b.number||'').replace(/^.*-/,'').replace(/_.*$/,''))||9999));
+    cards.sort((a,b) => {
+      const na = parseInt((a.model_number||'').split('/')[0].replace(/[^0-9]/g,'')) || 9999;
+      const nb = parseInt((b.model_number||'').split('/')[0].replace(/[^0-9]/g,'')) || 9999;
+      return na - nb;
+    });
   } else if (currentSort === 'rarity') {
-    cards.sort((a,b) => (RARITY_ORDER[a.rarity]||50) - (RARITY_ORDER[b.rarity]||50));
+    cards.sort((a,b) => (RARITY_ORDER[(a.rarity||'-').toUpperCase()]||50) - (RARITY_ORDER[(b.rarity||'-').toUpperCase()]||50));
   } else if (currentSort === 'price') {
     cards.sort((a,b) => {
-      const pa = getPrice(a.card_name||a.card_name_en);
-      const pb = getPrice(b.card_name||b.card_name_en);
-      const va = pa ? parseInt((pa.buy_price||'0').replace(/[^0-9]/g,'')) : 0;
-      const vb = pb ? parseInt((pb.buy_price||'0').replace(/[^0-9]/g,'')) : 0;
+      const va = parseInt(((a.buy_price||'0')+'').replace(/[^0-9]/g,'')) || 0;
+      const vb = parseInt(((b.buy_price||'0')+'').replace(/[^0-9]/g,'')) || 0;
       return vb - va;
     });
   }
 
   const body = document.getElementById('modalBody');
-  if (cards.length === 0) { body.innerHTML = '<div class="modal-loading">このパックにはカード画像がありません</div>'; return; }
+  if (cards.length === 0) { body.innerHTML = '<div class="modal-loading">このパックにはカードがありません</div>'; return; }
 
-  body.innerHTML = `<div class="card-grid">${cards.map((c,i) => {
-    const p = getPrice(c.card_name || c.card_name_en);
-    const psa = getPsa10(c.card_name || c.card_name_en);
-    const surge = getSurge(c.card_name || c.card_name_en);
-    return `<div class="card-item" onclick="openLightbox(${i})" data-idx="${i}">
-      ${surge ? `<div style="position:absolute;top:4px;right:4px;background:#e74c3c;color:#fff;font-size:0.5rem;font-weight:700;padding:0.12rem 0.35rem;border-radius:3px;z-index:2">+${surge.change_percent}%</div>` : ''}
-      <div class="card-img-wrap"><img src="${cardImg(c.image_small)}" alt="${c.card_name||c.card_name_en||''}" loading="lazy"></div>
-      <div class="card-meta">
-        <div class="card-meta-name">${c.card_name||c.card_name_en||c.card_id||''}</div>
-        <div class="card-meta-sub">${c.rarity?`<span class="rarity-badge">${c.rarity}</span>`:''}<span>#${(c.number||'-').replace(/^.*-/,'')}</span></div>
-        ${p ? `<div class="card-price">${p.buy_price}</div>` : ''}
-        ${psa ? `<div style="font-size:0.52rem;color:var(--gold);font-weight:600;margin-top:0.05rem">PSA10: ¥${psa.estimated_price.toLocaleString()}</div>` : ''}
-      </div>
-      ${p || psa ? `<div class="card-tooltip">
-        <div class="tooltip-name">${c.card_name||c.card_name_en||''}</div>
-        ${p ? `<div class="tooltip-row"><span>買取価格</span><span class="tooltip-val price">${p.buy_price}</span></div>` : ''}
-        ${p?.sell_price ? `<div class="tooltip-row"><span>販売価格</span><span class="tooltip-val">${p.sell_price}</span></div>` : ''}
-        ${psa ? `<div class="tooltip-row"><span>PSA10相場</span><span class="tooltip-val price">¥${psa.estimated_price.toLocaleString()}</span></div>` : ''}
-        ${psa ? `<div class="tooltip-row"><span>eBay出品数</span><span class="tooltip-val">${psa.ebay_count||'-'}件</span></div>` : ''}
-        <div class="tooltip-row"><span>レアリティ</span><span class="tooltip-val">${(p?.rarity||c.rarity||'-')}</span></div>
-        ${surge ? `<div class="tooltip-row"><span>前日比</span><span class="tooltip-val" style="color:#e74c3c">+${surge.change_percent}%</span></div>` : ''}
-      </div>` : ''}
-    </div>`;
-  }).join('')}</div>`;
-
-  // Update modalCards order to match sorted
+  body.innerHTML = `<div class="card-grid">${cards.map((c,i) => renderCardItem(c,i)).join('')}</div>`;
   modalCards = cards;
+}
+
+function renderCardItem(c, idx) {
+  const rc = rarityClass(c.rarity);
+  return `<div class="card-item" onclick="openLightbox(${idx})">
+    <div class="card-img-wrap">
+      ${c.image_url ? `<img src="${c.image_url}" alt="${esc(c.card_name)}" loading="lazy">` : '<div class="card-no-img">🃏</div>'}
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-name">${c.card_name||''}</div>
+      <div class="card-meta-detail">
+        ${c.rarity && c.rarity!=='-' ? `<span class="rarity-badge ${rc}">${c.rarity}</span>` : ''}
+        ${c.model_number ? `<span>${c.model_number}</span>` : ''}
+      </div>
+      ${c.buy_price ? `<div class="card-price">${fmtPrice(c.buy_price)}</div>` : ''}
+    </div>
+  </div>`;
 }
 
 function closeModal() { document.getElementById('cardModal').classList.remove('open'); document.body.style.overflow = ''; modalCards = []; }
@@ -446,27 +383,21 @@ function debounceSearch() {
   searchTimer = setTimeout(async () => {
     const q = document.getElementById('searchInput').value.trim();
     if (!q) { init(); return; }
-    document.getElementById('packGrid').innerHTML = '<div class="loading">検索中...</div>';
-    document.getElementById('loadMore').style.display = 'none';
-    const res = await fetch(`/api/card-images?game=${currentGame}&search=${encodeURIComponent(q)}&limit=200`);
-    const data = await res.json();
-    modalCards = (data.cards || []).filter(c => c.image_small);
-    const grid = document.getElementById('packGrid');
-    if (modalCards.length === 0) { grid.innerHTML = `<div class="loading">「${q}」に一致するカードがありません</div>`; return; }
-    grid.innerHTML = `<div style="grid-column:1/-1;margin-bottom:0.5rem;font-size:0.78rem;color:var(--muted)">「${q}」の検索結果: ${modalCards.length}枚</div>`;
-    const cg = document.createElement('div'); cg.className = 'card-grid'; cg.style.gridColumn = '1/-1';
-    cg.innerHTML = modalCards.map((c,i) => {
-      const p = getPrice(c.card_name||c.card_name_en);
-      return `<div class="card-item" onclick="openLightbox(${i})">
-        <div class="card-img-wrap"><img src="${cardImg(c.image_small)}" alt="${c.card_name||c.card_name_en||''}" loading="lazy"></div>
-        <div class="card-meta">
-          <div class="card-meta-name">${c.card_name||c.card_name_en||c.card_id||''}</div>
-          <div class="card-meta-sub">${c.rarity?`<span class="rarity-badge">${c.rarity}</span>`:''}<span style="opacity:0.6">${c.set_name||''}</span></div>
-          ${p ? `<div class="card-price">${p.buy_price}</div>` : ''}
-        </div>
-      </div>`;
-    }).join('');
-    grid.appendChild(cg);
+    const content = document.getElementById('mainContent');
+    content.innerHTML = '<div class="loading">検索中...</div>';
+    try {
+      const res = await fetch(`/api/card-images?action=search&game=${currentGame}&search=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      const cards = data.cards || [];
+      modalCards = cards;
+      if (cards.length === 0) {
+        content.innerHTML = `<div class="loading">「${q}」に一致するカードがありません</div>`;
+        return;
+      }
+      content.innerHTML = `
+        <div style="margin-bottom:1rem;font-size:0.78rem;color:var(--muted)">「${q}」の検索結果: ${cards.length}枚</div>
+        <div class="card-grid">${cards.map((c,i) => renderCardItem(c,i)).join('')}</div>`;
+    } catch { content.innerHTML = '<div class="loading">検索に失敗しました</div>'; }
   }, 400);
 }
 
@@ -482,26 +413,31 @@ function setGame(game, btn) {
 // ===== LIGHTBOX =====
 function openLightbox(idx) {
   const c = modalCards[idx]; if (!c) return;
-  const u = c.image_large || c.image_small; if (!u) return;
-  document.getElementById('lightboxImg').src = cardImg(u);
-  document.getElementById('lightboxName').textContent = c.card_name || c.card_name_en || '';
-  const p = getPrice(c.card_name||c.card_name_en);
-  const psa = getPsa10(c.card_name||c.card_name_en);
-  const parts = [c.rarity, c.set_name, c.number?'#'+(c.number||'').replace(/^.*-/,''):''];
-  if (p) parts.push(p.buy_price);
-  if (psa) parts.push('PSA10: ¥' + psa.estimated_price.toLocaleString());
-  document.getElementById('lightboxMeta').textContent = parts.filter(Boolean).join(' / ');
+  const img = c.image_url; if (!img) return;
+  document.getElementById('lightboxImg').src = img;
+  document.getElementById('lightboxName').textContent = c.card_name || '';
+  document.getElementById('lightboxMeta').textContent = fmtPrice(c.buy_price);
+  const parts = [c.model_number, c.rarity && c.rarity!=='-' ? c.rarity : '', c.pack_name].filter(Boolean);
+  document.getElementById('lightboxDetail').textContent = parts.join(' / ');
   document.getElementById('lightbox').classList.add('open');
 }
-function openLightboxDirect(img,name,price) {
+function openLightboxDirect(img, name, price, detail) {
   if (!img) return;
   document.getElementById('lightboxImg').src = img;
   document.getElementById('lightboxName').textContent = name;
   document.getElementById('lightboxMeta').textContent = price;
+  document.getElementById('lightboxDetail').textContent = detail || '';
   document.getElementById('lightbox').classList.add('open');
 }
 function closeLightbox(e) { if (e && e.target !== e.currentTarget && !e.target.classList.contains('lightbox-close')) return; document.getElementById('lightbox').classList.remove('open'); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (document.getElementById('lightbox').classList.contains('open')) closeLightbox(); else if (document.getElementById('cardModal').classList.contains('open')) closeModal(); }});
+function esc(s) { return (s||'').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('lightbox').classList.contains('open')) closeLightbox();
+    else if (document.getElementById('cardModal').classList.contains('open')) closeModal();
+  }
+});
 
 init();
 </script>

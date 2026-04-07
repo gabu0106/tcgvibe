@@ -1,6 +1,13 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
 
+async function supabaseGet(query) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${query}`, {
+    headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
+  });
+  return await res.json();
+}
+
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
   if (['https://tcgvibe.com','https://www.tcgvibe.com'].includes(origin) || origin.includes('localhost')) {
@@ -10,237 +17,133 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const { game, set_id, rarity, search, limit, offset, action } = req.query;
+    const { action, game, pack, search, limit } = req.query;
+    const g = game || 'pokeca';
 
-    // カード名で画像をマッチングして返す
-    if (action === 'match') {
-      const cardName = req.query.card_name;
-      if (!cardName) return res.status(400).json({ error: 'card_name必須' });
-
-      // 完全一致 → 部分一致の順で検索
-      let url = `${SUPABASE_URL}/rest/v1/card_images?select=image_small,image_large,card_name_en,rarity,set_name&card_name_en=ilike.*${encodeURIComponent(cardName)}*&limit=1`;
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
-      });
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return res.status(200).json({ match: data[0] });
+    // パック一覧: card_prices から shop=カードラッシュ の distinct pack_name を集計
+    if (action === 'packs') {
+      // card_pricesを全件取得してJSで集計（Supabase RESTにGROUP BYはない）
+      const allCards = [];
+      let offset = 0;
+      while (true) {
+        const page = await supabaseGet(`card_prices?select=pack_name,model_number&shop=eq.カードラッシュ&game=eq.${g}&limit=1000&offset=${offset}`);
+        if (!Array.isArray(page) || page.length === 0) break;
+        allCards.push(...page);
+        if (page.length < 1000) break;
+        offset += 1000;
       }
-      return res.status(200).json({ match: null });
+      const packMap = {};
+      for (const c of allCards) {
+        const p = c.pack_name || '不明';
+        if (!packMap[p]) packMap[p] = 0;
+        packMap[p]++;
+      }
+      const packs = Object.entries(packMap)
+        .map(([name, count]) => ({ pack_name: name, card_count: count }))
+        .sort((a, b) => b.card_count - a.card_count);
+      return res.status(200).json({ packs });
     }
 
-    // 一括マッチング: card_pricesとcard_imagesをカード名で結合
-    if (action === 'match_prices') {
-      const g = game || 'pokeca';
-      // card_pricesを取得
-      let priceUrl = `${SUPABASE_URL}/rest/v1/card_prices?select=id,card_name,buy_price,rarity,shop,pack_name,model_number&limit=5000`;
-      if (g) priceUrl += `&game=eq.${g}`;
-      const priceRes = await fetch(priceUrl, {
-        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
-      });
-      const prices = await priceRes.json();
+    // パック内カード一覧: card_prices + card_images をJSでJOIN
+    if (action === 'cards') {
+      if (!pack) return res.status(400).json({ error: 'pack必須' });
 
-      // card_imagesを取得（同ゲーム、number付き、日本語名含む）
-      // card_imagesをページネーションで全件取得（Supabaseの1000件制限を回避）
-      const images = [];
-      let imgOffset = 0;
-      const IMG_PAGE = 1000;
-      while (true) {
-        const imgUrl = `${SUPABASE_URL}/rest/v1/card_images?select=card_id,card_name,card_name_en,image_small,set_id,number&game=eq.${g}&image_small=not.is.null&limit=${IMG_PAGE}&offset=${imgOffset}&order=id.asc`;
-        const imgRes = await fetch(imgUrl, {
-          headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
-        });
-        const page = await imgRes.json();
-        if (!Array.isArray(page) || page.length === 0) break;
-        images.push(...page);
-        if (page.length < IMG_PAGE) break;
-        imgOffset += IMG_PAGE;
-      }
+      // card_prices（該当パック）
+      const prices = await supabaseGet(
+        `card_prices?select=card_name,buy_price,rarity,pack_name,model_number&shop=eq.カードラッシュ&game=eq.${g}&pack_name=eq.${encodeURIComponent(pack)}&limit=1000&order=model_number.asc`
+      );
 
-      // 複数のマップを構築してマッチング精度を上げる
-      const byCardId = {};   // card_id → image
-      const bySetNum = {};   // "set_id:number" → image
-      const byNameJa = {};   // 日本語名 → image
-      const byNameEn = {};   // english name → image
+      // card_images（該当パック、cardrushソース）
+      const images = await supabaseGet(
+        `card_images?select=card_name,image_small,number,rarity&card_id=like.cardrush-${g}-*&set_id=eq.${encodeURIComponent(pack)}&limit=1000`
+      );
+      const imgMap = {};
       if (Array.isArray(images)) {
         for (const img of images) {
-          if (!img.image_small) continue;
-          if (img.card_id) byCardId[img.card_id.toLowerCase()] = img.image_small;
-          if (img.set_id && img.number) bySetNum[`${img.set_id}:${img.number}`] = img.image_small;
-          if (img.card_name) {
-            const key = img.card_name;
-            if (!byNameJa[key]) byNameJa[key] = img.image_small;
-          }
-          if (img.card_name_en) {
-            const key = img.card_name_en.toLowerCase();
-            if (!byNameEn[key]) byNameEn[key] = img.image_small;
-          }
+          if (img.card_name && img.image_small) imgMap[img.card_name] = img.image_small;
         }
       }
 
-      // 日本語pack_name → 英語set_idの正規化候補を生成
-      function normalizePackName(pack) {
-        const p = pack.toLowerCase().trim();
-        const variants = [p];
-        // sm4+ → sm4  /  sm4A → sm4  /  sm4S → sm4
-        variants.push(p.replace(/[+]$/, ''));
-        variants.push(p.replace(/[a-z]$/, ''));
-        // S10D → s10  /  S10P → s10  /  S10a → s10
-        variants.push(p.replace(/[a-z]$/i, ''));
-        // s1H → s1  /  s1W → s1  /  s1a → s1
-        // sv → sv  (keep as is)
-        // 151C → sv2a (special mapping) - skip, too specific
-        // smP2 → smp
-        if (p.startsWith('smp')) variants.push('smp');
-        // BW1白 → bw1 (remove japanese suffix)
-        variants.push(p.replace(/[^\x00-\x7F]+/g, ''));
-        // M1L/M1S → me1, M2 → me2, M2a → me2pt5, M3 → me3
-        if (/^m\d/.test(p)) {
-          const mNum = p.match(/^m(\d+)/)?.[1];
-          if (mNum) {
-            variants.push(`me${mNum}`);
-            if (p.includes('a')) variants.push(`me${mNum}pt5`);
-          }
-        }
-        // sv3.5 → sv3pt5
-        variants.push(p.replace(/\.5/g, 'pt5').replace(/\./g, 'pt'));
-        // sm3.5 → sm35
-        variants.push(p.replace(/\./g, ''));
-        // s→sv mapping: s1 → sv1 etc (newer sets)
-        if (/^s\d/.test(p) && !p.startsWith('sv') && !p.startsWith('sm')) {
-          variants.push('sv' + p.substring(1).replace(/[a-z]$/i, ''));
-        }
-        return [...new Set(variants)];
-      }
+      const cards = (Array.isArray(prices) ? prices : []).map(p => ({
+        card_name: p.card_name,
+        buy_price: p.buy_price,
+        rarity: p.rarity,
+        pack_name: p.pack_name,
+        model_number: p.model_number,
+        image_url: imgMap[p.card_name] || null,
+      }));
 
-      // 価格データに画像URLを付与（複数戦略でマッチ）
-      const matched = (Array.isArray(prices) ? prices : []).map(p => {
-        let image = null;
-        const cardName = (p.card_name || '').trim();
-
-        // 戦略0: 日本語カード名で直接マッチ（TCGdexのcard_nameと照合）
-        if (cardName && byNameJa[cardName]) {
-          image = byNameJa[cardName];
-        }
-        // 括弧やサフィックスを除去して再マッチ
-        if (!image && cardName) {
-          const baseName = cardName.replace(/[（(].*[）)]/g, '').replace(/(VMAX|VSTAR|V|ex|EX|GX|BREAK|δ)$/g, '').trim();
-          if (baseName && byNameJa[baseName]) image = byNameJa[baseName];
-          // 部分一致
-          if (!image) {
-            for (const [key, url] of Object.entries(byNameJa)) {
-              if (key.includes(cardName) || cardName.includes(key)) {
-                image = url;
-                break;
-              }
-            }
-          }
-        }
-
-        // 戦略1: pack_name + model_number → card_id/set_id:number マッチ
-        if (!image && p.pack_name && p.model_number) {
-          const num = p.model_number.split('/')[0];
-          const setVariants = normalizePackName(p.pack_name);
-          for (const setId of setVariants) {
-            const cid = `${setId}-${num}`;
-            if (byCardId[cid]) { image = byCardId[cid]; break; }
-            const sn = `${setId}:${num}`;
-            if (bySetNum[sn]) { image = bySetNum[sn]; break; }
-          }
-        }
-
-        // 戦略2: model_number(番号部分)で全set_idを横断検索
-        if (!image && p.model_number) {
-          const num = p.model_number.split('/')[0];
-          const packBase = (p.pack_name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-          for (const [key, url] of Object.entries(bySetNum)) {
-            const [sid, snum] = key.split(':');
-            if (snum === num && sid.startsWith(packBase.substring(0, 2))) {
-              image = url;
-              break;
-            }
-          }
-        }
-
-        return { ...p, image_url: image };
-      });
-
-      const matchedCount = matched.filter(m => m.image_url).length;
-      return res.status(200).json({ prices: matched, total: matched.length, matched: matchedCount });
+      return res.status(200).json({ cards, total: cards.length });
     }
 
-    // 高額カードランキング（card_pricesの高い順 + 画像付き）
-    if (action === 'ranking') {
-      const g = game || 'pokeca';
-      const rankLimit = parseInt(limit) || 20;
-      // card_pricesを価格順で取得
-      let priceUrl = `${SUPABASE_URL}/rest/v1/card_prices?select=id,card_name,buy_price,sell_price,rarity,shop,pack_name,model_number&game=eq.${g}&order=id.asc&limit=5000`;
-      const priceRes = await fetch(priceUrl, { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY } });
-      const prices = await priceRes.json();
-      if (!Array.isArray(prices)) return res.status(200).json({ ranking: [] });
-
-      // 価格でソート（数値変換）
-      const sorted = prices
-        .map(p => ({ ...p, price_num: parseInt((p.buy_price || '0').replace(/[^0-9]/g, '')) }))
-        .filter(p => p.price_num > 0)
-        .sort((a, b) => b.price_num - a.price_num);
-      // 重複カード名を除去して上位を取得
-      const seen = new Set();
-      const top = [];
-      for (const p of sorted) {
-        if (!seen.has(p.card_name)) { seen.add(p.card_name); top.push(p); }
-        if (top.length >= rankLimit) break;
+    // カード検索
+    if (action === 'search') {
+      if (!search) return res.status(400).json({ error: 'search必須' });
+      const q = encodeURIComponent(search);
+      const prices = await supabaseGet(
+        `card_prices?select=card_name,buy_price,rarity,pack_name,model_number&shop=eq.カードラッシュ&game=eq.${g}&card_name=ilike.*${q}*&limit=${parseInt(limit) || 200}&order=model_number.asc`
+      );
+      // 画像をまとめて取得
+      const images = await supabaseGet(
+        `card_images?select=card_name,image_small&card_id=like.cardrush-${g}-*&card_name=ilike.*${q}*&limit=500`
+      );
+      const imgMap = {};
+      if (Array.isArray(images)) {
+        for (const img of images) {
+          if (img.card_name && img.image_small) imgMap[img.card_name] = img.image_small;
+        }
       }
+      const cards = (Array.isArray(prices) ? prices : []).map(p => ({
+        card_name: p.card_name,
+        buy_price: p.buy_price,
+        rarity: p.rarity,
+        pack_name: p.pack_name,
+        model_number: p.model_number,
+        image_url: imgMap[p.card_name] || null,
+      }));
+      return res.status(200).json({ cards, total: cards.length });
+    }
 
-      // 画像をマッチング（ページネーションで全取得）
+    // 高額カードランキング
+    if (action === 'ranking') {
+      const rankLimit = parseInt(limit) || 20;
+      const allPrices = [];
+      let offset = 0;
+      while (true) {
+        const page = await supabaseGet(`card_prices?select=card_name,buy_price,rarity,pack_name,model_number&shop=eq.カードラッシュ&game=eq.${g}&limit=1000&offset=${offset}`);
+        if (!Array.isArray(page) || page.length === 0) break;
+        allPrices.push(...page);
+        if (page.length < 1000) break;
+        offset += 1000;
+      }
+      // 画像
       const images = [];
       let imgOff = 0;
       while (true) {
-        const imgUrl = `${SUPABASE_URL}/rest/v1/card_images?select=card_name,image_small&game=eq.${g}&card_name=not.is.null&image_small=not.is.null&limit=1000&offset=${imgOff}`;
-        const r = await fetch(imgUrl, { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY } });
-        const pg = await r.json();
+        const pg = await supabaseGet(`card_images?select=card_name,image_small&card_id=like.cardrush-${g}-*&limit=1000&offset=${imgOff}`);
         if (!Array.isArray(pg) || pg.length === 0) break;
         images.push(...pg);
         if (pg.length < 1000) break;
         imgOff += 1000;
       }
       const imgMap = {};
-      for (const img of images) { if (img.card_name && img.image_small && !imgMap[img.card_name]) imgMap[img.card_name] = img.image_small; }
+      for (const img of images) {
+        if (img.card_name && img.image_small) imgMap[img.card_name] = img.image_small;
+      }
 
-      const ranking = top.map((p, i) => ({ ...p, rank: i + 1, image_url: imgMap[p.card_name] || null }));
+      const seen = new Set();
+      const ranking = allPrices
+        .map(p => ({ ...p, price_num: parseInt((p.buy_price || '0').replace(/[^0-9]/g, '')) }))
+        .filter(p => p.price_num > 0)
+        .sort((a, b) => b.price_num - a.price_num)
+        .filter(p => { if (seen.has(p.card_name)) return false; seen.add(p.card_name); return true; })
+        .slice(0, rankLimit)
+        .map((p, i) => ({ ...p, rank: i + 1, image_url: imgMap[p.card_name] || null }));
+
       return res.status(200).json({ ranking });
     }
 
-    // セット一覧を取得（日本語名があるセットを優先）
-    if (action === 'sets') {
-      let url = `${SUPABASE_URL}/rest/v1/card_sets?select=set_id,set_name,set_name_en,game,release_date,total_cards,logo_url,symbol_url&order=release_date.desc.nullslast`;
-      if (game) url += `&game=eq.${game}`;
-      // 日本語名(set_name)があるセットのみ返す
-      url += `&set_name=not.is.null`;
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
-      });
-      const data = await response.json();
-      return res.status(200).json({ sets: Array.isArray(data) ? data : [] });
-    }
-
-    // カード画像一覧（メイン）— 日本語データ（card_nameあり）を優先表示
-    let url = `${SUPABASE_URL}/rest/v1/card_images?select=*&order=id.desc`;
-    if (game) url += `&game=eq.${game}`;
-    if (set_id) url += `&set_id=eq.${set_id}`;
-    if (rarity) url += `&rarity=eq.${rarity}`;
-    if (search) url += `&or=(card_name.ilike.*${encodeURIComponent(search)}*,card_name_en.ilike.*${encodeURIComponent(search)}*)`;
-    // 日本語データを優先: card_nameがnullでない＋画像ありのものだけ表示
-    if (!set_id && !search) url += `&card_name=not.is.null&image_small=not.is.null`;
-    url += `&limit=${parseInt(limit) || 100}`;
-    if (offset) url += `&offset=${parseInt(offset)}`;
-
-    const response = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY },
-    });
-    const data = await response.json();
-    return res.status(200).json({ cards: Array.isArray(data) ? data : [], count: Array.isArray(data) ? data.length : 0 });
-
+    return res.status(400).json({ error: 'action必須', actions: ['packs', 'cards', 'ranking', 'search'] });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
