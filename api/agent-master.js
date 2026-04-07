@@ -654,6 +654,35 @@ export default async function handler(req, res) {
     } catch (e) { return res.status(500).json({ error: e.message }); }
   }
 
+  // --- Oripa layout learning ---
+  if (action === 'oripa_save_layout') {
+    try {
+      const layout = req.body?.layout;
+      if (!layout) return res.status(400).json({ error: 'layout required' });
+      await saveMemory('oripa_designer',
+        `[承認済レイアウト] items:${layout.itemCount} theme:${layout.theme} config:${JSON.stringify(layout)}`,
+        7);
+      return res.status(200).json({ status: 'saved' });
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
+  if (action === 'oripa_get_patterns') {
+    try {
+      const raw = await loadMemory('oripa_designer');
+      const patterns = [];
+      if (typeof raw === 'string') {
+        // Parse each memory line for layout configs
+        for (const line of raw.split('\n')) {
+          const m = line.match(/config:(\{.+\})$/);
+          if (m) {
+            try { patterns.push(JSON.parse(m[1])); } catch {}
+          }
+        }
+      }
+      return res.status(200).json({ patterns });
+    } catch (e) { return res.status(200).json({ patterns: [] }); }
+  }
+
   if (action === 'learn') {
     try {
       diagnostics.length = 0;

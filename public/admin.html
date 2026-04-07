@@ -443,6 +443,7 @@
             </div>
             <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap">
               <button class="btn btn-gold" onclick="oriAutoLayout()">自動配置</button>
+              <button class="btn btn-outline" onclick="oriSaveLayout()" title="現在のレイアウトをAIに学習させる">💾 レイアウト学習</button>
               <button class="btn btn-success" onclick="oriDownload()">PNG保存</button>
               <button class="btn" onclick="oriCopyForX()">X投稿用コピー</button>
             </div>
@@ -1124,13 +1125,68 @@ function oriListDrop(e, idx) {
 // --- Smart auto layout: sort by price, top-3 large upper row, rest small lower row ---
 // Render uses: cardH_px = h*0.46*mult, cardW_px = cardH_px*0.716
 // Position: px = it.x*w, py = it.y*h  (x,y are 0-1 fractions)
-// So fractional dims: fw = 0.46*mult*0.716*(h/w), fh = 0.46*mult
 function oriItemFracDims(mult, ww, hh, isBox) {
   const fh = 0.46 * mult;
   const fw = isBox ? fh * (hh / ww) : fh * 0.716 * (hh / ww);
   return { fw, fh };
 }
 
+// Compute text zone: the vertical band occupied by visible text elements
+function oriTextZone() {
+  const { w, h } = oriGetSize();
+  const sc = w / 1200;
+  let topY = 1, botY = 0;
+  for (const t of Object.values(oriTextEls)) {
+    if (!t.text) continue;
+    const halfH = (t.fontSize * sc * 0.7) / h;
+    const ty = t.y - halfH;
+    const by = t.y + halfH;
+    if (ty < topY) topY = ty;
+    if (by > botY) botY = by;
+  }
+  if (topY >= botY) return { top: 0.60, bottom: 0.95 }; // default
+  return { top: Math.max(0, topY - 0.02), bottom: Math.min(1, botY + 0.02) };
+}
+
+// --- AI-learned layout patterns ---
+let oriLearnedPatterns = null; // loaded from agent_memory
+
+async function oriLoadLearnedPatterns() {
+  try {
+    const res = await fetch('/api/agent-master', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'oripa_get_patterns' }),
+    });
+    const data = await res.json();
+    if (data.patterns) oriLearnedPatterns = data.patterns;
+  } catch(e) { /* silent */ }
+}
+
+async function oriSaveLayout() {
+  if (!oriItems.length) return;
+  const layout = {
+    itemCount: oriItems.length,
+    theme: document.getElementById('ori-theme').value,
+    size: document.getElementById('ori-size').value,
+    items: oriItems.map(it => ({ size: it.size, x: +it.x.toFixed(3), y: +it.y.toFixed(3), priceRank: 0 })),
+    textEls: Object.fromEntries(Object.entries(oriTextEls).filter(([,t]) => t.text).map(([k,t]) => [k, { x: +t.x.toFixed(3), y: +t.y.toFixed(3), fontSize: t.fontSize }])),
+  };
+  // Assign price ranks
+  const sorted = [...oriItems].sort((a,b) => b.priceNum - a.priceNum);
+  oriItems.forEach((it, i) => { layout.items[i].priceRank = sorted.indexOf(it); });
+
+  try {
+    await fetch('/api/agent-master', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'oripa_save_layout', layout }),
+    });
+    showMsg('ori-status', 'success', '✓ レイアウトを学習データとして保存しました');
+  } catch(e) { showMsg('ori-status', 'error', '保存に失敗しました'); }
+}
+
+// --- Smart auto layout ---
 function oriAutoLayout() {
   if (!oriItems.length) { oriAutoPreview(); return; }
   const { w, h } = oriGetSize();
@@ -1141,94 +1197,89 @@ function oriAutoLayout() {
   oriItems.push(...sorted);
 
   const n = oriItems.length;
-  const mainCount = Math.min(3, n);
-  const subCount = n - mainCount;
-  const hasSubRow = subCount > 0;
-
-  // Assign sizes: 1st card biggest, top-3 large, rest small
-  for (let i = 0; i < n; i++) {
-    if (n === 1) oriItems[i].size = 'xl';
-    else if (n === 2) oriItems[i].size = 'lg';
-    else if (i < mainCount) oriItems[i].size = i === 0 ? 'lg' : 'lg';
-    else oriItems[i].size = 'sm';
-  }
-
-  // Layout zones (fractional 0-1)
-  const mainTop = 0.03;
-  const mainBottom = hasSubRow ? 0.50 : 0.56;
   const gap = 0.015;
-
-  // Main row: fit cards within zone height, then center horizontally
-  const mainMult = ORI_SIZES[oriItems[0]?.size || 'lg'];
-  let mainDims = oriItemFracDims(mainMult, w, h, false);
-
-  // Scale down if cards exceed zone height
-  let mainScale = 1;
-  if (mainDims.fh > (mainBottom - mainTop) * 0.92) {
-    mainScale = (mainBottom - mainTop) * 0.92 / mainDims.fh;
-  }
-
-  // Compute total width of main row
-  let mainWidths = [];
-  for (let i = 0; i < mainCount; i++) {
-    const m = ORI_SIZES[oriItems[i].size] || 1.0;
-    const d = oriItemFracDims(m, w, h, oriItems[i].type === 'box');
-    mainWidths.push(d.fw * mainScale);
-  }
-  let mainTotalW = mainWidths.reduce((a, b) => a + b, 0) + gap * (mainCount - 1);
-
-  // If too wide, scale down further
   const maxRowW = 0.92;
-  if (mainTotalW > maxRowW) {
-    const shrink = maxRowW / mainTotalW;
-    mainScale *= shrink;
-    mainWidths = mainWidths.map(w => w * shrink);
-    mainTotalW = maxRowW;
+  const margin = 0.04;
+
+  // Compute text zone to avoid
+  const tz = oriTextZone();
+  // Card area = everything above the text zone
+  const cardTop = margin;
+  const cardBottom = tz.top - 0.01;
+  const cardH = Math.max(cardBottom - cardTop, 0.2);
+
+  // Check for learned pattern with same item count
+  let learned = null;
+  if (oriLearnedPatterns && Array.isArray(oriLearnedPatterns)) {
+    learned = oriLearnedPatterns.find(p => p.itemCount === n);
   }
 
-  let cx = 0.5 - mainTotalW / 2;
-  for (let i = 0; i < mainCount; i++) {
-    const m = ORI_SIZES[oriItems[i].size] || 1.0;
-    const d = oriItemFracDims(m, w, h, oriItems[i].type === 'box');
-    const fh = d.fh * mainScale;
-    oriItems[i].x = cx;
-    oriItems[i].y = mainTop + ((mainBottom - mainTop) - fh) / 2;
-    cx += mainWidths[i] + gap;
-  }
-
-  // Sub row
-  if (subCount > 0) {
-    const subTop = hasSubRow ? 0.49 : 0.56;
-    const subMult = ORI_SIZES['sm'];
-    let subDims = oriItemFracDims(subMult, w, h, false);
-    let subScale = 1;
-
-    // Compute total width
-    let subWidths = [];
-    for (let i = mainCount; i < n; i++) {
-      const m = ORI_SIZES[oriItems[i].size] || 0.42;
-      const d = oriItemFracDims(m, w, h, oriItems[i].type === 'box');
-      subWidths.push(d.fw * subScale);
+  if (learned && learned.items && learned.items.length === n) {
+    // Apply learned layout: map price-ranked positions
+    for (let i = 0; i < n; i++) {
+      const lp = learned.items[i]; // learned position for i-th highest price card
+      if (lp) {
+        oriItems[i].x = lp.x;
+        oriItems[i].y = lp.y;
+        oriItems[i].size = lp.size || 'md';
+      }
     }
-    let subTotalW = subWidths.reduce((a, b) => a + b, 0) + gap * (subCount - 1);
+  } else {
+    // Algorithmic layout: main row (top 3) + sub row (rest)
+    const mainCount = Math.min(3, n);
+    const subCount = n - mainCount;
+    const hasSubRow = subCount > 0;
 
-    // Scale down if too wide
-    if (subTotalW > maxRowW) {
-      const shrink = maxRowW / subTotalW;
-      subScale *= shrink;
-      subWidths = subWidths.map(w => w * shrink);
-      subTotalW = maxRowW;
+    // Assign sizes based on price rank
+    for (let i = 0; i < n; i++) {
+      if (n === 1) oriItems[i].size = 'xl';
+      else if (n <= 3) oriItems[i].size = i === 0 ? 'lg' : 'md';
+      else if (i < mainCount) oriItems[i].size = i === 0 ? 'lg' : 'md';
+      else oriItems[i].size = 'sm';
     }
 
-    let sx = 0.5 - subTotalW / 2;
-    for (let i = 0; i < subCount; i++) {
-      const si = mainCount + i;
-      const m = ORI_SIZES[oriItems[si].size] || 0.42;
-      const d = oriItemFracDims(m, w, h, oriItems[si].type === 'box');
-      const fh = d.fh * subScale;
-      oriItems[si].x = sx;
-      oriItems[si].y = subTop;
-      sx += subWidths[i] + gap;
+    // Split card zone into main row and sub row
+    const mainZoneH = hasSubRow ? cardH * 0.72 : cardH;
+    const subZoneH = hasSubRow ? cardH * 0.28 : 0;
+    const mainZoneTop = cardTop;
+    const subZoneTop = cardTop + mainZoneH;
+
+    // Layout a row: returns scaled widths, centers horizontally
+    function layoutRow(items, zoneTop, zoneH) {
+      if (!items.length) return;
+      // Compute dims and find scale to fit zone height
+      const dims = items.map(it => {
+        const m = ORI_SIZES[it.size] || 1.0;
+        return oriItemFracDims(m, w, h, it.type === 'box');
+      });
+      const maxFh = Math.max(...dims.map(d => d.fh));
+      let scale = (zoneH * 0.90) / maxFh;
+
+      // Compute total width at this scale
+      let widths = dims.map(d => d.fw * scale);
+      let totalW = widths.reduce((a, b) => a + b, 0) + gap * (items.length - 1);
+
+      // Shrink if too wide
+      if (totalW > maxRowW) {
+        const shrink = maxRowW / totalW;
+        scale *= shrink;
+        widths = widths.map(ww => ww * shrink);
+        totalW = maxRowW;
+      }
+
+      // Position
+      let cx = 0.5 - totalW / 2;
+      for (let i = 0; i < items.length; i++) {
+        const fh = dims[i].fh * scale;
+        items[i].x = cx;
+        items[i].y = zoneTop + (zoneH - fh) / 2;
+        cx += widths[i] + gap;
+      }
+    }
+
+    layoutRow(oriItems.slice(0, mainCount), mainZoneTop, mainZoneH);
+    if (subCount > 0) {
+      layoutRow(oriItems.slice(mainCount), subZoneTop, subZoneH);
     }
   }
 
@@ -1625,6 +1676,7 @@ async function oriCopyForX() {
 oriRenderTextEls();
 oriRenderItemsList();
 setTimeout(() => oriRender(), 100);
+oriLoadLearnedPatterns();
 </script>
 </body>
 </html>
