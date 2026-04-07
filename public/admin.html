@@ -101,6 +101,17 @@
   .pending-card-body{padding:1.25rem 1.5rem;font-size:0.85rem;line-height:1.8;white-space:pre-wrap;max-height:300px;overflow-y:auto;color:var(--text);background:var(--bg2);}
   .pending-card-footer{display:flex;gap:0.75rem;padding:1rem 1.5rem;flex-wrap:wrap;align-items:center;}
   .pending-card-footer .status-msg{margin:0;}
+  /* ORIPA */
+  .ori-result-card{position:relative;cursor:pointer;border:2px solid var(--border);border-radius:4px;overflow:hidden;transition:border-color 0.15s,transform 0.15s;background:var(--bg2)}
+  .ori-result-card:hover{border-color:var(--gold);transform:translateY(-2px)}
+  .ori-result-card img{width:100%;aspect-ratio:0.716;object-fit:cover;display:block}
+  .ori-result-card .ori-card-name{font-size:0.65rem;padding:0.3rem 0.4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+  .ori-result-card .ori-card-price{font-size:0.6rem;color:var(--gold);text-align:center;padding-bottom:0.3rem}
+  .ori-sel-card{position:relative;width:90px;cursor:pointer;border:2px solid var(--gold2);border-radius:4px;overflow:hidden;transition:transform 0.15s}
+  .ori-sel-card:hover{transform:scale(1.05)}
+  .ori-sel-card img{width:100%;aspect-ratio:0.716;object-fit:cover;display:block}
+  .ori-sel-card .ori-sel-badge{position:absolute;top:2px;right:2px;background:var(--danger);color:#fff;font-size:0.55rem;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1}
+  .ori-sel-card .ori-sel-label{font-size:0.6rem;text-align:center;padding:0.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   @media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:1.5rem;}.stat-grid{grid-template-columns:1fr 1fr;}.two-col{grid-template-columns:1fr;}}
 </style>
 </head>
@@ -181,6 +192,8 @@
       <div class="nav-item" onclick="showPage('siteStatus',this)"><span class="nav-icon">🌐</span>公開設定</div>
       <div class="nav-item" onclick="showPage('games',this)"><span class="nav-icon">🃏</span>対応ゲーム</div>
       <div class="nav-item" onclick="showPage('prices',this)"><span class="nav-icon">📈</span>価格テーブル</div>
+      <div class="nav-section">ツール</div>
+      <div class="nav-item" onclick="showPage('oripa',this)"><span class="nav-icon">🎰</span>オリパ画像作成</div>
       <div class="nav-section">AI設定</div>
       <div class="nav-item" onclick="showPage('learning',this)"><span class="nav-icon">🧠</span>学習状況</div>
       <div class="nav-item" onclick="showPage('aiPrompt',this)"><span class="nav-icon">🤖</span>AIプロンプト</div>
@@ -347,6 +360,86 @@
       <div class="card">
         <div class="card-title">学習レポート</div>
         <pre id="learn-report" style="font-size:0.8rem;line-height:1.6;white-space:pre-wrap;color:var(--text);background:var(--bg2);padding:1rem;border-radius:2px;max-height:300px;overflow-y:auto">読み込み中...</pre>
+      </div>
+    </div>
+
+    <!-- ORIPA IMAGE CREATOR -->
+    <div class="page" id="page-oripa">
+      <h1 class="page-title">オリパ画像作成</h1>
+      <p class="page-desc">ド派手なオリパ宣伝画像をCanvas APIで生成します</p>
+
+      <div class="card">
+        <div class="card-title">基本情報</div>
+        <div class="two-col">
+          <div><label>オリパ名</label><input type="text" id="ori-name" placeholder="例：超豪華オリパ" value="超豪華オリパ"></div>
+          <div><label>サブタイトル</label><input type="text" id="ori-subtitle" placeholder="例：高額カード確定！"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+          <div><label>価格</label><input type="text" id="ori-price" placeholder="例：¥4,000" value="¥4,000"></div>
+          <div><label>ポイント</label><input type="text" id="ori-points" placeholder="例：ALL 330P" value="ALL 330P"></div>
+          <div><label>口数</label><input type="text" id="ori-lots" placeholder="例：限定100口"></div>
+        </div>
+        <label>注意書き</label>
+        <input type="text" id="ori-note" placeholder="例：※画像はイメージです" value="※画像はイメージです。カードの状態は個体差があります。">
+      </div>
+
+      <div class="card">
+        <div class="card-title">封入カード選択</div>
+        <div style="display:flex;gap:0.75rem;margin-bottom:1rem">
+          <input type="text" id="ori-search" placeholder="カード名で検索..." style="margin:0;flex:1" onkeydown="if(event.key==='Enter')oriSearchCards()">
+          <button class="btn" onclick="oriSearchCards()">検索</button>
+        </div>
+        <div id="ori-search-results" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:0.5rem;max-height:300px;overflow-y:auto;margin-bottom:1.25rem"></div>
+        <div class="card-title" style="margin-top:0.5rem">選択済みカード（ドラッグで並替え・クリックで削除）</div>
+        <div id="ori-selected-cards" style="display:flex;gap:0.75rem;flex-wrap:wrap;min-height:60px;padding:0.75rem;background:var(--bg2);border:1px dashed var(--border);border-radius:2px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">デザイン設定</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+          <div>
+            <label>出力サイズ</label>
+            <select id="ori-size" onchange="oriUpdatePreview()">
+              <option value="x">X投稿用 (1200×675)</option>
+              <option value="a4">印刷用 A4横 (3508×2480)</option>
+            </select>
+          </div>
+          <div>
+            <label>背景テーマ</label>
+            <select id="ori-theme" onchange="oriUpdatePreview()">
+              <option value="rainbow">虹色キラキラ</option>
+              <option value="gold">ゴールド豪華</option>
+              <option value="dark">ダーク高級</option>
+              <option value="blue">ブルーオーシャン</option>
+            </select>
+          </div>
+          <div>
+            <label>メインカード枚数</label>
+            <select id="ori-main-count" onchange="oriUpdatePreview()">
+              <option value="1">1枚（センター大）</option>
+              <option value="2">2枚</option>
+              <option value="3" selected>3枚</option>
+              <option value="5">5枚</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:2rem;margin-top:0.5rem">
+          <div class="toggle-wrap" style="margin:0">
+            <label class="toggle"><input type="checkbox" id="ori-psa" checked onchange="oriUpdatePreview()"><span class="toggle-slider"></span></label>
+            <span class="toggle-label">PSA10バッジ表示</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">プレビュー</div>
+        <div style="text-align:center;background:#111;padding:1.5rem;border-radius:2px;overflow:auto">
+          <canvas id="ori-canvas" style="max-width:100%;height:auto;border:1px solid rgba(255,255,255,0.1)"></canvas>
+        </div>
+        <div style="display:flex;gap:0.75rem;margin-top:1.25rem;flex-wrap:wrap">
+          <button class="btn btn-gold" onclick="oriUpdatePreview()">プレビュー更新</button>
+          <button class="btn btn-success" onclick="oriDownload()">ダウンロード (PNG)</button>
+        </div>
       </div>
     </div>
 
@@ -830,6 +923,482 @@ function showMsg(id, type, text) {
   el.className = 'status-msg' + (type ? ' show ' + type : '');
   if (text) setTimeout(() => el.classList.remove('show'), 3000);
 }
+
+// ===== ORIPA IMAGE CREATOR =====
+const oriSelectedCards = [];
+
+async function oriSearchCards() {
+  const q = document.getElementById('ori-search').value.trim();
+  if (!q) return;
+  const el = document.getElementById('ori-search-results');
+  el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">検索中...</p>';
+  try {
+    const res = await fetch(`/api/card-images?action=search&game=pokeca&search=${encodeURIComponent(q)}&limit=50`);
+    const data = await res.json();
+    const cards = data.cards || [];
+    if (!cards.length) { el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">見つかりませんでした</p>'; return; }
+    el.innerHTML = cards.filter(c => c.image_url).map((c, i) => `
+      <div class="ori-result-card" onclick="oriAddCard(${i})" data-idx="${i}">
+        <img src="${c.image_url}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'">
+        <div class="ori-card-name">${c.card_name}</div>
+        <div class="ori-card-price">${c.buy_price || ''}</div>
+      </div>
+    `).join('');
+    window._oriSearchResults = cards;
+  } catch(e) { el.innerHTML = '<p style="color:var(--danger);font-size:0.8rem">エラー: '+e.message+'</p>'; }
+}
+
+function oriAddCard(idx) {
+  const c = window._oriSearchResults?.[idx];
+  if (!c || !c.image_url) return;
+  if (oriSelectedCards.length >= 10) { alert('最大10枚まで選択できます'); return; }
+  oriSelectedCards.push({ ...c });
+  oriRenderSelected();
+  oriUpdatePreview();
+}
+
+function oriRemoveCard(idx) {
+  oriSelectedCards.splice(idx, 1);
+  oriRenderSelected();
+  oriUpdatePreview();
+}
+
+function oriRenderSelected() {
+  const el = document.getElementById('ori-selected-cards');
+  if (!oriSelectedCards.length) { el.innerHTML = '<p style="color:var(--muted);font-size:0.75rem;margin:auto">カードを検索して追加してください</p>'; return; }
+  el.innerHTML = oriSelectedCards.map((c, i) => `
+    <div class="ori-sel-card" onclick="oriRemoveCard(${i})">
+      <div class="ori-sel-badge">×</div>
+      <img src="${c.image_url}" alt="">
+      <div class="ori-sel-label">${c.card_name}</div>
+    </div>
+  `).join('');
+}
+
+function oriGetSize() {
+  const s = document.getElementById('ori-size').value;
+  return s === 'a4' ? { w: 3508, h: 2480 } : { w: 1200, h: 675 };
+}
+
+// Load image with CORS handling
+function oriLoadImg(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+// ---- Canvas Drawing ----
+
+const ORI_THEMES = {
+  rainbow: {
+    bg: (ctx, w, h) => {
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, '#1a0533'); g.addColorStop(0.15, '#2d1b69');
+      g.addColorStop(0.3, '#0d3b66'); g.addColorStop(0.5, '#1a5c3a');
+      g.addColorStop(0.7, '#8b6914'); g.addColorStop(0.85, '#8b1a1a');
+      g.addColorStop(1, '#4a0e4e');
+      return g;
+    },
+    accent: '#ffd700', accent2: '#ff6ec7', glow: 'rgba(255,215,0,0.3)',
+  },
+  gold: {
+    bg: (ctx, w, h) => {
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, '#1a1000'); g.addColorStop(0.3, '#3d2800');
+      g.addColorStop(0.6, '#5c3d00'); g.addColorStop(1, '#1a1000');
+      return g;
+    },
+    accent: '#ffd700', accent2: '#ffaa00', glow: 'rgba(255,180,0,0.35)',
+  },
+  dark: {
+    bg: (ctx, w, h) => {
+      const g = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w*0.7);
+      g.addColorStop(0, '#1a1a2e'); g.addColorStop(0.5, '#0f0f1a');
+      g.addColorStop(1, '#050510');
+      return g;
+    },
+    accent: '#c0c0c0', accent2: '#8888ff', glow: 'rgba(100,100,255,0.2)',
+  },
+  blue: {
+    bg: (ctx, w, h) => {
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, '#001030'); g.addColorStop(0.4, '#002060');
+      g.addColorStop(0.7, '#003090'); g.addColorStop(1, '#001040');
+      return g;
+    },
+    accent: '#00cfff', accent2: '#4488ff', glow: 'rgba(0,180,255,0.3)',
+  },
+};
+
+function oriDrawBg(ctx, w, h, theme) {
+  ctx.fillStyle = theme.bg(ctx, w, h);
+  ctx.fillRect(0, 0, w, h);
+
+  // Light rays from center
+  const cx = w / 2, cy = h * 0.35;
+  for (let i = 0; i < 24; i++) {
+    const angle = (i / 24) * Math.PI * 2;
+    const len = Math.max(w, h) * 1.2;
+    ctx.save();
+    ctx.globalAlpha = 0.06 + Math.random() * 0.04;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle - 0.04) * len, cy + Math.sin(angle - 0.04) * len);
+    ctx.lineTo(cx + Math.cos(angle + 0.04) * len, cy + Math.sin(angle + 0.04) * len);
+    ctx.closePath();
+    ctx.fillStyle = theme.accent;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Sparkle particles
+  const sc = w / 1200;
+  for (let i = 0; i < 80; i++) {
+    const x = Math.random() * w, y = Math.random() * h;
+    const r = (1 + Math.random() * 3) * sc;
+    ctx.save();
+    ctx.globalAlpha = 0.3 + Math.random() * 0.7;
+    const sg = ctx.createRadialGradient(x, y, 0, x, y, r * 4);
+    sg.addColorStop(0, '#fff');
+    sg.addColorStop(0.3, theme.accent);
+    sg.addColorStop(1, 'transparent');
+    ctx.fillStyle = sg;
+    ctx.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
+    // Cross sparkle
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = sc;
+    ctx.globalAlpha = 0.5 + Math.random() * 0.5;
+    ctx.beginPath();
+    ctx.moveTo(x - r * 3, y); ctx.lineTo(x + r * 3, y);
+    ctx.moveTo(x, y - r * 3); ctx.lineTo(x, y + r * 3);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Diamond/jewel shapes
+  for (let i = 0; i < 12; i++) {
+    const x = Math.random() * w, y = Math.random() * h;
+    const size = (8 + Math.random() * 16) * sc;
+    ctx.save();
+    ctx.globalAlpha = 0.08 + Math.random() * 0.12;
+    ctx.translate(x, y);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = theme.accent2;
+    ctx.fillRect(-size / 2, -size / 2, size, size);
+    ctx.restore();
+  }
+
+  // Edge vignette
+  const vg = ctx.createRadialGradient(cx, h / 2, w * 0.25, cx, h / 2, w * 0.75);
+  vg.addColorStop(0, 'transparent');
+  vg.addColorStop(1, 'rgba(0,0,0,0.5)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Bottom gradient for text readability
+  const btm = ctx.createLinearGradient(0, h * 0.55, 0, h);
+  btm.addColorStop(0, 'transparent');
+  btm.addColorStop(0.5, 'rgba(0,0,0,0.4)');
+  btm.addColorStop(1, 'rgba(0,0,0,0.7)');
+  ctx.fillStyle = btm;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function oriDrawGoldFrame(ctx, x, y, w, h, sc, isMain) {
+  const bw = (isMain ? 6 : 4) * sc;
+  // Outer glow
+  ctx.save();
+  ctx.shadowColor = 'rgba(255,215,0,0.6)';
+  ctx.shadowBlur = 20 * sc;
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = bw;
+  ctx.strokeRect(x - bw/2, y - bw/2, w + bw, h + bw);
+  ctx.restore();
+
+  // Gold gradient border
+  const grd = ctx.createLinearGradient(x, y, x + w, y + h);
+  grd.addColorStop(0, '#fff8b0');
+  grd.addColorStop(0.2, '#ffd700');
+  grd.addColorStop(0.5, '#ffed80');
+  grd.addColorStop(0.8, '#ffd700');
+  grd.addColorStop(1, '#b8860b');
+  ctx.strokeStyle = grd;
+  ctx.lineWidth = bw;
+  ctx.strokeRect(x, y, w, h);
+
+  // Inner highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = sc;
+  ctx.strokeRect(x + bw * 0.6, y + bw * 0.6, w - bw * 1.2, h - bw * 1.2);
+
+  // Corner accents
+  const cn = 12 * sc;
+  ctx.strokeStyle = '#fff8b0';
+  ctx.lineWidth = 2 * sc;
+  [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]].forEach(([cx,cy,dx,dy]) => {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + dy * cn);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx + dx * cn, cy);
+    ctx.stroke();
+  });
+}
+
+function oriDrawPSA(ctx, x, y, size, sc) {
+  // Gold circle
+  ctx.save();
+  ctx.shadowColor = 'rgba(255,215,0,0.8)';
+  ctx.shadowBlur = 10 * sc;
+  const g = ctx.createRadialGradient(x, y, 0, x, y, size);
+  g.addColorStop(0, '#ffed80');
+  g.addColorStop(0.5, '#ffd700');
+  g.addColorStop(1, '#b8860b');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Inner ring
+  ctx.strokeStyle = '#fff8b0';
+  ctx.lineWidth = 1.5 * sc;
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.82, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Text
+  ctx.fillStyle = '#1a0800';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `bold ${size * 0.55}px 'DM Sans', sans-serif`;
+  ctx.fillText('PSA', x, y - size * 0.18);
+  ctx.font = `bold ${size * 0.65}px 'DM Sans', sans-serif`;
+  ctx.fillText('10', x, y + size * 0.3);
+}
+
+function oriDrawText(ctx, text, x, y, fontSize, color, opts = {}) {
+  ctx.save();
+  ctx.textAlign = opts.align || 'center';
+  ctx.textBaseline = opts.baseline || 'middle';
+  const ff = opts.serif ? "'Cormorant Garamond', serif" : "'DM Sans', sans-serif";
+  ctx.font = `${opts.weight || 'bold'} ${fontSize}px ${ff}`;
+
+  if (opts.outline) {
+    ctx.strokeStyle = opts.outline;
+    ctx.lineWidth = opts.outlineWidth || fontSize * 0.08;
+    ctx.lineJoin = 'round';
+    ctx.strokeText(text, x, y);
+  }
+  if (opts.shadow) {
+    ctx.shadowColor = opts.shadow;
+    ctx.shadowBlur = opts.shadowBlur || fontSize * 0.3;
+  }
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+async function oriUpdatePreview() {
+  const canvas = document.getElementById('ori-canvas');
+  const { w, h } = oriGetSize();
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const sc = w / 1200;
+  const themeKey = document.getElementById('ori-theme').value;
+  const theme = ORI_THEMES[themeKey] || ORI_THEMES.rainbow;
+  const showPSA = document.getElementById('ori-psa').checked;
+  const mainCount = parseInt(document.getElementById('ori-main-count').value) || 3;
+
+  // Background
+  oriDrawBg(ctx, w, h, theme);
+
+  // Load card images
+  const cards = oriSelectedCards.slice(0, 10);
+  const imgs = await Promise.all(cards.map(c => oriLoadImg(c.image_url)));
+
+  // Card layout
+  const cardAspect = 0.716;
+  const areaTop = h * 0.06;
+  const areaBottom = h * 0.52;
+  const areaHeight = areaBottom - areaTop;
+  const areaWidth = w * 0.88;
+  const areaLeft = (w - areaWidth) / 2;
+
+  if (cards.length > 0) {
+    const mainCards = Math.min(mainCount, cards.length);
+    const subCards = cards.length - mainCards;
+
+    // Main cards
+    const mainH = areaHeight * (subCards > 0 ? 0.95 : 1);
+    const mainCardW = mainH * cardAspect;
+    const mainGap = 12 * sc;
+    const mainTotalW = mainCards * mainCardW + (mainCards - 1) * mainGap;
+    const mainStartX = (w - mainTotalW) / 2;
+
+    for (let i = 0; i < mainCards; i++) {
+      const cx = mainStartX + i * (mainCardW + mainGap);
+      const cy = areaTop;
+      // Card shadow
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 15 * sc;
+      ctx.shadowOffsetY = 5 * sc;
+      ctx.fillStyle = '#111';
+      ctx.fillRect(cx, cy, mainCardW, mainH);
+      ctx.restore();
+
+      if (imgs[i]) {
+        ctx.drawImage(imgs[i], cx, cy, mainCardW, mainH);
+      } else {
+        ctx.fillStyle = '#222';
+        ctx.fillRect(cx, cy, mainCardW, mainH);
+        ctx.fillStyle = '#555';
+        ctx.textAlign = 'center';
+        ctx.font = `${14 * sc}px sans-serif`;
+        ctx.fillText(cards[i]?.card_name || '?', cx + mainCardW / 2, cy + mainH / 2);
+      }
+      oriDrawGoldFrame(ctx, cx, cy, mainCardW, mainH, sc, true);
+
+      if (showPSA) {
+        oriDrawPSA(ctx, cx + mainCardW - 8 * sc, cy + 8 * sc, 22 * sc, sc);
+      }
+    }
+
+    // Sub cards (smaller, below or overlapping bottom)
+    if (subCards > 0) {
+      const subH = mainH * 0.45;
+      const subW = subH * cardAspect;
+      const subGap = 8 * sc;
+      const subTotalW = subCards * subW + (subCards - 1) * subGap;
+      const subStartX = (w - subTotalW) / 2;
+      const subY = areaTop + mainH - subH * 0.3;
+
+      for (let i = 0; i < subCards; i++) {
+        const si = mainCards + i;
+        const sx = subStartX + i * (subW + subGap);
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowBlur = 10 * sc;
+        ctx.fillStyle = '#111';
+        ctx.fillRect(sx, subY, subW, subH);
+        ctx.restore();
+
+        if (imgs[si]) {
+          ctx.drawImage(imgs[si], sx, subY, subW, subH);
+        } else {
+          ctx.fillStyle = '#222';
+          ctx.fillRect(sx, subY, subW, subH);
+        }
+        oriDrawGoldFrame(ctx, sx, subY, subW, subH, sc, false);
+      }
+    }
+  } else {
+    // Placeholder
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.textAlign = 'center';
+    ctx.font = `${18 * sc}px sans-serif`;
+    ctx.fillText('カードを検索して追加してください', w / 2, h * 0.3);
+  }
+
+  // Title area (bottom section)
+  const titleY = h * 0.62;
+  const name = document.getElementById('ori-name').value || 'オリパ';
+  const subtitle = document.getElementById('ori-subtitle').value;
+  const price = document.getElementById('ori-price').value;
+  const points = document.getElementById('ori-points').value;
+  const lots = document.getElementById('ori-lots').value;
+  const note = document.getElementById('ori-note').value;
+
+  // Decorative line
+  const lineY = titleY - 10 * sc;
+  const lineG = ctx.createLinearGradient(w * 0.15, 0, w * 0.85, 0);
+  lineG.addColorStop(0, 'transparent');
+  lineG.addColorStop(0.2, theme.accent);
+  lineG.addColorStop(0.5, '#fff');
+  lineG.addColorStop(0.8, theme.accent);
+  lineG.addColorStop(1, 'transparent');
+  ctx.strokeStyle = lineG;
+  ctx.lineWidth = 2 * sc;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.1, lineY);
+  ctx.lineTo(w * 0.9, lineY);
+  ctx.stroke();
+
+  // Title
+  oriDrawText(ctx, name, w / 2, titleY + 30 * sc, 52 * sc, '#fff', {
+    outline: theme.accent, outlineWidth: 3 * sc,
+    shadow: theme.accent, shadowBlur: 30 * sc,
+    weight: '800',
+  });
+
+  // Subtitle
+  if (subtitle) {
+    oriDrawText(ctx, subtitle, w / 2, titleY + 65 * sc, 22 * sc, theme.accent, {
+      shadow: theme.accent, shadowBlur: 10 * sc,
+    });
+  }
+
+  // Price band
+  const priceText = [price, points, lots].filter(Boolean).join('  ');
+  if (priceText) {
+    const priceY = titleY + (subtitle ? 100 : 80) * sc;
+    // Price background pill
+    ctx.save();
+    const pw = ctx.measureText ? 400 * sc : 300 * sc;
+    ctx.font = `bold ${28 * sc}px 'DM Sans', sans-serif`;
+    const pm = ctx.measureText(priceText);
+    const pillW = pm.width + 60 * sc;
+    const pillH = 44 * sc;
+    const pillX = w / 2 - pillW / 2;
+    const pillGrd = ctx.createLinearGradient(pillX, 0, pillX + pillW, 0);
+    pillGrd.addColorStop(0, 'rgba(255,215,0,0.15)');
+    pillGrd.addColorStop(0.5, 'rgba(255,215,0,0.25)');
+    pillGrd.addColorStop(1, 'rgba(255,215,0,0.15)');
+    ctx.fillStyle = pillGrd;
+    ctx.beginPath();
+    ctx.roundRect(pillX, priceY - pillH / 2, pillW, pillH, pillH / 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+    ctx.lineWidth = 1.5 * sc;
+    ctx.stroke();
+    ctx.restore();
+
+    oriDrawText(ctx, priceText, w / 2, priceY, 28 * sc, '#ffd700', {
+      shadow: 'rgba(255,215,0,0.5)', shadowBlur: 15 * sc,
+    });
+  }
+
+  // Note
+  if (note) {
+    oriDrawText(ctx, note, w / 2, h - 18 * sc, 11 * sc, 'rgba(255,255,255,0.5)', {
+      weight: '400',
+    });
+  }
+
+  // Watermark
+  oriDrawText(ctx, 'TCGVIBE.COM', w - 15 * sc, h - 18 * sc, 10 * sc, 'rgba(255,255,255,0.25)', {
+    align: 'right', weight: '500',
+  });
+}
+
+function oriDownload() {
+  const canvas = document.getElementById('ori-canvas');
+  if (!canvas.width || canvas.width < 10) { alert('先にプレビューを生成してください'); return; }
+  const link = document.createElement('a');
+  const name = document.getElementById('ori-name').value || 'oripa';
+  const size = document.getElementById('ori-size').value;
+  link.download = `${name}_${size === 'a4' ? 'A4' : 'X'}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// Init oripa preview on page show
+oriRenderSelected();
 </script>
 </body>
 </html>
