@@ -55,7 +55,8 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
   card_images: id, card_id, card_name, card_name_en, number, rarity, set_name, set_id, image_small, image_large, game, created_at
 
   データソース:
-  - ポケモンカード: TCGdex API (https://api.tcgdex.net/v2/ja/) — 日本語名・日本語パック名・画像
+  - ポケモンカード: TCGdex API (https://api.tcgdex.net/v2/ja/) — 日本語名・日本語パック名
+  - ポケモンカード ロゴ: カードラッシュメディア (https://cardrush.media/pokemon/packs) — パックボックス画像
   - ワンピースカード: eBay Browse API — 英語名・画像
 */
 
@@ -76,63 +77,39 @@ async function tcgdexFetch(endpoint) {
   return await res.json();
 }
 
-// TCGdex英語APIからロゴURLマップを構築
-async function fetchEnglishLogoMap() {
+// カードラッシュメディアからパックボックス画像URLマップを構築
+// https://cardrush.media/pokemon/packs の __NEXT_DATA__ からpack code→image_sourceを取得
+async function fetchCardrushPackLogos() {
+  const map = {};
   try {
-    const res = await fetch('https://api.tcgdex.net/v2/en/sets');
-    if (!res.ok) return {};
-    const enSets = await res.json();
-    const map = {};
-    for (const s of enSets) {
-      if (s.logo) {
-        // 英語ID(小文字)→ロゴURL+.png
-        map[s.id.toLowerCase()] = s.logo + '.png';
+    // 全ページを取得（lastPageで判定）
+    for (let page = 1; page <= 10; page++) {
+      const url = `https://cardrush.media/pokemon/packs${page > 1 ? `?page=${page}` : ''}`;
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'TCGVibe-SyncBot/1.0 (+https://tcgvibe.com)' },
+      });
+      if (!res.ok) break;
+      const html = await res.text();
+      const match = html.match(/<script\s+id="__NEXT_DATA__"\s+type="application\/json">(.*?)<\/script>/s);
+      if (!match) break;
+      const data = JSON.parse(match[1]);
+      const packs = data?.props?.pageProps?.packs || [];
+      const lastPage = data?.props?.pageProps?.lastPage || 1;
+      for (const p of packs) {
+        if (p.code && p.image_source) {
+          map[p.code.toLowerCase()] = p.image_source;
+        }
       }
+      if (page >= lastPage) break;
+      await sleep(500);
     }
-    return map;
-  } catch { return {}; }
+  } catch (e) {
+    diagnostics.push(`カードラッシュパックロゴ取得エラー: ${e.message}`);
+  }
+  return map;
 }
 
-// 日本語セットID→英語セットID候補リスト（複数パターンでマッチ試行）
-// 例: SV8→[sv08,sv8], SV8a→[sv08.5,sv8.5,sv08a], SV11W→[sv10.5w,sv11w]
-function jaToEnCandidates(jaId) {
-  const lower = jaId.toLowerCase();
-  const out = [lower];
-
-  // SV系
-  const sv = lower.match(/^sv(\d+)([a-z]?)$/);
-  if (sv) {
-    const n = parseInt(sv[1]), pad = n.toString().padStart(2, '0'), sfx = sv[2];
-    out.push(`sv${pad}${sfx}`, `sv${pad}`);
-    // 'a'サフィックス → 英語では'.5' (SV8a→sv08.5)
-    if (sfx === 'a') out.push(`sv${pad}.5`, `sv${n}.5`);
-    // 'e'サフィックス → sve (SV*e→sve)
-    if (sfx === 'e') out.push('sve');
-    // W/Bサフィックス → 英語では(n-1).5w/.5b (SV11W→sv10.5w)
-    if (sfx === 'w' || sfx === 'b') {
-      const prev = n - 1;
-      out.push(`sv${prev}.5${sfx}`, `sv${prev.toString().padStart(2, '0')}.5${sfx}`);
-    }
-    // S/Vサフィックス → 番号のみ (SV1S→sv01)
-    if (sfx === 's' || sfx === 'v') out.push(`sv${pad}`);
-  }
-
-  // SM系: sm1m→sm1, sm12a→sm12, sm3+→sm3.5 等
-  const sm = lower.match(/^sm(\d+)([a-z+]?)$/);
-  if (sm) {
-    const n = sm[1], sfx = sm[2];
-    out.push(`sm${n}`, `sm${parseInt(n)}`);
-    if (sfx === '+' || sfx === 'a') out.push(`sm${n}.5`, `sm${parseInt(n)}.5`);
-  }
-
-  // XY/BW系: ほぼ直接マッチ
-  const xyBw = lower.match(/^(xy|bw)(\d+)([a-z]?)$/);
-  if (xyBw) out.push(`${xyBw[1]}${xyBw[2]}`);
-
-  return [...new Set(out)];
-}
-
-// 全セットを取得して card_sets に保存（日本語名 + 英語APIロゴ）
+// 全セットを取得して card_sets に保存（日本語名 + カードラッシュボックス画像）
 async function syncPokemonSets() {
   console.log('TCGdex セット同期開始（日本語）');
   const rawSets = await tcgdexFetch('sets');
@@ -149,9 +126,9 @@ async function syncPokemonSets() {
   // 既存のポケカセットを削除して全入れ替え
   await supabaseDelete('card_sets', 'game=eq.pokeca');
 
-  // 英語APIからロゴURLマップを取得
-  const enLogoMap = await fetchEnglishLogoMap();
-  diagnostics.push(`TCGdex EN: ${Object.keys(enLogoMap).length}セットのロゴ取得`);
+  // カードラッシュメディアからパックボックス画像を取得
+  const packLogoMap = await fetchCardrushPackLogos();
+  diagnostics.push(`カードラッシュ: ${Object.keys(packLogoMap).length}パックのボックス画像取得`);
 
   // 各セットの詳細からreleaseDateを取得（並列で高速化）
   diagnostics.push('TCGdex: releaseDateを取得中...');
@@ -171,12 +148,8 @@ async function syncPokemonSets() {
   let saved = 0;
   for (let i = 0; i < sets.length; i += 50) {
     const batch = sets.slice(i, i + 50).map(s => {
-      // ロゴURL: 候補リストから最初にマッチするものを使用
-      const candidates = jaToEnCandidates(s.id);
-      let logoUrl = null;
-      for (const c of candidates) {
-        if (enLogoMap[c]) { logoUrl = enLogoMap[c]; break; }
-      }
+      // ロゴURL: カードラッシュのパックボックス画像を使用（pack_codeで照合）
+      const logoUrl = packLogoMap[s.id.toLowerCase()] || null;
       return {
         set_id: s.id,
         set_name: s.name,

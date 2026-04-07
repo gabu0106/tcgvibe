@@ -71,8 +71,7 @@ export default async function handler(req, res) {
           display_name: setInfo?.set_name || code,
           release_date: setInfo?.release_date || null,
           total_cards: setInfo?.total_cards || null,
-          // pokemontcg.ioは403/裏面画像を返すため除外
-          logo_url: (setInfo?.logo_url && !setInfo.logo_url.includes('pokemontcg.io')) ? setInfo.logo_url : null,
+          logo_url: setInfo?.logo_url || null,
           card_count: count,
         };
       });
