@@ -5,10 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TCGVIBE.AI 管理画面</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script>
+  // テーマ初期化（描画前に実行してフラッシュ防止）
+  (function(){
+    const t = localStorage.getItem('tcgvibe_admin_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <style>
-  :root{--bg:#fafaf8;--bg2:#f5f3ee;--surface:#fff;--border:rgba(0,0,0,0.08);--text:#1a1814;--muted:#7a7570;--gold:#b8952a;--gold2:#d4af5a;--danger:#c0392b;--success:#2a7a4a;}
+  :root{--bg:#fafaf8;--bg2:#f5f3ee;--surface:#fff;--border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);--text:#1a1814;--muted:#7a7570;--gold:#b8952a;--gold2:#d4af5a;--gold-light:#f5edda;--danger:#c0392b;--success:#2a7a4a;--shadow-sm:0 1px 3px rgba(0,0,0,0.04);--shadow-md:0 4px 16px rgba(0,0,0,0.08);--radius:4px;}
+  [data-theme="dark"]{--bg:#15110b;--bg2:#1f1a13;--surface:#221c14;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.16);--text:#f0ebe0;--muted:#8a8278;--gold:#b8952a;--gold2:#d4af5a;--gold-light:rgba(184,149,42,0.14);--shadow-sm:0 1px 3px rgba(0,0,0,0.4);--shadow-md:0 6px 24px rgba(0,0,0,0.5);}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.3s,color 0.3s;}
   #loginPage{display:flex;position:fixed;inset:0;z-index:999;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;}
   #loginPage.hide{display:none;}
   .login-logo{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;letter-spacing:0.08em;}
@@ -22,21 +30,29 @@
   .login-error{font-size:0.8rem;color:var(--danger);text-align:center;}
   #app{display:none;}
   #app.show{display:flex;min-height:100vh;}
-  .sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:fixed;top:0;bottom:0;overflow-y:auto;}
-  .sidebar-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;letter-spacing:0.08em;padding:0 1.5rem 1.5rem;border-bottom:1px solid var(--border);display:block;}
+  .sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0 1rem;position:fixed;top:0;bottom:0;overflow-y:auto;box-shadow:var(--shadow-sm);transition:transform 0.3s,background 0.3s;z-index:200;}
+  .sidebar-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;letter-spacing:0.08em;padding:0 1.5rem 1.25rem;border-bottom:1px solid var(--border);display:block;}
   .sidebar-logo span{color:var(--gold);}
-  .sidebar-nav{padding:1rem 0;}
-  .nav-section{font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);padding:0.75rem 1.5rem 0.4rem;}
-  .nav-item{display:flex;align-items:center;gap:0.6rem;padding:0.6rem 1.5rem;font-size:0.85rem;color:var(--muted);cursor:pointer;transition:all 0.15s;border-left:2px solid transparent;}
+  .sidebar-cta{display:flex;align-items:center;gap:0.75rem;margin:1rem 1rem 0.5rem;padding:0.85rem 1rem;background:linear-gradient(135deg,var(--gold) 0%,var(--gold2) 100%);color:#fff;text-decoration:none;border:none;font-family:inherit;cursor:pointer;border-radius:var(--radius);transition:transform 0.2s,box-shadow 0.2s;text-align:left;width:calc(100% - 2rem);}
+  .sidebar-cta:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+  .sidebar-cta:active{transform:translateY(0);}
+  .sidebar-cta-icon{font-size:1.25rem;flex-shrink:0;}
+  .sidebar-cta-body{display:flex;flex-direction:column;gap:0.1rem;min-width:0;}
+  .sidebar-cta-label{font-size:0.85rem;font-weight:600;letter-spacing:0.04em;color:#fff;}
+  .sidebar-cta-sub{font-size:0.65rem;letter-spacing:0.05em;color:rgba(255,255,255,0.85);}
+  .sidebar-nav{padding:0.75rem 0;}
+  .nav-section{font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);padding:1rem 1.5rem 0.5rem;}
+  .nav-item{display:flex;align-items:center;gap:0.6rem;padding:0.85rem 1.5rem;font-size:0.85rem;color:var(--muted);cursor:pointer;transition:all 0.2s;border-left:3px solid transparent;}
   .nav-item:hover{color:var(--text);background:var(--bg2);}
-  .nav-item.active{color:var(--text);background:#f5edda;border-left-color:var(--gold);}
-  .nav-icon{font-size:1rem;width:20px;text-align:center;}
+  .nav-item:hover .nav-icon{transform:translateX(3px);}
+  .nav-item.active{color:var(--text);background:var(--gold-light);border-left-color:var(--gold);}
+  .nav-icon{font-size:1rem;width:20px;text-align:center;transition:transform 0.2s;}
   .main{margin-left:240px;flex:1;padding:2.5rem;}
   .page{display:none;}
   .page.active{display:block;}
   .page-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;margin-bottom:0.5rem;}
   .page-desc{color:var(--muted);font-size:0.85rem;margin-bottom:2rem;}
-  .card{background:var(--surface);border:1px solid var(--border);padding:1.75rem;margin-bottom:1.25rem;border-radius:2px;}
+  .card{background:var(--surface);border:1px solid var(--border);padding:2rem 2.25rem;margin-bottom:1.5rem;border-radius:var(--radius);box-shadow:var(--shadow-sm);transition:box-shadow 0.2s,background 0.3s,border-color 0.3s;}
   .card-title{font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:1.25rem;}
   .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
   .stat-card{background:var(--bg2);border:1px solid var(--border);padding:1.25rem;border-radius:2px;}
@@ -46,8 +62,9 @@
   input,textarea,select{width:100%;font-family:inherit;font-size:0.875rem;color:var(--text);background:var(--bg);border:1px solid var(--border);padding:0.75rem 1rem;outline:none;transition:border-color 0.2s;margin-bottom:1.25rem;border-radius:2px;}
   input:focus,textarea:focus,select:focus{border-color:var(--gold2);}
   textarea{resize:vertical;line-height:1.7;}
-  .btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.6rem 1.25rem;background:var(--text);color:var(--bg);font-family:inherit;font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:pointer;border-radius:2px;transition:background 0.2s;}
-  .btn:hover{background:var(--gold);}
+  .btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.6rem 1.25rem;background:var(--text);color:var(--bg);font-family:inherit;font-size:0.78rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:pointer;border-radius:var(--radius);transition:background 0.2s,transform 0.15s,box-shadow 0.2s;}
+  .btn:hover{background:var(--gold);transform:translateY(-1px);box-shadow:var(--shadow-sm);}
+  .btn:active{transform:translateY(0);box-shadow:none;}
   .btn-sm{padding:0.4rem 0.875rem;font-size:0.72rem;}
   .btn-danger{background:var(--danger);}
   .btn-danger:hover{background:#a93226;}
@@ -122,7 +139,41 @@
   .ori-text-el{display:flex;align-items:center;gap:0.5rem;padding:0.5rem;border:1px solid var(--border);border-radius:4px;margin-bottom:0.4rem;background:var(--surface);flex-wrap:wrap}
   .ori-text-el input[type=text]{margin:0;padding:0.3rem 0.5rem;font-size:0.82rem}
   .ori-text-el select{margin:0;padding:0.25rem 0.3rem;font-size:0.7rem;width:auto;min-width:0}
-  @media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:1.5rem;}.stat-grid{grid-template-columns:1fr 1fr;}.two-col{grid-template-columns:1fr;}}
+  /* TOPBAR (テーマ切替＋モバイルメニュー) */
+  .topbar{display:flex;align-items:center;justify-content:flex-end;gap:0.5rem;margin:-0.5rem 0 1.5rem;}
+  .theme-toggle{background:var(--surface);border:1px solid var(--border);color:var(--text);width:40px;height:40px;border-radius:var(--radius);cursor:pointer;font-size:1.1rem;display:inline-flex;align-items:center;justify-content:center;transition:all 0.2s;box-shadow:var(--shadow-sm);}
+  .theme-toggle:hover{border-color:var(--gold2);transform:translateY(-1px);box-shadow:var(--shadow-md);}
+  .mobile-menu-toggle{display:none;background:var(--surface);border:1px solid var(--border);color:var(--text);width:40px;height:40px;border-radius:var(--radius);cursor:pointer;font-size:1.2rem;align-items:center;justify-content:center;position:fixed;top:1rem;left:1rem;z-index:250;box-shadow:var(--shadow-sm);}
+  .mobile-menu-toggle:hover{border-color:var(--gold2);}
+
+  /* SIDEBAR OVERLAY */
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:150;backdrop-filter:blur(2px);}
+  .sidebar-overlay.open{display:block;}
+
+  /* PENDING BADGE PULSE */
+  @keyframes pulse-gold{
+    0%,100%{box-shadow:0 0 0 0 rgba(184,149,42,0.45);}
+    50%{box-shadow:0 0 0 5px rgba(184,149,42,0);}
+  }
+  #pending-badge.has-items{animation:pulse-gold 2.2s ease-out infinite;}
+
+  /* INPUTS in dark mode visibility */
+  [data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select{background:var(--bg2);color:var(--text);}
+  [data-theme="dark"] .login-input{background:var(--surface);}
+  [data-theme="dark"] pre{color:var(--text)!important;background:var(--bg2)!important;}
+  [data-theme="dark"] .pending-card-body{color:var(--text);background:var(--bg2);}
+
+  @media(max-width:768px){
+    .sidebar{transform:translateX(-100%);width:280px;}
+    .sidebar.open{transform:translateX(0);}
+    .mobile-menu-toggle{display:inline-flex;}
+    .main{margin-left:0;padding:4rem 1rem 1.5rem;}
+    .topbar{margin:-2rem 0 1rem;}
+    .stat-grid{grid-template-columns:1fr 1fr;gap:0.75rem;}
+    .two-col{grid-template-columns:1fr;}
+    .card{padding:1.5rem;}
+    .page-title{font-size:1.6rem;}
+  }
 </style>
 </head>
 <body>
@@ -190,27 +241,39 @@
 
 <!-- APP -->
 <div id="app">
-  <div class="sidebar">
+  <button class="mobile-menu-toggle" id="mobileMenuToggle" onclick="toggleSidebar()" aria-label="メニュー">☰</button>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar" id="sidebar">
     <span class="sidebar-logo">TCGVIBE<span>.AI</span></span>
+    <button class="sidebar-cta" onclick="showPage('compose',document.querySelector('[data-page=compose]'));closeSidebarMobile();">
+      <span class="sidebar-cta-icon">✍️</span>
+      <span class="sidebar-cta-body">
+        <span class="sidebar-cta-label">記事を生成</span>
+        <span class="sidebar-cta-sub">プロの回答からAIが作成</span>
+      </span>
+    </button>
     <nav class="sidebar-nav">
       <div class="nav-section">メイン</div>
-      <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>ダッシュボード</div>
-      <div class="nav-item" onclick="showPage('pending',this)"><span class="nav-icon">📋</span>承認待ち<span id="pending-badge" style="background:var(--gold);color:#fff;font-size:0.6rem;padding:0.1rem 0.45rem;border-radius:999px;margin-left:auto;display:none">0</span></div>
-      <div class="nav-item" onclick="showPage('articles',this)"><span class="nav-icon">📝</span>記事管理</div>
-      <div class="nav-item" onclick="showPage('compose',this)"><span class="nav-icon">✍️</span>記事を生成する</div>
+      <div class="nav-item active" onclick="showPage('dashboard',this);closeSidebarMobile();"><span class="nav-icon">📊</span>ダッシュボード</div>
+      <div class="nav-item" onclick="showPage('pending',this);closeSidebarMobile();"><span class="nav-icon">📋</span>承認待ち<span id="pending-badge" style="background:var(--gold);color:#fff;font-size:0.6rem;padding:0.1rem 0.45rem;border-radius:999px;margin-left:auto;display:none">0</span></div>
+      <div class="nav-item" onclick="showPage('articles',this);closeSidebarMobile();"><span class="nav-icon">📝</span>記事管理</div>
+      <div class="nav-item" data-page="compose" onclick="showPage('compose',this);closeSidebarMobile();" style="display:none"><span class="nav-icon">✍️</span>記事を生成する</div>
       <div class="nav-section">サイト設定</div>
-      <div class="nav-item" onclick="showPage('siteStatus',this)"><span class="nav-icon">🌐</span>公開設定</div>
-      <div class="nav-item" onclick="showPage('games',this)"><span class="nav-icon">🃏</span>対応ゲーム</div>
-      <div class="nav-item" onclick="showPage('prices',this)"><span class="nav-icon">📈</span>価格テーブル</div>
+      <div class="nav-item" onclick="showPage('siteStatus',this);closeSidebarMobile();"><span class="nav-icon">🌐</span>公開設定</div>
+      <div class="nav-item" onclick="showPage('games',this);closeSidebarMobile();"><span class="nav-icon">🃏</span>対応ゲーム</div>
+      <div class="nav-item" onclick="showPage('prices',this);closeSidebarMobile();"><span class="nav-icon">📈</span>価格テーブル</div>
       <div class="nav-section">ツール</div>
-      <div class="nav-item" onclick="showPage('oripa',this)"><span class="nav-icon">🎰</span>オリパ画像作成</div>
+      <div class="nav-item" onclick="showPage('oripa',this);closeSidebarMobile();"><span class="nav-icon">🎰</span>オリパ画像作成</div>
       <div class="nav-section">AI設定</div>
-      <div class="nav-item" onclick="showPage('learning',this)"><span class="nav-icon">🧠</span>学習状況</div>
-      <div class="nav-item" onclick="showPage('aiPrompt',this)"><span class="nav-icon">🤖</span>AIプロンプト</div>
+      <div class="nav-item" onclick="showPage('learning',this);closeSidebarMobile();"><span class="nav-icon">🧠</span>学習状況</div>
+      <div class="nav-item" onclick="showPage('aiPrompt',this);closeSidebarMobile();"><span class="nav-icon">🤖</span>AIプロンプト</div>
     </nav>
   </div>
 
   <div class="main">
+    <div class="topbar">
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="テーマ切替">🌙</button>
+    </div>
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
@@ -225,9 +288,9 @@
       <div class="card">
         <div class="card-title">クイックアクション</div>
         <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
-          <button class="btn" onclick="showPage('compose',document.querySelector('[onclick*=compose]'))">✍️ 新しい記事を生成</button>
+          <button class="btn" onclick="showPage('compose',document.querySelector('[data-page=compose]'))">✍️ 新しい記事を生成</button>
+          <button class="btn btn-outline" onclick="showPage('pending',document.querySelectorAll('.nav-item')[1])">📋 承認待ちを確認</button>
           <button class="btn btn-outline" onclick="window.open('/','_blank')">🌐 サイトを確認</button>
-          <button class="btn btn-outline" onclick="window.open('/','_blank')">🔑 サイトを確認</button>
         </div>
       </div>
     </div>
@@ -793,10 +856,41 @@ function updatePendingBadge() {
   if (pendingArticles.length > 0) {
     badge.textContent = pendingArticles.length;
     badge.style.display = 'inline';
+    badge.classList.add('has-items');
   } else {
     badge.style.display = 'none';
+    badge.classList.remove('has-items');
   }
 }
+
+// テーマ切替
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = cur === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('tcgvibe_admin_theme', next);
+  const tt = document.getElementById('themeToggle');
+  if (tt) tt.textContent = next === 'dark' ? '☀️' : '🌙';
+}
+
+// モバイルサイドバー
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebarMobile() {
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+  }
+}
+
+// 起動時にテーマトグルアイコンを設定
+document.addEventListener('DOMContentLoaded', function(){
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
+  const tt = document.getElementById('themeToggle');
+  if (tt) tt.textContent = cur === 'dark' ? '☀️' : '🌙';
+});
 
 function renderPendingArticles() {
   const el = document.getElementById('pendingList');
