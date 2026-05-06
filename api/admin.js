@@ -20,20 +20,15 @@ export default async function handler(req, res) {
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   const trimmedText = rawText.slice(0, 2500);
 
+  if (!GEMINI_API_KEY) {
+    return res.status(500).json({ error: 'GEMINI_API_KEY が未設定です' });
+  }
+
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        system: `あなたはTCGVIBE.AIの記事編集者です。プロの回答をQ&A三層構造の記事にしてください。
+    const systemInstruction = `あなたはTCGVIBE.AIの記事編集者です。プロの回答をQ&A三層構造の記事にしてください。
 
 必ず以下の形式で出力してください：
 
@@ -46,26 +41,60 @@ CONTENT:
 記事本文をここに書く。記号（##、**）は使わず話し言葉で。全ての質問と回答を必ずQ&A三層構造で含めること。
 
 REVIEW:
-AIによる総評をここに書く（200文字程度）。プロの回答全体を踏まえた分析・注目ポイント・読者へのメッセージを話し言葉で。`,
-        messages: [{
-          role: 'user',
-          content: `ゲーム: ${game || 'ポケカ'}
+AIによる総評をここに書く（200文字程度）。プロの回答全体を踏まえた分析・注目ポイント・読者へのメッセージを話し言葉で。`;
+
+    const userContent = `ゲーム: ${game || 'ポケカ'}
 執筆者: ${author || 'プロ'}${authorX ? `（X: ${authorX}）` : ''}
 質問: ${questions || '環境について'}
 回答: ${trimmedText}
 
-上記の形式で記事を出力してください。全ての質問と回答を含めてください。`
-        }],
+上記の形式で記事を出力してください。全ての質問と回答を含めてください。`;
+
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent`;
+
+    const response = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': GEMINI_API_KEY,
+      },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemInstruction }] },
+        contents: [{ role: 'user', parts: [{ text: userContent }] }],
+        tools: [{ google_search: {} }],
+        generationConfig: {
+          maxOutputTokens: 4000,
+          temperature: 0.7,
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+        ],
       }),
     });
 
     if (!response.ok) {
-      const errData = await response.json();
-      return res.status(500).json({ error: 'AI error: ' + (errData.error?.message || 'unknown') });
+      const errorText = await response.text();
+      console.error('Gemini APIエラー:', response.status, errorText);
+      return res.status(500).json({ error: 'AI APIエラーが発生しました' });
     }
 
     const data = await response.json();
-    const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    const candidate = data.candidates?.[0];
+    if (!candidate) {
+      return res.status(500).json({ error: 'AIの応答が空でした' });
+    }
+
+    if (candidate.finishReason === 'SAFETY' || candidate.finishReason === 'BLOCKLIST') {
+      return res.status(500).json({ error: 'コンテンツが安全フィルターでブロックされました' });
+    }
+
+    const text = candidate.content?.parts?.map(p => p.text).filter(Boolean).join('\n') || '';
+    if (!text) {
+      return res.status(500).json({ error: '応答テキストが取得できませんでした' });
+    }
 
     const titleMatch = text.match(/TITLE:\s*(.+)/);
     const tagMatch = text.match(/TAG:\s*(.+)/);
