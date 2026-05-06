@@ -1,3 +1,4 @@
+// eBay海外相場取得（既存の動作確認済みコードをそのまま維持）
 async function fetchEbayContext(query) {
   try {
     const EBAY_APP_ID = process.env.EBAY_APP_ID;
@@ -7,7 +8,10 @@ async function fetchEbayContext(query) {
     const credentials = Buffer.from(`${EBAY_APP_ID}:${EBAY_CERT_ID}`).toString('base64');
     const tokenRes = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': `Basic ${credentials}` },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${credentials}`,
+      },
       body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope',
     });
     if (!tokenRes.ok) return '';
@@ -23,11 +27,12 @@ async function fetchEbayContext(query) {
     if (items.length === 0) return '';
     const prices = items.map(i => parseFloat(i.price.value));
     const avg = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length * 100) / 100;
-    return `\n\n【eBay海外相場】${query}: 平均$${avg} (${items.length}件, $${Math.min(...prices)}〜$${Math.max(...prices)})`;
+    return `\n\n【eBay海外相場】 ${query}: 平均$${avg} (${items.length}件, $${Math.min(...prices)}〜$${Math.max(...prices)})`;
   } catch { return ''; }
 }
 
 export default async function handler(req, res) {
+  // CORS設定（既存のまま）
   const origin = req.headers.origin || '';
   if (['https://tcgvibe.com','https://www.tcgvibe.com'].includes(origin) || origin.includes('localhost')) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -44,9 +49,14 @@ export default async function handler(req, res) {
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+  // ★ ここがAnthropicからGeminiに変わった部分
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-  // TCGメタ情報を取得
+  if (!GEMINI_API_KEY) {
+    return res.status(500).json({ error: 'GEMINI_API_KEY が未設定です' });
+  }
+
+  // TCGメタ情報を取得（既存ロジックそのまま）
   let tcgContext = '';
   try {
     const dbRes = await fetch(
@@ -69,7 +79,7 @@ export default async function handler(req, res) {
     console.error('DB取得エラー:', e);
   }
 
-  // ユーザーの最新メッセージから価格情報を検索
+  // 価格情報の検索（既存ロジックそのまま）
   const lastMessage = messages[messages.length - 1]?.content || '';
   let priceContext = '';
   const priceKeywords = ['価格', '値段', '買取', '相場', '高い', '高額', 'いくら', '円', 'eBay', 'ebay', '海外'];
@@ -80,7 +90,6 @@ export default async function handler(req, res) {
       searchTerm = searchTerm.replace(/[のはがをにで？?、。]/g, '').trim();
 
       if (searchTerm.length >= 2) {
-        // 国内価格とeBay価格を並行取得
         const [priceRes, ebayContext] = await Promise.all([
           fetch(
             `${SUPABASE_URL}/rest/v1/card_prices?select=card_name,buy_price,rarity,shop,game&card_name=ilike.*${encodeURIComponent(searchTerm)}*&limit=20`,
@@ -117,22 +126,14 @@ export default async function handler(req, res) {
     }
   }
 
+  // ★ ここからGemini API呼び出し（Anthropicから変更）
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        system: `あなたはTCGVIBE.AIの専属AIアドバイザーです。
+    // システムプロンプト（既存の人格設定をそのまま継承）
+    const systemInstruction = `あなたはTCGVIBE.AIの専属AIアドバイザーです。
 ポケモンカード、遊戯王、MTG、デュエルマスターズ、ヴァイスシュヴァルツ、ワンピースカードの専門家です。
 
 【重要】以下のデータベース情報を最優先で参照して回答してください。
-データベースにない情報はweb_searchで検索してください。${tcgContext}${priceContext}
+データベースにない情報はGoogle検索で補完してください。${tcgContext}${priceContext}
 
 カード価格の質問にはデータを参照して正確に答えてください。国内買取価格とeBay海外相場の両方があれば両方答える。データにないカードは「最新情報はショップでご確認ください」と伝える。
 
@@ -142,53 +143,63 @@ export default async function handler(req, res) {
 ・箇条書きは「・」のみ使う
 ・「〜だよ」「〜だね」「〜かな」など話し言葉で答える
 ・専門知識は持ちつつも堅くなりすぎない
-・回答は長すぎず、テンポよく答える`,
-        messages: messages,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+・回答は長すぎず、テンポよく答える`;
+
+    // Anthropic形式のmessages配列をGemini形式のcontents配列に変換
+    const contents = messages.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: typeof m.content === 'string' ? m.content : JSON.stringify(m.content) }],
+    }));
+
+    // Gemini 2.5 Flash-Lite を使用（無料枠：1日1,000リクエスト）
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent`;
+
+    const response = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': GEMINI_API_KEY,
+      },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemInstruction }] },
+        contents: contents,
+        tools: [{ google_search: {} }],
+        generationConfig: {
+          maxOutputTokens: 1024,
+          temperature: 0.7,
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+        ],
       }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const errorText = await response.text();
+      console.error('Gemini APIエラー:', response.status, errorText);
       return res.status(response.status).json({ error: 'AI APIエラーが発生しました' });
     }
 
     const data = await response.json();
 
-    // テキストブロックがあればそのまま返す
-    const textBlocks = data.content?.filter(b => b.type === 'text');
-    if (textBlocks?.length > 0) {
-      return res.status(200).json({ reply: textBlocks.map(b => b.text).join('\n') });
+    const candidate = data.candidates?.[0];
+    if (!candidate) {
+      return res.status(500).json({ error: 'AIの応答が空でした' });
     }
 
-    // tool_useが返された場合（web_search結果を処理）
-    if (data.content?.some(b => b.type === 'tool_use')) {
-      const toolUse = data.content.find(b => b.type === 'tool_use');
-      const res2 = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-          system: 'マークダウンなし、話し言葉で答えてください。',
-          messages: [
-            ...messages,
-            { role: 'assistant', content: data.content },
-            { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: '検索完了' }] },
-          ],
-        }),
-      });
-      const data2 = await res2.json();
-      const texts = data2.content?.filter(b => b.type === 'text');
-      return res.status(200).json({ reply: texts?.map(b => b.text).join('\n') || '処理できませんでした' });
+    if (candidate.finishReason === 'SAFETY' || candidate.finishReason === 'BLOCKLIST') {
+      return res.status(200).json({ reply: 'ごめん、その質問にはちょっと答えづらいかも。別の聞き方で試してみて！' });
     }
 
-    return res.status(200).json({ reply: '処理できませんでした' });
+    const reply = candidate.content?.parts?.map(p => p.text).filter(Boolean).join('\n') || '';
+    if (!reply) {
+      return res.status(500).json({ error: '応答テキストが取得できませんでした' });
+    }
+
+    return res.status(200).json({ reply });
 
   } catch (err) {
     console.error('Server error:', err);
