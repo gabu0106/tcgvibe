@@ -401,6 +401,7 @@ function closeArticle() {
 }
 
 function openChatFromArticle() {
+  const isAdmin = sessionStorage.getItem('tcgvibe_admin') === 'true';
   if (!isAdmin) { alert('AIチャット機能は近日公開予定です！'); return; }
   closeArticle(); openChat();
   if (currentArticle) {
@@ -544,6 +545,7 @@ let isLoading = false;
 
 function openChat(e) {
   if (e) e.preventDefault();
+  const isAdmin = sessionStorage.getItem('tcgvibe_admin') === 'true';
   if (!isAdmin) { alert('AIチャット機能は近日公開予定です！'); return; }
   document.getElementById('chatPage').classList.add('open');
   document.body.style.overflow = 'hidden';
