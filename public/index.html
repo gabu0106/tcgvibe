@@ -3,78 +3,128 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TCGVIBE.AI — TCGプロの知見をAIで届ける | ポケカ・ワンピースカード買取価格比較</title>
-<meta name="description" content="TCGVIBE.AIはポケモンカード・ワンピースカードの買取価格比較、PSA10相場、高騰カード情報をAIで分析・配信するTCG総合情報サイトです。">
-<meta name="keywords" content="ポケモンカード,ワンピースカード,買取価格,PSA10,相場,高騰,TCG,トレーディングカード">
-<meta property="og:title" content="TCGVIBE.AI — TCGプロの知見をAIで届ける">
-<meta property="og:description" content="ポケモンカード・ワンピースカードの買取価格比較、PSA10相場、高騰カード情報をAIで分析">
+<title>TCGVIBE.AI — ポケカ・ワンピのプロ解説 × AI分析 | 買取価格・カードギャラリー</title>
+<meta name="description" content="TCGVIBE.AIはポケモンカード・ワンピースカードのプロプレイヤー解説をAIが深掘り配信。買取価格比較、PSA10相場、カードギャラリーも一括チェック。">
+<meta name="keywords" content="ポケモンカード,ワンピースカード,買取価格,PSA10,相場,高騰,TCG,プロ解説,AI">
+<meta property="og:title" content="TCGVIBE.AI — ポケカ・ワンピのプロ解説 × AI分析">
+<meta property="og:description" content="プロプレイヤーの知見をAIが深掘り。買取相場・PSA10・カードギャラリーも一括チェック。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tcgvibe.com/">
 <meta property="og:site_name" content="TCGVIBE.AI">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="TCGVIBE.AI — TCG総合情報サイト">
-<meta name="twitter:description" content="ポケカ・ワンピースカードの買取価格比較、PSA10相場、AI記事配信">
+<meta name="twitter:title" content="TCGVIBE.AI — TCGメディア × AI">
+<meta name="twitter:description" content="ポケカ・ワンピのプロ解説、買取相場、AIアドバイザー">
 <link rel="canonical" href="https://tcgvibe.com/">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"TCGVIBE.AI","url":"https://tcgvibe.com/","description":"TCGプロの知見をAIで届けるTCG総合情報サイト","potentialAction":{"@type":"SearchAction","target":"https://tcgvibe.com/card-list.html?q={search_term_string}","query-input":"required name=search_term_string"}}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:#fafaf8; --bg2:#f5f3ee; --surface:#fff;
+    --bg:#fafaf8; --bg2:#f5f3ee; --bg3:#ece9e2; --surface:#fff;
     --border:rgba(0,0,0,0.07); --border2:rgba(0,0,0,0.12);
     --text:#1a1814; --muted:#7a7570;
-    --gold:#b8952a; --gold2:#d4af5a; --gold-light:#f5edda;
+    --gold:#b8952a; --gold2:#d4af5a; --gold-light:#f5edda; --gold-glow:rgba(184,149,42,0.12);
+    --line-green:#06c755; --line-green-dark:#05a648;
+    --red:#c0392b;
+    --shadow-sm:0 1px 3px rgba(0,0,0,0.04);
+    --shadow-md:0 4px 16px rgba(0,0,0,0.08);
+    --shadow-lg:0 12px 40px rgba(0,0,0,0.12);
+    --radius:8px; --radius-sm:4px;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
-  body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+  body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding-bottom:0;}
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--gold2);color:#fff;}
 
-  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.25rem 3rem;background:rgba(250,250,248,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
-  .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;letter-spacing:0.08em;color:var(--text);text-decoration:none;}
+  /* TOP NAV */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:1.5rem;padding:0.85rem 2rem;background:rgba(250,250,248,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);height:60px;}
+  .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;letter-spacing:0.08em;color:var(--text);flex-shrink:0;}
   .nav-logo span{color:var(--gold);}
-  .nav-right{display:flex;align-items:center;gap:1.5rem;}
-  .nav-tag{font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);}
-  .nav-ai-btn{background:var(--text);color:var(--bg);padding:0.5rem 1.25rem;border-radius:2px;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;text-decoration:none;transition:background 0.2s;display:none;}
+  .nav-links{display:flex;gap:0.25rem;margin-left:auto;align-items:center;}
+  .nav-link{font-size:0.78rem;letter-spacing:0.04em;color:var(--muted);padding:0.45rem 0.85rem;border-radius:var(--radius-sm);transition:all 0.2s;font-weight:500;}
+  .nav-link:hover{color:var(--text);background:var(--bg2);}
+  .nav-link.active{color:var(--gold);background:var(--gold-light);}
+  .nav-search-btn{background:var(--surface);border:1px solid var(--border2);color:var(--muted);width:36px;height:36px;border-radius:var(--radius-sm);cursor:pointer;font-size:0.95rem;display:inline-flex;align-items:center;justify-content:center;transition:all 0.2s;margin-left:0.5rem;}
+  .nav-search-btn:hover{border-color:var(--gold2);color:var(--gold);}
+  .nav-ai-btn{background:var(--text);color:var(--bg);padding:0.5rem 1.1rem;border-radius:var(--radius-sm);font-size:0.74rem;letter-spacing:0.06em;font-weight:600;transition:all 0.2s;display:none;align-items:center;gap:0.4rem;}
   .nav-ai-btn:hover{background:var(--gold);}
-  .nav-ai-btn.show{display:block;}
+  .nav-ai-btn.show{display:inline-flex;}
 
-  .hero{padding:10rem 2rem 5rem;text-align:center;background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(184,149,42,0.07) 0%,transparent 70%),var(--bg);position:relative;}
+  /* SEARCH OVERLAY */
+  .search-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(26,24,20,0.45);backdrop-filter:blur(8px);padding-top:5rem;}
+  .search-overlay.open{display:block;}
+  .search-modal{max-width:640px;margin:0 auto;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;}
+  .search-input-wrap{display:flex;align-items:center;gap:0.75rem;padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);}
+  .search-input-icon{font-size:1.1rem;color:var(--muted);}
+  .search-modal-input{flex:1;border:none;background:none;font-family:inherit;font-size:1rem;color:var(--text);outline:none;}
+  .search-close{background:none;border:1px solid var(--border2);color:var(--muted);padding:0.3rem 0.75rem;border-radius:var(--radius-sm);font-size:0.7rem;cursor:pointer;font-family:inherit;letter-spacing:0.06em;}
+  .search-close:hover{border-color:var(--text);color:var(--text);}
+  .search-results{max-height:60vh;overflow-y:auto;}
+  .search-section-label{padding:0.75rem 1.25rem 0.4rem;font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+  .search-result-item{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.25rem;cursor:pointer;border-top:1px solid var(--border);transition:background 0.15s;}
+  .search-result-item:hover{background:var(--gold-light);}
+  .search-result-emoji{font-size:1.4rem;flex-shrink:0;}
+  .search-result-body{flex:1;min-width:0;}
+  .search-result-title{font-size:0.88rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .search-result-meta{font-size:0.72rem;color:var(--muted);margin-top:0.15rem;}
+  .search-result-empty{padding:1.5rem 1.25rem;text-align:center;color:var(--muted);font-size:0.85rem;}
+
+  /* HERO */
+  .hero{padding:7rem 1.5rem 4rem;text-align:center;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(184,149,42,0.08) 0%,transparent 70%),var(--bg);position:relative;overflow:hidden;}
   .hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 60% at 50% 50%,black 30%,transparent 80%);pointer-events:none;}
-  .hero-eyebrow{font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:center;gap:0.75rem;}
+  .hero-inner{position:relative;z-index:1;max-width:760px;margin:0 auto;}
+  .hero-eyebrow{font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:center;gap:0.75rem;}
   .hero-eyebrow::before,.hero-eyebrow::after{content:'';display:block;width:32px;height:1px;background:var(--gold2);opacity:0.6;}
-  .hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.5rem,6vw,5rem);font-weight:300;line-height:1.1;color:var(--text);margin-bottom:1rem;position:relative;}
-  .hero-title em{font-style:italic;color:var(--gold);}
-  .hero-desc{color:var(--muted);font-size:0.95rem;font-weight:300;line-height:1.8;max-width:480px;margin:0 auto 2.5rem;}
-  .hero-stats{display:flex;gap:3rem;justify-content:center;flex-wrap:wrap;margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);max-width:600px;margin-left:auto;margin-right:auto;}
-  .hero-stat-num{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;display:block;line-height:1;}
-  .hero-stat-label{font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;display:block;}
+  .hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,5.5vw,4.2rem);font-weight:300;line-height:1.15;color:var(--text);margin-bottom:1.25rem;}
+  .hero-title em{font-style:italic;color:var(--gold);font-weight:400;}
+  .hero-desc{color:var(--muted);font-size:0.95rem;font-weight:300;line-height:1.85;max-width:520px;margin:0 auto 2rem;}
+  .hero-ctas{display:flex;gap:0.85rem;justify-content:center;flex-wrap:wrap;margin-bottom:3rem;}
+  .hero-cta{padding:0.85rem 1.75rem;font-family:inherit;font-size:0.82rem;font-weight:600;letter-spacing:0.06em;border-radius:var(--radius-sm);cursor:pointer;border:none;transition:all 0.25s;display:inline-flex;align-items:center;gap:0.5rem;}
+  .hero-cta-primary{background:var(--text);color:var(--bg);}
+  .hero-cta-primary:hover{background:var(--gold);transform:translateY(-2px);box-shadow:var(--shadow-md);}
+  .hero-cta-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border2);}
+  .hero-cta-secondary:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-2px);box-shadow:var(--shadow-sm);}
+  .hero-stats{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;padding-top:2rem;border-top:1px solid var(--border);max-width:560px;margin:0 auto;}
+  .hero-stat-num{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:300;display:block;line-height:1;}
+  .hero-stat-label{font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:0.3rem;display:block;}
 
-  .filter-bar{padding:1.5rem 2rem;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:72px;z-index:50;}
-  .filter-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:0.75rem;overflow-x:auto;scrollbar-width:none;}
+  /* SECTION HEADER */
+  .section-anchor{scroll-margin-top:80px;}
+  .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;}
+  .section-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;display:flex;align-items:center;gap:0.6rem;}
+  .section-title::before{content:'';width:3px;height:1.1em;background:var(--gold);border-radius:2px;}
+  .section-title span{color:var(--gold);}
+  .section-sub{color:var(--muted);font-size:0.78rem;}
+
+  /* FILTER BAR */
+  .filter-bar{padding:1rem 1.5rem;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:60px;z-index:50;}
+  .filter-inner{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:0.5rem;overflow-x:auto;scrollbar-width:none;}
   .filter-inner::-webkit-scrollbar{display:none;}
-  .filter-btn{background:none;border:1px solid var(--border2);padding:0.35rem 1rem;font-family:inherit;font-size:0.78rem;color:var(--muted);cursor:pointer;border-radius:999px;white-space:nowrap;transition:all 0.2s;}
-  .filter-btn:hover,.filter-btn.active{border-color:var(--gold2);color:var(--text);background:var(--gold-light);}
+  .filter-btn{background:var(--surface);border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.76rem;color:var(--muted);cursor:pointer;border-radius:999px;white-space:nowrap;transition:all 0.2s;font-weight:500;}
+  .filter-btn:hover,.filter-btn.active{border-color:var(--gold2);color:var(--gold);background:var(--gold-light);}
 
-  .articles-section{padding:4rem 2rem 6rem;}
-  .container{max-width:1060px;margin:0 auto;}
-  .articles-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
+  /* ARTICLES SECTION */
+  .articles-section{padding:3.5rem 1.5rem 4.5rem;}
+  .container{max-width:1080px;margin:0 auto;}
+  .articles-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   .article-card{background:var(--surface);display:flex;flex-direction:column;cursor:pointer;transition:background 0.2s;}
   .article-card:hover{background:var(--gold-light);}
   .article-thumb{background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:3rem;border-bottom:1px solid var(--border);height:180px;}
-  .article-thumb.lg{height:260px;}
-  .article-body{padding:1.75rem;flex:1;display:flex;flex-direction:column;gap:0.4rem;}
-  .article-tag{font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);font-weight:500;}
-  .article-title{font-size:0.95rem;font-weight:400;line-height:1.5;flex:1;}
-  .article-title.lg{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;line-height:1.3;}
+  .article-thumb.lg{height:260px;font-size:4rem;}
+  .article-body{padding:1.5rem 1.6rem;flex:1;display:flex;flex-direction:column;gap:0.4rem;}
+  .article-tag{font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+  .article-title{font-size:0.95rem;font-weight:500;line-height:1.5;flex:1;}
+  .article-title.lg{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400;line-height:1.3;}
   .article-summary{font-size:0.8rem;color:var(--muted);line-height:1.65;font-weight:300;}
   .article-meta{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:0.75rem;border-top:1px solid var(--border);}
   .article-date{font-size:0.7rem;color:var(--muted);font-weight:300;}
-  .article-read{font-size:0.7rem;color:var(--gold);font-weight:500;letter-spacing:0.05em;}
+  .article-read{font-size:0.7rem;color:var(--gold);font-weight:600;letter-spacing:0.05em;}
   .empty-state{grid-column:1/-1;padding:5rem 2rem;text-align:center;background:var(--surface);}
   .empty-state p{color:var(--muted);font-size:0.9rem;}
-  .loading-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
+  .loading-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   .loading-card{background:var(--surface);padding:2rem;}
   .skeleton{background:var(--bg2);border-radius:2px;animation:shimmer 1.5s ease-in-out infinite;}
   .skeleton-thumb{height:180px;margin-bottom:1rem;}
@@ -84,99 +134,330 @@
   .skeleton-line.medium{width:70%;}
   @keyframes shimmer{0%,100%{opacity:1}50%{opacity:0.5}}
 
-  /* 価格テーブル */
-  .prices-section{padding:4rem 2rem;background:var(--bg2);border-top:1px solid var(--border);}
-  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;}
-  .section-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;}
-  .section-title span{color:var(--gold);}
-  .prices-filters{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem;}
-  .price-filter-btn{background:none;border:1px solid var(--border2);padding:0.3rem 0.875rem;font-family:inherit;font-size:0.75rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:all 0.2s;}
-  .price-filter-btn:hover,.price-filter-btn.active{border-color:var(--gold2);color:var(--text);background:var(--gold-light);}
-  .price-search{display:flex;gap:0.5rem;margin-bottom:1.5rem;}
-  .price-search-input{flex:1;max-width:320px;background:var(--surface);border:1px solid var(--border2);padding:0.5rem 1rem;font-family:inherit;font-size:0.85rem;color:var(--text);outline:none;border-radius:2px;}
-  .price-search-input:focus{border-color:var(--gold2);}
-  .prices-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);}
-  .prices-table th{padding:0.75rem 1rem;text-align:left;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);background:var(--bg2);}
-  .prices-table td{padding:0.75rem 1rem;font-size:0.85rem;border-bottom:1px solid var(--border);}
+  /* PRICE TABLE SECTION */
+  .prices-section{padding:4rem 1.5rem;background:var(--bg2);border-top:1px solid var(--border);}
+  .prices-filters{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.25rem;}
+  .price-filter-btn{background:var(--surface);border:1px solid var(--border2);padding:0.35rem 0.95rem;font-family:inherit;font-size:0.74rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:all 0.2s;font-weight:500;}
+  .price-filter-btn:hover,.price-filter-btn.active{border-color:var(--gold2);color:var(--gold);background:var(--gold-light);}
+  .price-search{display:flex;gap:0.5rem;margin-bottom:1.25rem;}
+  .price-search-input{flex:1;max-width:360px;background:var(--surface);border:1px solid var(--border2);padding:0.55rem 1rem;font-family:inherit;font-size:0.85rem;color:var(--text);outline:none;border-radius:999px;transition:all 0.2s;}
+  .price-search-input:focus{border-color:var(--gold2);box-shadow:0 0 0 3px var(--gold-glow);}
+  .prices-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .prices-table th{padding:0.75rem 1rem;text-align:left;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);background:var(--bg2);}
+  .prices-table td{padding:0.7rem 1rem;font-size:0.85rem;border-bottom:1px solid var(--border);}
   .prices-table tr:hover td{background:var(--gold-light);}
-  .rarity-badge{display:inline-block;padding:0.15rem 0.5rem;font-size:0.65rem;font-weight:600;letter-spacing:0.08em;border-radius:2px;background:var(--gold-light);color:var(--gold);}
-  .price-val{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:400;color:var(--text);}
-  .ebay-price{font-size:0.8rem;color:var(--gold2);cursor:pointer;white-space:nowrap;}
+  .prices-table tr:last-child td{border-bottom:none;}
+  .rarity-badge{display:inline-block;padding:0.15rem 0.5rem;font-size:0.62rem;font-weight:700;letter-spacing:0.06em;border-radius:3px;background:var(--gold-light);color:var(--gold);}
+  .price-val{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:400;color:var(--text);}
+  .ebay-price{font-size:0.78rem;color:var(--gold2);cursor:pointer;white-space:nowrap;font-weight:500;}
   .ebay-price:hover{text-decoration:underline;}
-  .ebay-loading{font-size:0.75rem;color:var(--muted);}
+  .ebay-loading{font-size:0.72rem;color:var(--muted);cursor:pointer;}
+  .ebay-loading:hover{color:var(--gold);}
+  .line-notify-btn{display:inline-flex;align-items:center;gap:0.25rem;background:transparent;border:1px solid var(--line-green);color:var(--line-green);padding:0.2rem 0.55rem;font-family:inherit;font-size:0.68rem;font-weight:600;border-radius:999px;cursor:pointer;transition:all 0.18s;white-space:nowrap;}
+  .line-notify-btn:hover{background:var(--line-green);color:#fff;transform:translateY(-1px);}
   .prices-pagination{display:flex;align-items:center;gap:0.5rem;margin-top:1.5rem;justify-content:center;}
-  .page-btn{background:none;border:1px solid var(--border2);padding:0.35rem 0.875rem;font-family:inherit;font-size:0.8rem;color:var(--muted);cursor:pointer;border-radius:2px;transition:all 0.2s;}
-  .page-btn:hover,.page-btn.active{border-color:var(--gold2);color:var(--text);background:var(--gold-light);}
+  .page-btn{background:var(--surface);border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.78rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:all 0.2s;font-weight:500;}
+  .page-btn:hover,.page-btn.active{border-color:var(--gold2);color:var(--gold);background:var(--gold-light);}
   .page-btn:disabled{opacity:0.3;cursor:not-allowed;}
-  .prices-count{font-size:0.75rem;color:var(--muted);margin-left:1rem;}
+  .prices-count{font-size:0.75rem;color:var(--muted);}
 
+  /* LINE CTA SECTION */
+  .line-cta-section{padding:3.5rem 1.5rem;background:linear-gradient(135deg,#06c755 0%,#05a648 100%);color:#fff;position:relative;overflow:hidden;}
+  .line-cta-section::before{content:'';position:absolute;top:-40%;right:-10%;width:480px;height:480px;background:radial-gradient(circle,rgba(255,255,255,0.12) 0%,transparent 70%);pointer-events:none;}
+  .line-cta-inner{max-width:880px;margin:0 auto;display:flex;align-items:center;gap:2.5rem;flex-wrap:wrap;position:relative;}
+  .line-cta-icon{font-size:3.5rem;line-height:1;flex-shrink:0;}
+  .line-cta-body{flex:1;min-width:240px;}
+  .line-cta-eyebrow{font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;font-weight:600;opacity:0.85;margin-bottom:0.4rem;}
+  .line-cta-title{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:400;line-height:1.25;margin-bottom:0.6rem;}
+  .line-cta-desc{font-size:0.9rem;font-weight:300;line-height:1.7;opacity:0.95;}
+  .line-cta-btn{background:#fff;color:var(--line-green-dark);padding:0.95rem 2rem;font-family:inherit;font-size:0.85rem;font-weight:700;letter-spacing:0.04em;border-radius:999px;border:none;cursor:pointer;transition:all 0.25s;display:inline-flex;align-items:center;gap:0.5rem;flex-shrink:0;box-shadow:0 4px 16px rgba(0,0,0,0.12);}
+  .line-cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.18);}
+
+  /* ARTICLE OVERLAY */
   #articleOverlay{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;}
   #articleOverlay.open{display:block;}
-  .article-header{position:sticky;top:0;background:rgba(250,250,248,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;}
-  .article-back{background:none;border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-radius:2px;color:var(--muted);transition:all 0.2s;}
+  .article-header{position:sticky;top:0;background:rgba(250,250,248,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0.85rem 1.5rem;display:flex;align-items:center;justify-content:space-between;z-index:1;}
+  .article-back{background:var(--surface);border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.74rem;letter-spacing:0.06em;cursor:pointer;border-radius:var(--radius-sm);color:var(--muted);transition:all 0.2s;}
   .article-back:hover{border-color:var(--text);color:var(--text);}
-  .article-logo{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;letter-spacing:0.08em;}
+  .article-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;letter-spacing:0.08em;}
   .article-logo span{color:var(--gold);}
-  .article-body-wrap{max-width:720px;margin:4rem auto;padding:0 2rem 6rem;}
-  .a-tag{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:1rem;}
-  .a-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:300;line-height:1.2;margin-bottom:0.75rem;}
+  .article-body-wrap{max-width:720px;margin:3rem auto;padding:0 1.5rem 6rem;}
+  .a-tag{font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:1rem;}
+  .a-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.85rem,4vw,2.85rem);font-weight:300;line-height:1.2;margin-bottom:0.75rem;}
   .a-meta{font-size:0.78rem;color:var(--muted);margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
-  .a-content{font-size:0.95rem;line-height:1.9;white-space:pre-wrap;}
-  .a-review{margin-top:2.5rem;padding:1.5rem;background:var(--gold-light);border:1px solid rgba(184,149,42,0.2);}
-  .a-review-label{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:0.75rem;}
-  .a-review-text{font-size:0.9rem;line-height:1.8;}
-  .a-author{margin-top:2rem;padding:1.25rem;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-  .a-author-name{font-weight:500;font-size:0.9rem;}
-  .a-author-x{font-size:0.82rem;color:var(--gold);text-decoration:none;}
+  .a-content{font-size:0.95rem;line-height:1.95;white-space:pre-wrap;}
+  .a-review{margin-top:2.5rem;padding:1.5rem 1.75rem;background:var(--gold-light);border:1px solid rgba(184,149,42,0.2);border-radius:var(--radius);}
+  .a-review-label{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:0.75rem;}
+  .a-review-text{font-size:0.92rem;line-height:1.85;}
+  .a-author{margin-top:2rem;padding:1.25rem 1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:space-between;}
+  .a-author-name{font-weight:600;font-size:0.9rem;}
+  .a-author-x{font-size:0.82rem;color:var(--gold);}
   .a-author-x:hover{text-decoration:underline;}
-  .a-ai-cta{margin-top:2rem;padding:1.5rem;background:var(--text);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background 0.2s;}
-  .a-ai-cta:hover{background:#2a2420;}
-  .a-ai-cta-text{color:var(--bg);font-size:0.9rem;font-weight:400;}
-  .a-ai-cta-btn{color:var(--gold2);font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;}
+  .a-ai-cta{margin-top:2rem;padding:1.5rem 1.75rem;background:var(--text);border-radius:var(--radius);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all 0.2s;gap:1rem;flex-wrap:wrap;}
+  .a-ai-cta:hover{background:#2a2420;transform:translateY(-1px);box-shadow:var(--shadow-md);}
+  .a-ai-cta-text{color:var(--bg);font-size:0.9rem;font-weight:500;}
+  .a-ai-cta-btn{color:var(--gold2);font-size:0.78rem;letter-spacing:0.06em;font-weight:600;}
 
+  /* CHAT PAGE */
   .chat-page{display:none;position:fixed;inset:0;z-index:300;background:var(--bg);flex-direction:column;}
   .chat-page.open{display:flex;}
-  .chat-page-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
-  .chat-page-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;}
+  .chat-page-header{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 1.5rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+  .chat-page-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;}
   .chat-page-title span{color:var(--gold);font-style:italic;}
-  .chat-close{background:none;border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-radius:2px;color:var(--muted);transition:all 0.2s;}
+  .chat-close{background:var(--bg);border:1px solid var(--border2);padding:0.4rem 1rem;font-family:inherit;font-size:0.74rem;letter-spacing:0.06em;cursor:pointer;border-radius:var(--radius-sm);color:var(--muted);transition:all 0.2s;}
   .chat-close:hover{border-color:var(--text);color:var(--text);}
-  .chat-messages{flex:1;overflow-y:auto;padding:2rem;display:flex;flex-direction:column;gap:1.25rem;}
+  .chat-messages{flex:1;overflow-y:auto;padding:1.75rem;display:flex;flex-direction:column;gap:1.1rem;}
   .chat-bubble-wrap{display:flex;flex-direction:column;max-width:680px;width:100%;}
   .chat-bubble-wrap.user{align-self:flex-end;align-items:flex-end;}
   .chat-bubble-wrap.ai{align-self:flex-start;align-items:flex-start;}
-  .chat-sender{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;}
+  .chat-sender{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;font-weight:600;}
   .chat-sender.ai-sender{color:var(--gold);}
-  .chat-bubble{padding:0.875rem 1.125rem;font-size:0.875rem;line-height:1.65;border-radius:2px;}
+  .chat-bubble{padding:0.875rem 1.125rem;font-size:0.88rem;line-height:1.65;border-radius:var(--radius);}
   .chat-bubble.user{background:var(--text);color:var(--bg);}
   .chat-bubble.ai{background:var(--surface);border:1px solid var(--border2);color:var(--text);}
   .chat-bubble.typing{color:var(--muted);font-style:italic;}
-  .chat-input-area{padding:1.5rem 2rem;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+  .chat-input-area{padding:1.25rem 1.5rem;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
   .chat-input-row{max-width:680px;margin:0 auto;display:flex;gap:0.75rem;}
-  .chat-input{flex:1;background:var(--bg);border:1px solid var(--border2);padding:0.875rem 1.25rem;font-family:inherit;font-size:0.875rem;color:var(--text);outline:none;border-radius:2px;transition:border-color 0.2s;resize:none;}
-  .chat-input:focus{border-color:var(--gold2);}
-  .chat-send{background:var(--text);color:var(--bg);border:none;padding:0.875rem 1.5rem;font-family:inherit;font-size:0.75rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:background 0.2s;white-space:nowrap;}
+  .chat-input{flex:1;background:var(--bg);border:1px solid var(--border2);padding:0.85rem 1.25rem;font-family:inherit;font-size:0.875rem;color:var(--text);outline:none;border-radius:var(--radius);transition:all 0.2s;resize:none;}
+  .chat-input:focus{border-color:var(--gold2);box-shadow:0 0 0 3px var(--gold-glow);}
+  .chat-send{background:var(--text);color:var(--bg);border:none;padding:0.85rem 1.5rem;font-family:inherit;font-size:0.74rem;font-weight:600;letter-spacing:0.08em;cursor:pointer;border-radius:var(--radius);transition:background 0.2s;white-space:nowrap;}
   .chat-send:hover{background:var(--gold);}
   .chat-send:disabled{opacity:0.4;cursor:not-allowed;}
   .chat-suggestions{max-width:680px;margin:0 auto 1rem;display:flex;gap:0.5rem;flex-wrap:wrap;}
-  .chat-suggestion{background:none;border:1px solid var(--border2);padding:0.35rem 0.875rem;font-family:inherit;font-size:0.75rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:all 0.2s;}
-  .chat-suggestion:hover{border-color:var(--gold2);color:var(--text);}
+  .chat-suggestion{background:var(--surface);border:1px solid var(--border2);padding:0.4rem 0.95rem;font-family:inherit;font-size:0.75rem;color:var(--muted);cursor:pointer;border-radius:999px;transition:all 0.2s;}
+  .chat-suggestion:hover{border-color:var(--gold2);color:var(--gold);background:var(--gold-light);}
 
-  footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem 2rem 2rem;}
-  .footer-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
-  .footer-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--text);letter-spacing:0.08em;text-decoration:none;}
+  /* FOOTER */
+  footer{background:var(--surface);border-top:1px solid var(--border);padding:2.5rem 1.5rem 2rem;}
+  .footer-inner{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+  .footer-logo{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;letter-spacing:0.08em;}
   .footer-logo span{color:var(--gold);}
-  .footer-copy{font-size:0.75rem;color:#c0bcb5;}
+  .footer-links{display:flex;gap:1.25rem;font-size:0.78rem;color:var(--muted);}
+  .footer-links a:hover{color:var(--gold);}
+  .footer-copy{font-size:0.72rem;color:var(--muted);}
 
+  /* BOTTOM TAB BAR (mobile) */
+  .bottom-tabs{display:none;position:fixed;bottom:0;left:0;right:0;z-index:90;background:rgba(255,255,255,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));}
+  .bottom-tabs-inner{display:grid;grid-template-columns:repeat(5,1fr);max-width:540px;margin:0 auto;}
+  .bottom-tab{background:none;border:none;color:var(--muted);font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0.18rem;padding:0.4rem 0.25rem;transition:color 0.2s;position:relative;}
+  .bottom-tab-icon{font-size:1.25rem;line-height:1;}
+  .bottom-tab-label{font-size:0.6rem;letter-spacing:0.04em;font-weight:600;}
+  .bottom-tab.active{color:var(--gold);}
+  .bottom-tab.active::before{content:'';position:absolute;top:-0.4rem;left:50%;transform:translateX(-50%);width:24px;height:2px;background:var(--gold);border-radius:0 0 2px 2px;}
+
+  /* FADE IN ANIMATION */
   .fi{opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease;}
   .fi.vis{opacity:1;transform:translateY(0);}
 
-  @media(max-width:900px){.articles-grid,.loading-grid{grid-template-columns:1fr;}.prices-table th:nth-child(4),.prices-table td:nth-child(4),.prices-table th:nth-child(6),.prices-table td:nth-child(6){display:none;}}
-  @media(max-width:768px){nav{padding:1rem 1.5rem;}.filter-bar{top:64px;}.chat-input-row{flex-direction:column;}}
+  /* RESPONSIVE */
+  @media(max-width:900px){
+    .articles-grid,.loading-grid{grid-template-columns:1fr;}
+    .prices-table th:nth-child(4),.prices-table td:nth-child(4),
+    .prices-table th:nth-child(2),.prices-table td:nth-child(2){display:none;}
+  }
+  @media(max-width:768px){
+    body{padding-bottom:64px;}
+    nav{padding:0.7rem 1rem;height:56px;}
+    .nav-logo{font-size:1.2rem;}
+    .nav-links .nav-link{display:none;}
+    .nav-links{margin-left:auto;}
+    .filter-bar{top:56px;padding:0.85rem 1rem;}
+    .hero{padding:5.5rem 1.25rem 3rem;}
+    .articles-section,.prices-section,.line-cta-section{padding-left:1rem;padding-right:1rem;}
+    .articles-section{padding-top:2.5rem;padding-bottom:3rem;}
+    .prices-section{padding-top:3rem;padding-bottom:3rem;}
+    .article-body{padding:1.25rem;}
+    .prices-table th,.prices-table td{padding:0.55rem 0.5rem;font-size:0.78rem;}
+    .price-val{font-size:0.92rem;}
+    .prices-table th:nth-child(6),.prices-table td:nth-child(6){display:none;}
+    .line-cta-inner{flex-direction:column;text-align:center;gap:1.25rem;}
+    .line-cta-icon{font-size:3rem;}
+    .line-cta-title{font-size:1.5rem;}
+    .chat-input-row{flex-direction:column;}
+    .a-ai-cta{flex-direction:column;align-items:flex-start;text-align:left;}
+    .footer-inner{flex-direction:column;text-align:center;gap:0.85rem;}
+    .bottom-tabs{display:block;}
+    .article-body-wrap{padding-bottom:8rem;}
+    .chat-page{padding-bottom:0;}
+  }
 </style>
 </head>
 <body>
 
+<!-- TOP NAV -->
+<nav>
+  <a href="/" class="nav-logo">TCGVIBE<span>.AI</span></a>
+  <div class="nav-links">
+    <a class="nav-link" href="#articles" onclick="scrollToSection('articles',event)">記事</a>
+    <a class="nav-link" href="#prices" onclick="scrollToSection('prices',event)">価格</a>
+    <a class="nav-link" href="/card-list.html">カード</a>
+    <a class="nav-link" href="#line-cta" onclick="scrollToSection('line-cta',event)">LINE</a>
+    <a class="nav-link" href="#" id="navAiBtn" onclick="openChat(event)">AIに相談</a>
+    <button class="nav-search-btn" onclick="openSearch()" aria-label="検索">🔍</button>
+  </div>
+</nav>
+
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay" onclick="if(event.target===this)closeSearch()">
+  <div class="search-modal">
+    <div class="search-input-wrap">
+      <span class="search-input-icon">🔍</span>
+      <input class="search-modal-input" id="searchModalInput" type="text" placeholder="記事タイトル・カード名で検索..." oninput="searchAll(this.value)" onkeydown="if(event.key==='Escape')closeSearch();">
+      <button class="search-close" onclick="closeSearch()">ESC</button>
+    </div>
+    <div class="search-results" id="searchResults">
+      <div class="search-result-empty">検索ワードを入力してください</div>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow fi">プロの知見 × AIの分析力</div>
+    <h1 class="hero-title fi">ポケカ・ワンピの<br><em>プロ解説 × AI分析</em></h1>
+    <p class="hero-desc fi">実績あるプロプレイヤーの知見をAIが深掘り配信。買取相場・PSA10・カードギャラリーも一括チェックできる、TCG総合情報メディア。</p>
+    <div class="hero-ctas fi">
+      <button class="hero-cta hero-cta-primary" onclick="scrollToSection('articles')">📝 最新記事を読む</button>
+      <button class="hero-cta hero-cta-secondary" onclick="scrollToSection('prices')">💴 カード価格を調べる</button>
+    </div>
+    <div class="hero-stats fi">
+      <div class="hero-stat"><span class="hero-stat-num" id="articleCount">-</span><span class="hero-stat-label">記事数</span></div>
+      <div class="hero-stat"><span class="hero-stat-num">24/7</span><span class="hero-stat-label">AI対応</span></div>
+      <div class="hero-stat"><span class="hero-stat-num">無料</span><span class="hero-stat-label">完全無料</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FILTER BAR -->
+<div class="filter-bar section-anchor" id="articles">
+  <div class="filter-inner">
+    <button class="filter-btn active" onclick="filterArticles('all', this)">すべて</button>
+    <button class="filter-btn" onclick="filterArticles('大会レポート', this)">大会レポート</button>
+    <button class="filter-btn" onclick="filterArticles('環境解説', this)">環境解説</button>
+    <button class="filter-btn" onclick="filterArticles('デッキ紹介', this)">デッキ紹介</button>
+    <button class="filter-btn" onclick="filterArticles('価格情報', this)">価格情報</button>
+    <button class="filter-btn" onclick="filterArticles('初心者向け', this)">初心者向け</button>
+    <button class="filter-btn" onclick="filterArticles('pokeca', this)">ポケカ</button>
+    <button class="filter-btn" onclick="filterArticles('onepiece', this)">ワンピース</button>
+  </div>
+</div>
+
+<!-- ARTICLES -->
+<section class="articles-section">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="section-title">最新<span>記事</span></h2>
+      <span class="section-sub">プロプレイヤーの解説 × AIの分析</span>
+    </div>
+    <div id="articlesGrid" class="loading-grid">
+      <div class="loading-card"><div class="skeleton skeleton-thumb lg"></div><div class="skeleton skeleton-line short" style="margin-bottom:12px"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line medium"></div></div>
+      <div class="loading-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line short" style="margin-bottom:12px"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line medium"></div></div>
+      <div class="loading-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line short" style="margin-bottom:12px"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line medium"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICES -->
+<section class="prices-section section-anchor" id="prices">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="section-title">買取<span>価格</span>一覧 <span style="font-size:0.55em;color:var(--muted);font-weight:400">+ eBay海外相場</span></h2>
+      <span class="prices-count" id="pricesCount">読み込み中...</span>
+    </div>
+    <div class="prices-filters">
+      <button class="price-filter-btn active" onclick="filterPrices('all', this)">すべて</button>
+      <button class="price-filter-btn" onclick="filterPrices('SAR', this)">SAR</button>
+      <button class="price-filter-btn" onclick="filterPrices('MUR', this)">MUR</button>
+      <button class="price-filter-btn" onclick="filterPrices('UR', this)">UR</button>
+      <button class="price-filter-btn" onclick="filterPrices('HR', this)">HR</button>
+      <button class="price-filter-btn" onclick="filterPrices('SR', this)">SR</button>
+      <button class="price-filter-btn" onclick="filterPrices('RRR', this)">RRR</button>
+      <button class="price-filter-btn" onclick="filterPrices('RR', this)">RR</button>
+      <button class="price-filter-btn" onclick="filterPrices('AR', this)">AR</button>
+    </div>
+    <div class="price-search">
+      <input class="price-search-input" type="text" placeholder="カード名で検索..." id="priceSearchInput" oninput="searchPrices(this.value)">
+    </div>
+    <div id="pricesTableWrap" style="overflow-x:auto">
+      <table class="prices-table">
+        <thead>
+          <tr>
+            <th>カード名</th>
+            <th>パック</th>
+            <th>レアリティ</th>
+            <th>型番</th>
+            <th>買取価格</th>
+            <th>eBay相場</th>
+            <th>通知</th>
+          </tr>
+        </thead>
+        <tbody id="pricesTableBody">
+          <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">読み込み中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prices-pagination" id="pricesPagination"></div>
+  </div>
+</section>
+
+<!-- LINE CTA -->
+<section class="line-cta-section section-anchor" id="line-cta">
+  <div class="line-cta-inner">
+    <div class="line-cta-icon">💬</div>
+    <div class="line-cta-body">
+      <div class="line-cta-eyebrow">LINE Bot 連携</div>
+      <h2 class="line-cta-title">LINEで、カード価格を即チェック</h2>
+      <p class="line-cta-desc">公式LINEを友だち追加して、カード名を送るだけ。最新の買取相場・eBay海外相場・PSA10情報がトークに届きます。価格変動の通知設定も可能。</p>
+    </div>
+    <a class="line-cta-btn" href="https://line.me/R/ti/p/@tcgvibe" target="_blank" rel="noopener" id="lineFriendBtn">
+      <span style="font-size:1.05rem">＋</span> 友だち追加して使ってみる
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <a href="/" class="footer-logo">TCGVIBE<span>.AI</span></a>
+    <div class="footer-links">
+      <a href="#articles" onclick="scrollToSection('articles',event)">記事</a>
+      <a href="#prices" onclick="scrollToSection('prices',event)">価格</a>
+      <a href="/card-list.html">カード</a>
+      <a href="#line-cta" onclick="scrollToSection('line-cta',event)">LINE</a>
+    </div>
+    <span class="footer-copy">© 2025 TCGVIBE.AI</span>
+  </div>
+</footer>
+
+<!-- ARTICLE OVERLAY -->
+<div id="articleOverlay">
+  <div class="article-header">
+    <button class="article-back" onclick="closeArticle()">← 戻る</button>
+    <div class="article-logo">TCGVIBE<span>.AI</span></div>
+    <button class="article-back" style="border-color:var(--gold2);color:var(--gold)" onclick="openChatFromArticle()">AIに質問する →</button>
+  </div>
+  <div class="article-body-wrap">
+    <div class="a-tag" id="aTag"></div>
+    <h1 class="a-title" id="aTitle"></h1>
+    <div class="a-meta" id="aMeta"></div>
+    <div class="a-content" id="aContent"></div>
+    <div class="a-review" id="aReviewBox" style="display:none">
+      <div class="a-review-label">TCGVIBE AI 総評</div>
+      <div class="a-review-text" id="aReview"></div>
+    </div>
+    <div class="a-author" id="aAuthorBox" style="display:none">
+      <span class="a-author-name" id="aAuthorName"></span>
+      <a class="a-author-x" id="aAuthorX" href="#" target="_blank" rel="noopener"></a>
+    </div>
+    <div class="a-ai-cta" onclick="openChatFromArticle()">
+      <span class="a-ai-cta-text">この記事についてAIに質問する</span>
+      <span class="a-ai-cta-btn">AIチャットを開く →</span>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT PAGE -->
 <div class="chat-page" id="chatPage">
   <div class="chat-page-header">
     <div class="chat-page-title">TCGVIBE<span>.AI</span> — TCGアドバイザー</div>
@@ -201,127 +482,21 @@
   </div>
 </div>
 
-<div id="articleOverlay">
-  <div class="article-header">
-    <button class="article-back" onclick="closeArticle()">← 記事一覧</button>
-    <div class="article-logo">TCGVIBE<span>.AI</span></div>
-    <button class="article-back" style="border-color:var(--gold2);color:var(--gold)" onclick="openChatFromArticle()">AIに質問する →</button>
-  </div>
-  <div class="article-body-wrap">
-    <div class="a-tag" id="aTag"></div>
-    <h1 class="a-title" id="aTitle"></h1>
-    <div class="a-meta" id="aMeta"></div>
-    <div class="a-content" id="aContent"></div>
-    <div class="a-review" id="aReviewBox" style="display:none">
-      <div class="a-review-label">TCGVIBE AI 総評</div>
-      <div class="a-review-text" id="aReview"></div>
-    </div>
-    <div class="a-author" id="aAuthorBox" style="display:none">
-      <span class="a-author-name" id="aAuthorName"></span>
-      <a class="a-author-x" id="aAuthorX" href="#" target="_blank" rel="noopener"></a>
-    </div>
-    <div class="a-ai-cta" onclick="openChatFromArticle()">
-      <span class="a-ai-cta-text">この記事についてAIに質問する</span>
-      <span class="a-ai-cta-btn">AIチャットを開く →</span>
-    </div>
-  </div>
-</div>
-
-<nav>
-  <a href="/" class="nav-logo">TCGVIBE<span>.AI</span></a>
-  <div class="nav-right">
-    <span class="nav-tag">TCG × AI メディア</span>
-    <a href="#" class="nav-ai-btn" id="navAiBtn" onclick="openChat(event)">AIに相談</a>
+<!-- BOTTOM TABS (mobile) -->
+<nav class="bottom-tabs" aria-label="メイン機能">
+  <div class="bottom-tabs-inner">
+    <button class="bottom-tab" onclick="bottomNav('home',this)"><span class="bottom-tab-icon">🏠</span><span class="bottom-tab-label">ホーム</span></button>
+    <button class="bottom-tab" onclick="bottomNav('articles',this)"><span class="bottom-tab-icon">📝</span><span class="bottom-tab-label">記事</span></button>
+    <button class="bottom-tab" onclick="bottomNav('prices',this)"><span class="bottom-tab-icon">💴</span><span class="bottom-tab-label">価格</span></button>
+    <a class="bottom-tab" href="/card-list.html" style="text-decoration:none"><span class="bottom-tab-icon">🃏</span><span class="bottom-tab-label">カード</span></a>
+    <button class="bottom-tab" onclick="openChat(event)"><span class="bottom-tab-icon">🤖</span><span class="bottom-tab-label">AI</span></button>
   </div>
 </nav>
 
-<section class="hero">
-  <div style="position:relative;z-index:1;">
-    <div class="hero-eyebrow fi">プロの知見 × AIの分析力</div>
-    <h1 class="hero-title fi">TCGをもっと<br><em>深く、楽しく。</em></h1>
-    <p class="hero-desc fi">実績あるプロプレイヤーへのインタビューをAIが深掘り・解説。ポケカ・ワンピース・遊戯王の最新環境情報をお届けします。</p>
-    <div class="hero-stats fi">
-      <div class="hero-stat"><span class="hero-stat-num" id="articleCount">-</span><span class="hero-stat-label">記事数</span></div>
-      <div class="hero-stat"><span class="hero-stat-num">24/7</span><span class="hero-stat-label">AI対応</span></div>
-      <div class="hero-stat"><span class="hero-stat-num">無料</span><span class="hero-stat-label">完全無料</span></div>
-    </div>
-  </div>
-</section>
-
-<div class="filter-bar">
-  <div class="filter-inner">
-    <button class="filter-btn active" onclick="filterArticles('all', this)">すべて</button>
-    <button class="filter-btn" onclick="filterArticles('大会レポート', this)">大会レポート</button>
-    <button class="filter-btn" onclick="filterArticles('環境解説', this)">環境解説</button>
-    <button class="filter-btn" onclick="filterArticles('デッキ紹介', this)">デッキ紹介</button>
-    <button class="filter-btn" onclick="filterArticles('価格情報', this)">価格情報</button>
-    <button class="filter-btn" onclick="filterArticles('初心者向け', this)">初心者向け</button>
-    <button class="filter-btn" onclick="filterArticles('pokeca', this)">ポケカ</button>
-    <button class="filter-btn" onclick="filterArticles('onepiece', this)">ワンピース</button>
-  </div>
-</div>
-
-<section class="articles-section">
-  <div class="container">
-    <div id="articlesGrid" class="loading-grid">
-      <div class="loading-card"><div class="skeleton skeleton-thumb lg"></div><div class="skeleton skeleton-line short" style="margin-bottom:12px"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line medium"></div></div>
-      <div class="loading-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line short" style="margin-bottom:12px"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line medium"></div></div>
-      <div class="loading-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line short" style="margin-bottom:12px"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line medium"></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- 価格テーブル -->
-<section class="prices-section">
-  <div class="container">
-    <div class="section-header">
-      <h2 class="section-title">カード<span>買取価格</span>一覧 <span style="font-size:0.6em;color:var(--muted);font-weight:400">+ eBay海外相場</span></h2>
-      <span class="prices-count" id="pricesCount">読み込み中...</span>
-    </div>
-    <div class="prices-filters">
-      <button class="price-filter-btn active" onclick="filterPrices('all', this)">すべて</button>
-      <button class="price-filter-btn" onclick="filterPrices('SAR', this)">SAR</button>
-      <button class="price-filter-btn" onclick="filterPrices('MUR', this)">MUR</button>
-      <button class="price-filter-btn" onclick="filterPrices('UR', this)">UR</button>
-      <button class="price-filter-btn" onclick="filterPrices('HR', this)">HR</button>
-      <button class="price-filter-btn" onclick="filterPrices('SR', this)">SR</button>
-      <button class="price-filter-btn" onclick="filterPrices('RRR', this)">RRR</button>
-      <button class="price-filter-btn" onclick="filterPrices('RR', this)">RR</button>
-      <button class="price-filter-btn" onclick="filterPrices('AR', this)">AR</button>
-    </div>
-    <div class="price-search">
-      <input class="price-search-input" type="text" placeholder="カード名で検索..." id="priceSearchInput" oninput="searchPrices(this.value)">
-    </div>
-    <div id="pricesTableWrap">
-      <table class="prices-table">
-        <thead>
-          <tr>
-            <th>カード名</th>
-            <th>パック</th>
-            <th>レアリティ</th>
-            <th>型番</th>
-            <th>買取価格</th>
-            <th>eBay相場</th>
-            <th>ショップ</th>
-          </tr>
-        </thead>
-        <tbody id="pricesTableBody">
-          <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">読み込み中...</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="prices-pagination" id="pricesPagination"></div>
-  </div>
-</section>
-
-<footer>
-  <div class="footer-inner">
-    <a href="/" class="footer-logo">TCGVIBE<span>.AI</span></a>
-    <span class="footer-copy">© 2025 TCGVIBE.AI — プロの知見をAIで届ける</span>
-  </div>
-</footer>
-
 <script>
+// LINE Bot 友だち追加URL — 実際のbot IDに置き換える場合はここを修正
+const LINE_ADD_URL = 'https://line.me/R/ti/p/@tcgvibe';
+
 // 管理者モード: admin.htmlでログイン後にlocalStorageで認証（タブ間共有のため）
 if (localStorage.getItem('tcgvibe_admin') === 'true') {
   document.getElementById('navAiBtn').classList.add('show');
@@ -331,6 +506,85 @@ const obs = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
 }, { threshold: 0.08 });
 document.querySelectorAll('.fi').forEach(el => obs.observe(el));
+
+// SCROLL TO SECTION
+function scrollToSection(id, e) {
+  if (e) e.preventDefault();
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+// SEARCH OVERLAY
+function openSearch() {
+  document.getElementById('searchOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('searchModalInput').focus(), 50);
+}
+function closeSearch() {
+  document.getElementById('searchOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('searchModalInput').value = '';
+  document.getElementById('searchResults').innerHTML = '<div class="search-result-empty">検索ワードを入力してください</div>';
+}
+function searchAll(q) {
+  q = (q || '').trim();
+  const results = document.getElementById('searchResults');
+  if (!q) { results.innerHTML = '<div class="search-result-empty">検索ワードを入力してください</div>'; return; }
+  const lq = q.toLowerCase();
+  const articleHits = allArticles.filter(a =>
+    (a.title || '').toLowerCase().includes(lq) ||
+    (a.summary || '').toLowerCase().includes(lq) ||
+    (a.tag || '').toLowerCase().includes(lq)
+  ).slice(0, 6);
+  let html = '';
+  if (articleHits.length) {
+    html += '<div class="search-section-label">記事</div>';
+    html += articleHits.map(a => {
+      const idx = allArticles.indexOf(a);
+      return `<div class="search-result-item" onclick="closeSearch();openArticle(${idx})">
+        <div class="search-result-emoji">${a.emoji || '🃏'}</div>
+        <div class="search-result-body">
+          <div class="search-result-title">${escapeHtml(a.title || '')}</div>
+          <div class="search-result-meta">${escapeHtml(a.tag || '')} · ${escapeHtml(a.date || '')}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  html += '<div class="search-section-label">カードギャラリーで検索</div>';
+  html += `<a class="search-result-item" href="/card-list.html?q=${encodeURIComponent(q)}" style="text-decoration:none;color:inherit">
+    <div class="search-result-emoji">🃏</div>
+    <div class="search-result-body">
+      <div class="search-result-title">「${escapeHtml(q)}」をカード名で検索</div>
+      <div class="search-result-meta">カードギャラリーで全カードから探す →</div>
+    </div>
+  </a>`;
+  if (!articleHits.length) {
+    html = '<div class="search-section-label">該当する記事なし</div>' + html;
+  }
+  results.innerHTML = html;
+}
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('searchOverlay').classList.contains('open')) closeSearch();
+});
+
+// LINE NOTIFY (per-card row)
+function lineNotify(cardName) {
+  const msg = `「${cardName}」の価格通知をLINEで受け取れます。\n\n公式LINEを友だち追加して、トークでカード名を送ると最新相場が届きます。\n\n友だち追加ページに移動しますか？`;
+  if (confirm(msg)) {
+    window.open(LINE_ADD_URL, '_blank', 'noopener');
+  }
+}
+
+// BOTTOM NAV (mobile)
+function bottomNav(target, btn) {
+  document.querySelectorAll('.bottom-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (target === 'home') window.scrollTo({ top: 0, behavior: 'smooth' });
+  else scrollToSection(target);
+}
 
 // ARTICLES
 let allArticles = [];
@@ -426,7 +680,6 @@ async function loadPrices() {
     document.getElementById('pricesCount').textContent = `${allPrices.length.toLocaleString()}件`;
     renderPrices();
   } catch(e) {
-    // フォールバック: 画像マッチングなしで価格のみ取得
     try {
       const res = await fetch('/api/prices');
       const data = await res.json();
@@ -476,7 +729,6 @@ function renderPrices() {
   }
 
   tbody.innerHTML = pageData.map((p, i) => {
-    const rowIdx = (currentPricePage - 1) * pricesPerPage + i;
     const ebayCache = ebayPriceCache[p.card_name];
     const ebayCell = ebayCache
       ? `<span class="ebay-price" title="eBayで見る">$${ebayCache.avg} avg</span>`
@@ -484,6 +736,7 @@ function renderPrices() {
     const imgHtml = p.image_url
       ? `<img src="${p.image_url}" alt="" style="width:32px;height:44px;object-fit:contain;border-radius:2px;vertical-align:middle;margin-right:0.5rem">`
       : '';
+    const safeName = (p.card_name || '').replace(/'/g, "\\'");
     return `<tr>
       <td style="white-space:nowrap">${imgHtml}${p.card_name || ''}</td>
       <td style="color:var(--muted);font-size:0.8rem">${p.pack_name || ''}</td>
@@ -491,7 +744,7 @@ function renderPrices() {
       <td style="color:var(--muted);font-size:0.8rem">${p.model_number || ''}</td>
       <td><span class="price-val">${p.buy_price || '-'}</span></td>
       <td>${ebayCell}</td>
-      <td style="color:var(--muted);font-size:0.8rem">${p.shop || ''}</td>
+      <td><button class="line-notify-btn" onclick="lineNotify('${safeName}')" title="LINEで価格通知">🔔 LINE</button></td>
     </tr>`;
   }).join('');
 

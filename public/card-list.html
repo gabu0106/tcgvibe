@@ -10,19 +10,66 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tcgvibe.com/card-list.html">
 <link rel="canonical" href="https://tcgvibe.com/card-list.html">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#faf9f6;--bg2:#f3f1ec;--bg3:#ece9e2;--surface:#fff;--border:rgba(0,0,0,0.06);--border2:rgba(0,0,0,0.1);--text:#1a1814;--muted:#8a857e;--gold:#b8952a;--gold2:#d4af5a;--gold-light:#f5edda;--gold-glow:rgba(184,149,42,0.12);--shadow:rgba(0,0,0,0.06);--shadow2:rgba(0,0,0,0.1);--red:#c0392b;}
+:root{--bg:#fafaf8;--bg2:#f5f3ee;--bg3:#ece9e2;--surface:#fff;--border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.12);--text:#1a1814;--muted:#7a7570;--gold:#b8952a;--gold2:#d4af5a;--gold-light:#f5edda;--gold-glow:rgba(184,149,42,0.12);--shadow:rgba(0,0,0,0.06);--shadow2:rgba(0,0,0,0.1);--red:#c0392b;--line-green:#06c755;--line-green-dark:#05a648;--radius:8px;--radius-sm:4px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 ::selection{background:var(--gold2);color:#fff;}
 
-.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,249,246,0.88);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;height:56px;}
-.nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;letter-spacing:0.1em;text-decoration:none;color:var(--text);}
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,250,248,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1.5rem;height:60px;}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;letter-spacing:0.08em;text-decoration:none;color:var(--text);flex-shrink:0;}
 .nav-logo span{color:var(--gold);}
-.nav-links{margin-left:auto;display:flex;gap:1.5rem;}
-.nav-links a{font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
-.nav-links a:hover,.nav-links a.active{color:var(--gold);}
+.nav-links{margin-left:auto;display:flex;gap:0.25rem;align-items:center;}
+.nav-links .nav-link{font-size:0.78rem;letter-spacing:0.04em;text-transform:none;color:var(--muted);text-decoration:none;transition:all 0.2s;padding:0.45rem 0.85rem;border-radius:var(--radius-sm);font-weight:500;}
+.nav-links .nav-link:hover{color:var(--text);background:var(--bg2);}
+.nav-links .nav-link.active{color:var(--gold);background:var(--gold-light);}
+.nav-search-btn{background:var(--surface);border:1px solid var(--border2);color:var(--muted);width:36px;height:36px;border-radius:var(--radius-sm);cursor:pointer;font-size:0.95rem;display:inline-flex;align-items:center;justify-content:center;transition:all 0.2s;margin-left:0.5rem;}
+.nav-search-btn:hover{border-color:var(--gold2);color:var(--gold);}
+.nav-ai-btn{background:var(--text);color:var(--bg);padding:0.5rem 1.1rem;border-radius:var(--radius-sm);font-size:0.74rem;letter-spacing:0.06em;font-weight:600;transition:all 0.2s;display:none;align-items:center;gap:0.4rem;text-decoration:none;font-family:inherit;}
+.nav-ai-btn:hover{background:var(--gold);}
+.nav-ai-btn.show{display:inline-flex;}
+
+/* SEARCH OVERLAY */
+.search-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(26,24,20,0.45);backdrop-filter:blur(8px);padding-top:5rem;}
+.search-overlay.open{display:block;}
+.search-modal{max-width:640px;margin:0 auto;background:var(--surface);border-radius:var(--radius);box-shadow:0 20px 60px rgba(0,0,0,0.18);overflow:hidden;}
+.search-input-wrap{display:flex;align-items:center;gap:0.75rem;padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);}
+.search-modal-input{flex:1;border:none;background:none;font-family:inherit;font-size:1rem;color:var(--text);outline:none;}
+.search-close{background:none;border:1px solid var(--border2);color:var(--muted);padding:0.3rem 0.75rem;border-radius:var(--radius-sm);font-size:0.7rem;cursor:pointer;font-family:inherit;letter-spacing:0.06em;}
+.search-close:hover{border-color:var(--text);color:var(--text);}
+.search-result-empty{padding:1.5rem 1.25rem;text-align:center;color:var(--muted);font-size:0.85rem;}
+
+/* LINE CTA */
+.line-cta-section{padding:3rem 1.5rem;background:linear-gradient(135deg,#06c755 0%,#05a648 100%);color:#fff;position:relative;overflow:hidden;margin-top:2rem;}
+.line-cta-section::before{content:'';position:absolute;top:-40%;right:-10%;width:480px;height:480px;background:radial-gradient(circle,rgba(255,255,255,0.12) 0%,transparent 70%);pointer-events:none;}
+.line-cta-inner{max-width:880px;margin:0 auto;display:flex;align-items:center;gap:2rem;flex-wrap:wrap;position:relative;}
+.line-cta-icon{font-size:3rem;line-height:1;flex-shrink:0;}
+.line-cta-body{flex:1;min-width:240px;}
+.line-cta-eyebrow{font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;font-weight:600;opacity:0.85;margin-bottom:0.4rem;}
+.line-cta-title{font-family:'Cormorant Garamond',serif;font-size:1.65rem;font-weight:400;line-height:1.25;margin-bottom:0.5rem;}
+.line-cta-desc{font-size:0.86rem;font-weight:300;line-height:1.7;opacity:0.95;}
+.line-cta-btn{background:#fff;color:var(--line-green-dark);padding:0.85rem 1.85rem;font-family:inherit;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;border-radius:999px;border:none;cursor:pointer;transition:all 0.25s;display:inline-flex;align-items:center;gap:0.5rem;flex-shrink:0;box-shadow:0 4px 16px rgba(0,0,0,0.12);text-decoration:none;}
+.line-cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.18);}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:2.5rem 1.5rem 2rem;}
+.footer-inner{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+.footer-logo{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;letter-spacing:0.08em;text-decoration:none;color:var(--text);}
+.footer-logo span{color:var(--gold);}
+.footer-links{display:flex;gap:1.25rem;font-size:0.78rem;color:var(--muted);}
+.footer-links a{color:var(--muted);text-decoration:none;}
+.footer-links a:hover{color:var(--gold);}
+.footer-copy{font-size:0.72rem;color:var(--muted);}
+
+/* BOTTOM TABS */
+.bottom-tabs{display:none;position:fixed;bottom:0;left:0;right:0;z-index:90;background:rgba(255,255,255,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));}
+.bottom-tabs-inner{display:grid;grid-template-columns:repeat(5,1fr);max-width:540px;margin:0 auto;}
+.bottom-tab{background:none;border:none;color:var(--muted);font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0.18rem;padding:0.4rem 0.25rem;transition:color 0.2s;position:relative;text-decoration:none;}
+.bottom-tab-icon{font-size:1.25rem;line-height:1;}
+.bottom-tab-label{font-size:0.6rem;letter-spacing:0.04em;font-weight:600;}
+.bottom-tab.active{color:var(--gold);}
+.bottom-tab.active::before{content:'';position:absolute;top:-0.4rem;left:50%;transform:translateX(-50%);width:24px;height:2px;background:var(--gold);border-radius:0 0 2px 2px;}
 
 .hero{padding:5rem 2rem 1.5rem;text-align:center;position:relative;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);}
 .hero::before{content:'';position:absolute;top:-40%;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,var(--gold-glow) 0%,transparent 70%);pointer-events:none;}
@@ -129,6 +176,11 @@ body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:
 .loading{text-align:center;padding:3rem;color:var(--muted);font-size:0.82rem;}
 
 @media(max-width:768px){
+  body{padding-bottom:64px;}
+  .nav{padding:0 1rem;height:56px;}
+  .nav-logo{font-size:1.2rem;}
+  .nav-links .nav-link{display:none;}
+  .nav-links{margin-left:auto;}
   .hero{padding:4.5rem 1rem 1.2rem;}
   .hero-title{font-size:2rem;}
   .container{padding:0 1rem 3rem;}
@@ -145,6 +197,11 @@ body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:
   .modal-body{padding:0.8rem 1rem;}
   .rank-card{width:120px;}
   .rank-card-img{height:140px;}
+  .line-cta-section{padding:2.5rem 1rem;}
+  .line-cta-inner{flex-direction:column;text-align:center;gap:1.25rem;}
+  .line-cta-title{font-size:1.4rem;}
+  .footer-inner{flex-direction:column;text-align:center;gap:0.85rem;}
+  .bottom-tabs{display:block;}
 }
 </style>
 </head>
@@ -152,8 +209,27 @@ body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:
 
 <nav class="nav">
   <a class="nav-logo" href="/">TCGVIBE<span>.AI</span></a>
-  <div class="nav-links"><a href="/">TOP</a><a href="/card-list.html" class="active">GALLERY</a></div>
+  <div class="nav-links">
+    <a class="nav-link" href="/#articles">記事</a>
+    <a class="nav-link" href="/#prices">価格</a>
+    <a class="nav-link active" href="/card-list.html">カード</a>
+    <a class="nav-link" href="/#line-cta">LINE</a>
+    <a class="nav-link" href="#" id="navAiBtn" onclick="openChat(event)">AIに相談</a>
+    <button class="nav-search-btn" onclick="openSearch()" aria-label="検索">🔍</button>
+  </div>
 </nav>
+
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay" onclick="if(event.target===this)closeSearch()">
+  <div class="search-modal">
+    <div class="search-input-wrap">
+      <span style="font-size:1.1rem;color:var(--muted)">🔍</span>
+      <input class="search-modal-input" id="searchModalInput" type="text" placeholder="カード名で検索..." onkeydown="if(event.key==='Enter')doSearchModal();else if(event.key==='Escape')closeSearch();">
+      <button class="search-close" onclick="closeSearch()">ESC</button>
+    </div>
+    <div class="search-result-empty">Enterキーで検索 ／ ESCで閉じる</div>
+  </div>
+</div>
 
 <div class="hero">
   <h1 class="hero-title">Card <span>Gallery</span></h1>
@@ -206,7 +282,80 @@ body{font-family:'DM Sans','Noto Sans JP',sans-serif;background:var(--bg);color:
   </div>
 </div>
 
+<!-- LINE CTA -->
+<section class="line-cta-section">
+  <div class="line-cta-inner">
+    <div class="line-cta-icon">💬</div>
+    <div class="line-cta-body">
+      <div class="line-cta-eyebrow">LINE Bot 連携</div>
+      <h2 class="line-cta-title">LINEで、カード価格を即チェック</h2>
+      <p class="line-cta-desc">公式LINEを友だち追加して、カード名を送るだけ。最新の買取相場・eBay海外相場が届きます。</p>
+    </div>
+    <a class="line-cta-btn" href="https://line.me/R/ti/p/@tcgvibe" target="_blank" rel="noopener">
+      <span style="font-size:1.05rem">＋</span> 友だち追加して使ってみる
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <a href="/" class="footer-logo">TCGVIBE<span>.AI</span></a>
+    <div class="footer-links">
+      <a href="/#articles">記事</a>
+      <a href="/#prices">価格</a>
+      <a href="/card-list.html">カード</a>
+      <a href="/#line-cta">LINE</a>
+    </div>
+    <span class="footer-copy">© 2025 TCGVIBE.AI</span>
+  </div>
+</footer>
+
+<!-- BOTTOM TABS (mobile) -->
+<nav class="bottom-tabs" aria-label="メイン機能">
+  <div class="bottom-tabs-inner">
+    <a class="bottom-tab" href="/"><span class="bottom-tab-icon">🏠</span><span class="bottom-tab-label">ホーム</span></a>
+    <a class="bottom-tab" href="/#articles"><span class="bottom-tab-icon">📝</span><span class="bottom-tab-label">記事</span></a>
+    <a class="bottom-tab" href="/#prices"><span class="bottom-tab-icon">💴</span><span class="bottom-tab-label">価格</span></a>
+    <a class="bottom-tab active" href="/card-list.html"><span class="bottom-tab-icon">🃏</span><span class="bottom-tab-label">カード</span></a>
+    <button class="bottom-tab" onclick="openChat(event)"><span class="bottom-tab-icon">🤖</span><span class="bottom-tab-label">AI</span></button>
+  </div>
+</nav>
+
 <script>
+// 管理者モード判定（AI ボタン表示制御）
+if (localStorage.getItem('tcgvibe_admin') === 'true') {
+  const btn = document.getElementById('navAiBtn');
+  if (btn) btn.classList.add('show');
+}
+
+// AI チャットボタン（一般ユーザーには案内アラート、管理者は index.html へ誘導）
+function openChat(e) {
+  if (e) e.preventDefault();
+  const isAdmin = localStorage.getItem('tcgvibe_admin') === 'true';
+  if (!isAdmin) { alert('AIチャット機能は近日公開予定です！'); return; }
+  // 管理者はトップページのチャットへ
+  window.location.href = '/?openChat=1';
+}
+
+// 検索オーバーレイ（カード名検索を即時実行）
+function openSearch() {
+  document.getElementById('searchOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('searchModalInput').focus(), 50);
+}
+function closeSearch() {
+  document.getElementById('searchOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function doSearchModal() {
+  const v = document.getElementById('searchModalInput').value.trim();
+  if (!v) return;
+  closeSearch();
+  document.getElementById('searchInput').value = v;
+  debounceSearch();
+}
+
 let currentGame = 'pokeca';
 let allPacks = [];
 let packsShown = 0;
@@ -459,7 +608,17 @@ document.addEventListener('keydown', e => {
   }
 });
 
-init();
+// URL ?q= パラメータがあれば検索を実行
+(function applyUrlQuery(){
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get('q');
+  if (q) {
+    document.getElementById('searchInput').value = q;
+    init().then(() => debounceSearch());
+    return;
+  }
+  init();
+})();
 </script>
 </body>
 </html>
