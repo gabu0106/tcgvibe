@@ -491,7 +491,7 @@ async function login() {
     const data = await res.json();
     if (data.valid) {
       ADMIN_KEY = val;
-      sessionStorage.setItem('tcgvibe_admin', 'true');
+      localStorage.setItem('tcgvibe_admin', 'true');
       document.getElementById('loginPage').classList.add('hide');
       document.getElementById('app').classList.add('show');
       loadAll();
